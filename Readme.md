@@ -1,10 +1,17 @@
 Copy Trading System
 ===================
 
-実行方法
---------
+準備
+----
 
 ```cmd
-python3 manage.py runserver
+pipenv install
+```
+
+実行
+----
+
+```cmd
+pipenv start
 ```
 

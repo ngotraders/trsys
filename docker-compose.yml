@@ -3,6 +3,7 @@ version: "3.5"
 services:
   python:
     image: python:3
+    command: bash -c "pip install pipenv && pipenv install && pipenv run start"
     volumes:
       - ./:/app
     working_dir: /app
