@@ -1,0 +1,10 @@
+version: "3.5"
+
+services:
+  python:
+    image: python:3
+    volumes:
+      - ./:/app
+    working_dir: /app
+    ports:
+      - 8000:8000
