@@ -8,6 +8,7 @@ django = "==3.1.7"
 gunicorn = "*"
 dj-database-url = "*"
 psycopg2 = "*"
+whitenoise = "*"
 
 [dev-packages]
 autopep8 = "*"
@@ -19,6 +20,7 @@ python_version = "3.7"
 [scripts]
 start = "python manage.py runserver 0.0.0.0:8000"
 server = "gunicorn trsys.wsgi -b 0.0.0.0:8000"
+collectstatic = "python manage.py collectstatic --noinput"
 migrate = "python manage.py migrate"
 test = "python manage.py test"
 format = "autopep8 -ivr ."

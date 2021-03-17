@@ -3,15 +3,18 @@ version: "3.5"
 services:
   python:
     image: python:3.7
-    command: bash -c "pip install pipenv && pipenv install && pipenv run migrate && pipenv run server"
+    command: bash -c "pip install pipenv && pipenv install && pipenv run collectstatic && pipenv run migrate && pipenv run server"
     volumes:
+      - pip_cache:/root/.cache
       - pipenv_cache:/root/.local
       - ./:/app
+      - /app/static
     working_dir: /app
     ports:
       - 8000:8000
     environment:
       - DATABASE_URL=postgres://postgres:password@postgres:5432/postgres
+      - SECRET_KEY=DEPLOYMENT_SECRET_KEY
   postgres:
     image: postgres:12.3-alpine
     environment:
@@ -24,5 +27,6 @@ services:
       - "db:/var/lib/postgresql/data"
 
 volumes:
+  pip_cache:
   pipenv_cache:
   db:
