@@ -6,12 +6,13 @@ Copy Trading System
 
 ```cmd
 pipenv install
+pipenv run mygrate
 ```
 
 実行
 ----
 
 ```cmd
-pipenv start
+pipenv run start
 ```
 
