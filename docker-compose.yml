@@ -3,9 +3,13 @@ version: "3.5"
 services:
   python:
     image: python:3.7
-    command: bash -c "pip install pipenv && pipenv install && pipenv run start"
+    command: bash -c "pip install pipenv && pipenv install && pipenv run server"
     volumes:
+      - env_cache:/root/.local
       - ./:/app
     working_dir: /app
     ports:
       - 8000:8000
+
+volumes:
+  env_cache:
