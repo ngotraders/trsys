@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 django = "==3.1.7"
 gunicorn = "*"
+dj-database-url = "*"
+psycopg2 = "*"
 
 [dev-packages]
 autopep8 = "*"
@@ -17,6 +19,7 @@ python_version = "3.7"
 [scripts]
 start = "python manage.py runserver 0.0.0.0:8000"
 server = "gunicorn trsys.wsgi -b 0.0.0.0:8000"
+migrate = "python manage.py migrate"
 test = "python manage.py test"
 format = "autopep8 -ivr ."
 lint = "flake8 --show-source ."
