@@ -1,10 +1,10 @@
 from django.urls import path
-from django.views.decorators.csrf import csrf_exempt
 
 from . import views
 
 app_name = 'api'
 urlpatterns = [
-    path('accounts', csrf_exempt(views.account_index)),
-    path('trades', csrf_exempt(views.trade_index)),
+    path('accounts', views.account_index, name="account_index"),
+    path('accounts/<int:pk>', views.account_detail, name="account_detail"),
+    path('trades', views.trade_index, name="trade_index"),
 ]
