@@ -19,14 +19,12 @@ def order_index(request):
             response += f'{order.ticket_no}:{order.symbol}:{order.order_type}'
         return HttpResponse(response)
 
-    for order in Order.objects.all():
-        Object.objects.delete(order)
+    Order.objects.all().delete()
     for item in request.body.decode().split('@'):
         ticket_no, symbol, order_type = item.split(':')
-        print(ticket_no, symbol, OrderType[order_type])
         Order(
             ticket_no=ticket_no,
             symbol=symbol,
             order_type=OrderType[order_type],
         ).save()
-        return HttpResponse(status=200)
+    return HttpResponse(status=200)
