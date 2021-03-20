@@ -10,6 +10,7 @@ class Account(models.Model):
 
 
 class Position(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     ticket_no = models.TextField()
     symbol = models.TextField()
     order_type = models.TextChoices('OP_BUY', 'OP_SELL')
