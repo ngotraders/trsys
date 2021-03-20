@@ -24,7 +24,6 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   Print("*** Tick");
    string Data = TradingData();
    if (SentData != Data) {
       SendPOST("http://localhost/api/orders", Data);
