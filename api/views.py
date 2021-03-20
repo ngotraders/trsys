@@ -1,10 +1,11 @@
+from django.shortcuts import get_object_or_404
 from django.http.request import HttpHeaders
 from django.http.response import HttpResponseRedirect
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Account
+from .models import Account, Position
 
 
 @csrf_exempt
@@ -30,20 +31,14 @@ def account_index(request):
             is_demo=(request.POST['isdemo'] == '1')
         )
         account.save()
-        createdLocation = reverse(
-            "api:account_detail", kwargs=dict(pk=account.id))
-        response = HttpResponse(status=201)
-        response['Location'] = createdLocation
-        return response
+        return HttpResponse(status=201)
 
 
 @csrf_exempt
-def account_detail(request):
-    print("account_detail")
-    return HttpResponse("detail")
-
-
-@csrf_exempt
-def trade_index(request):
-    print("post_trade")
-    return HttpResponse("index")
+def trade_index(request, pk):
+    account = get_object_or_404(Account, pk=pk)
+    list = Position.objects.filter(account=account)
+    response = ""
+    for trade in list:
+        response += trade
+    return HttpResponse(response)
