@@ -51,5 +51,7 @@ class OrderIndexTests(TestCase):
             content_type='text/plain',
         )
         self.assertEqual(response.status_code, 200)
+        self.assertIsNone(Order.objects.filter(ticket_no='1').first())
+        self.assertIsNone(Order.objects.filter(ticket_no='2').first())
         self.assertIsNotNone(Order.objects.filter(ticket_no='3').first())
         self.assertIsNotNone(Order.objects.filter(ticket_no='4').first())
