@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.core.cache import cache
+from django.http.response import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Order, OrderType
@@ -11,7 +12,7 @@ def order_index(request):
         orders = cache.get('orders')
         if not orders:
             orders = Order.objects.all()
-            cache.set('orders', orders)
+            cache.set('orders', orders, 10)
 
         response = ''
         for order in orders:
@@ -22,7 +23,12 @@ def order_index(request):
     elif request.method == 'POST':
         Order.objects.all().delete()
         for item in request.body.decode().split('@'):
-            ticket_no, symbol, order_type = item.split(':')
+            splitted = item.split(':')
+            if len(splitted) != 3:
+                return HttpResponseBadRequest()
+            ticket_no, symbol, order_type = splitted
+            if (not ticket_no or not symbol or not order_type):
+                return HttpResponseBadRequest()
             order = Order(
                 ticket_no=ticket_no,
                 symbol=symbol,

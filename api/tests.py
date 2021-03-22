@@ -78,3 +78,37 @@ class OrderIndexTests(TestCase):
         self.assertIsNone(Order.objects.filter(ticket_no='2').first())
         self.assertIsNotNone(Order.objects.filter(ticket_no='3').first())
         self.assertIsNotNone(Order.objects.filter(ticket_no='4').first())
+
+    def test_post_order_should_not_update_orders_and_return_400_given_invalid_colons(self):
+        """
+        /api/ordersにpostする際にコロンの数が足りない場合はエラー
+        """
+        response = self.client.post(
+            reverse('api:order_index'),
+            '3:USDJPY1',
+            content_type='text/plain',
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_order_should_not_update_orders_and_return_400_given_empty_item(self):
+        """
+        /api/ordersにpostする際にコロンの数が足りない場合はエラー
+        """
+        response = self.client.post(
+            reverse('api:order_index'),
+            ':USDJPY:0',
+            content_type='text/plain',
+        )
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(
+            reverse('api:order_index'),
+            '3::0',
+            content_type='text/plain',
+        )
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(
+            reverse('api:order_index'),
+            '3:USDJPY:',
+            content_type='text/plain',
+        )
+        self.assertEqual(response.status_code, 400)
