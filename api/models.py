@@ -2,8 +2,8 @@ from django.db import models
 
 
 class OrderType(models.TextChoices):
-    BUY = 'BUY'
-    SELL = 'SELL'
+    BUY = '0'
+    SELL = '1'
 
 
 class Order(models.Model):

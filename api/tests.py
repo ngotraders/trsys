@@ -1,10 +1,14 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.core.cache import cache
 
 from .models import Order
 
 
 class OrderIndexTests(TestCase):
+    def setUp(self):
+        cache.delete('orders')
+
     def test_get_order_should_return_empty_response_given_no_orders(self):
         """
         /api/ordersにgetするとオーダーのリストが取得できる。オーダーが存在しない場合
@@ -13,13 +17,32 @@ class OrderIndexTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'')
 
+    def test_get_order_should_return_empty_response_given_single_order(self):
+        """
+        /api/ordersにgetするとオーダーのリストが取得できる。オーダーが1件の場合
+        """
+        Order(ticket_no="1", symbol="USDJPY", order_type="0").save()
+        response = self.client.get(reverse('api:order_index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'1:USDJPY:0')
+
+    def test_get_order_should_return_empty_response_given_multiple_orders(self):
+        """
+        /api/ordersにgetするとオーダーのリストが取得できる。オーダーが2件以上の場合
+        """
+        Order(ticket_no="1", symbol="USDJPY", order_type="0").save()
+        Order(ticket_no="2", symbol="EURUSD", order_type="1").save()
+        response = self.client.get(reverse('api:order_index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'1:USDJPY:0@2:EURUSD:1')
+
     def test_post_order_should_create_new_order(self):
         """
         /api/ordersにpostするとオーダーを登録できる。
         """
         response = self.client.post(
             reverse('api:order_index'),
-            '123456:USDJPY:BUY',
+            '123456:USDJPY:0',
             content_type='text/plain',
         )
         self.assertEqual(response.status_code, 200)
@@ -32,7 +55,7 @@ class OrderIndexTests(TestCase):
         """
         response = self.client.post(
             reverse('api:order_index'),
-            '123456:USDJPY:BUY@123457:USDJPY:BUY',
+            '123456:USDJPY:0@123457:USDJPY:0',
             content_type='text/plain',
         )
         self.assertEqual(response.status_code, 200)
@@ -43,11 +66,11 @@ class OrderIndexTests(TestCase):
         """
         /api/ordersにpostするとオーダーを更新できる。
         """
-        Order(ticket_no="1", symbol="USDJPY", order_type="BUY").save()
-        Order(ticket_no="2", symbol="USDJPY", order_type="BUY").save()
+        Order(ticket_no="1", symbol="USDJPY", order_type="0").save()
+        Order(ticket_no="2", symbol="USDJPY", order_type="0").save()
         response = self.client.post(
             reverse('api:order_index'),
-            '3:USDJPY:SELL@4:USDJPY:SELL',
+            '3:USDJPY:1@4:USDJPY:1',
             content_type='text/plain',
         )
         self.assertEqual(response.status_code, 200)

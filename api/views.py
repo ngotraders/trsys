@@ -1,6 +1,6 @@
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import Order, OrderType
 
@@ -26,7 +26,7 @@ def order_index(request):
             order = Order(
                 ticket_no=ticket_no,
                 symbol=symbol,
-                order_type=OrderType[order_type],
+                order_type=OrderType(order_type),
             )
             order.save()
         cache.delete('orders')
