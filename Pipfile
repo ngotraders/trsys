@@ -9,6 +9,7 @@ gunicorn = "*"
 dj-database-url = "*"
 psycopg2 = "*"
 whitenoise = "*"
+django-redis-cache = "*"
 
 [dev-packages]
 autopep8 = "*"
