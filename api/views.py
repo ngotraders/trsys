@@ -12,7 +12,7 @@ def order_index(request):
         orders = cache.get('orders')
         if not orders:
             orders = Order.objects.all()
-            cache.set('orders', orders, 10)
+            cache.set('orders', orders)
 
         response = ''
         for order in orders:
