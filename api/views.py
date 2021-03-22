@@ -21,8 +21,9 @@ def order_index(request):
             response += f'{order.ticket_no}:{order.symbol}:{order.order_type}'
         return HttpResponse(response)
     elif request.method == 'POST':
+        requestString = request.body.decode().rstrip('\x00')
         Order.objects.all().delete()
-        for item in request.body.decode().split('@'):
+        for item in requestString.split('@'):
             splitted = item.split(':')
             if len(splitted) != 3:
                 return HttpResponseBadRequest()

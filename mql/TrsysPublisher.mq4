@@ -1,5 +1,6 @@
  #property strict
  
+ string URL = "http://localhost/api/orders";
  string SentData = "";
  
 //+------------------------------------------------------------------+
@@ -26,7 +27,10 @@ void OnTick()
 {
    string Data = TradingData();
    if (SentData != Data) {
-      SendPOST("http://localhost/api/orders", Data);
+      Print("Sending: ", Data);
+      if (SendPOST(URL, Data)) {
+         SentData = Data;
+      }
    }
 }
 //+------------------------------------------------------------------+
@@ -38,19 +42,22 @@ string TradingData()
    
    for(int i=0;i<OrdersTotal();i++)
    {  
-      int R = OrderSelect(i,SELECT_BY_POS);
+      if (!OrderSelect(i,SELECT_BY_POS)) continue;
  
       if( OrderType() == OP_BUY || OrderType() == OP_SELL) 
       { 
+         if (PreTradingData != "") {
+            PreTradingData += "@";
+         }
          //only forex
          PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
-         PreTradingData += OrderTicket()+":"+PositionSymbol+":"+OrderType()+"@";
+         PreTradingData += OrderTicket()+":"+PositionSymbol+":"+OrderType();
       } 
    }
    return(PreTradingData);
 }
 
-void SendPOST(string URL, string str)
+int SendPOST(string URL, string str)
 {
    
    int WebR; 
@@ -60,8 +67,7 @@ void SendPOST(string URL, string str)
  
    StringToCharArray( str, post );
    WebR = WebRequest( "POST", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
-   if(!WebR) Print("Web request failed");   
-   
-   Comment(CharArrayToString(ReceivedData)); 
+   if(!WebR) Print("Web request failed");
+   return (WebR);
 }
 
