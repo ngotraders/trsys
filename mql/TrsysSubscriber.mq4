@@ -1,7 +1,9 @@
 #property strict
 
+string URL = "http://localhost/api/orders";
+string ProcessedData = "";
 double OrderVolume = 1;
-int Slippage = 1;
+int Slippage = 10;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -27,8 +29,11 @@ void OnDeinit(const int reason)
 void OnTick()
   {
 //---
-   string Data = SendGET("http://localhost/api/orders");
-   if (Data != "") {
+   string RecievedData = SendGET(URL);
+   if (RecievedData != ProcessedData) {
+      Print("Processing:", RecievedData);
+      string Data = RecievedData;
+      bool Success = True;
       int OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
@@ -62,36 +67,11 @@ void OnTick()
          OrderData_type[i] = StringSubstr(OrderData, ColonPos+1);
       }
       
-      // Search for newly added orders and place order.
-      for (int i = 0; i < OrderCount; i++) {
-         if (IsOrderExists(OrderData_ticket[i])) {
-            break;
-         }
-         string Symbol_ = FindSymbol(OrderData_symbol[i]);
-         if (Symbol_ == NULL) {
-            break;
-         }
-         int Cmd;
-         double Price;
-         if (OrderData_type[i] == "BUY") {
-            Cmd = OP_BUY;
-            Price = Ask;
-         } else if (OrderData_type[i] == "SELL") {
-            Cmd = OP_SELL;
-            Price = Bid;
-         } else {
-            break;
-         }
-         int OrderResult = OrderSend(Symbol_, Cmd, OrderVolume, Price, Slippage, 0, 0, NULL, OrderData_ticket[i]);
-         if (!OrderResult) {
-            Print("Order Send failed.", OrderData_ticket[i], " Error: ", GetLastError());
-         }
-      }
-      
       // Search for closed orders and close order.
       for(int i = OrdersTotal() - 1; i >= 0 ; i--) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+         if (!OrderSelect(i, SELECT_BY_POS)) continue;
          if (OrderType() != OP_BUY && OrderType() != OP_SELL) continue;
+         if (OrderMagicNumber() == 0) continue;
 
          bool Found = false;
          for (int j = 0; j < OrderCount; j++) {
@@ -104,11 +84,37 @@ void OnTick()
          
          int OrderCloseResult = OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), Slippage);
          if (!OrderCloseResult) {
+            Success = false;
             Print("Order Close failed, order number: ", OrderTicket(), " Error: ", GetLastError());
          }
       } 
       
-
+      // Search for newly added orders and place order.
+      for (int i = 0; i < OrderCount; i++) {
+         if (IsOrderExists(OrderData_ticket[i])) {
+            continue;
+         }
+         string Symbol_ = FindSymbol(OrderData_symbol[i]);
+         if (Symbol_ == NULL) {
+            continue;
+         }
+         Print("Order Sending: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i]);
+         int OrderResult;
+         if (OrderData_type[i] == "0") {
+            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+         } else if (OrderData_type[i] == "1") {
+            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+         } else {
+            continue;
+         }
+         if (!OrderResult) {
+            Success = false;
+            Print("Order Send failed.", OrderData_ticket[i], " Error: ", GetLastError());
+         }
+      }
+      if (Success) {
+         ProcessedData = RecievedData;
+      }
    }
    
 }
@@ -123,7 +129,7 @@ string SendGET(string URL)
    string cookie = NULL,headers; 
    char post[],ReceivedData[]; 
  
-   WebR = WebRequest( "POST", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
+   WebR = WebRequest( "GET", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
    if(!WebR) Print("Web request failed");   
    
    return(CharArrayToString(ReceivedData)); 
@@ -142,9 +148,9 @@ string FindSymbol(string SymbolStr) {
 bool IsOrderExists(int MagicNo) {
    int TotalNumberOfOrders = OrdersTotal();
    for(int i = TotalNumberOfOrders - 1; i >= 0 ; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (!OrderSelect(i, SELECT_BY_POS)) continue;
       
-      if(OrderMagicNumber() == MagicNo && (OrderType() == OP_BUY || OrderType() == OP_SELL)) {
+      if(OrderMagicNumber() == MagicNo) {
          return true;
       }
    } 
