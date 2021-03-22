@@ -9,7 +9,7 @@
 int OnInit()
   {
 //---
-   
+   EventSetMillisecondTimer(100);
 //---
    return(INIT_SUCCEEDED);
   }
@@ -18,13 +18,20 @@ int OnInit()
 //+------------------------------------------------------------------+
 void OnDeinit(const int reason)
 {
-   
+   EventKillTimer();
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
 //+------------------------------------------------------------------+
 void OnTick()
 {
+//---
+   
+}
+//+------------------------------------------------------------------+
+//| Expert timer function                                             |
+//+------------------------------------------------------------------+
+void OnTimer(){
    string Data = TradingData();
    if (SentData != Data) {
       Print("Sending: ", Data);

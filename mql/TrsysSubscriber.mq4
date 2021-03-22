@@ -11,7 +11,7 @@ int Slippage = 10;
 int OnInit()
   {
 //---
-   
+   EventSetMillisecondTimer(100);
 //---
    return(INIT_SUCCEEDED);
   }
@@ -21,7 +21,7 @@ int OnInit()
 void OnDeinit(const int reason)
   {
 //---
-   
+   EventKillTimer();
   }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -29,6 +29,12 @@ void OnDeinit(const int reason)
 void OnTick()
   {
 //---
+   
+}
+//+------------------------------------------------------------------+
+//| Expert timer function                                             |
+//+------------------------------------------------------------------+
+void OnTimer(){
    string RecievedData = SendGET(URL);
    if (RecievedData != ProcessedData) {
       Print("Processing:", RecievedData);
@@ -116,10 +122,8 @@ void OnTick()
          ProcessedData = RecievedData;
       }
    }
-   
 }
 //+------------------------------------------------------------------+
-
 
 string SendGET(string URL)
 {
