@@ -2,8 +2,10 @@
 
 string Endpoint = "http://localhost";
 string OrderEndPoint = Endpoint + "/api/orders";
+string ETag = NULL;
 int LastErrorCode = 0;
 string ProcessedData = "";
+
 double OrderVolume = 1;
 int Slippage = 10;
 
@@ -37,9 +39,24 @@ void OnTick()
 //| Expert timer function                                             |
 //+------------------------------------------------------------------+
 void OnTimer(){
-   string RecievedData = SendGET(OrderEndPoint);
-   if (RecievedData == "ERROR") {
-        return;
+   uint startTime = GetTickCount();
+   Print("OnTimer: start");
+
+   string RecievedData;
+   int sgResult = SendGET(OrderEndPoint, RecievedData);
+   Print("OnTimer: recieve data in ", GetTickCount() - startTime, "ms");
+   if (sgResult == -1) {
+      // Error
+     return;
+   }
+   if (sgResult == 304) {
+      // No change
+      // Print("WebRequest: Not Modified");
+     return;
+   }
+   if(sgResult != 200) {
+      Print("WebRequest: Not OK, StatusCode = ", sgResult);
+      return;
    }
    if (RecievedData != ProcessedData) {
       Print("Processing:", RecievedData);
@@ -77,6 +94,7 @@ void OnTimer(){
          OrderData_symbol[i] = splittedValues[1];
          OrderData_type[i] = splittedValues[2];
          OrderCount++;
+         // Print(OrderCount, ":", OrderData_ticket[i], ":", OrderData_symbol[i], ":", OrderData_type[i]);
       }
       
       // Search for closed orders and close order.
@@ -128,21 +146,28 @@ void OnTimer(){
          ProcessedData = RecievedData;
       }
    }
+   Print("OnTimer: finish in ", GetTickCount() - startTime, "ms");
 }
 //+------------------------------------------------------------------+
 
-string SendGET(string URL)
+int SendGET(string URL, string &response)
 {
    int timeout = 1000;
-   string cookie = NULL,headers; 
-   char post[],ReceivedData[]; 
+   string header = NULL;
+   char data[];
+   string result_headers;
+   char result_data[];
  
-   int Result = WebRequest( "GET", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
-   if(Result==-1) {
-      int ErrorCode = GetLastError();
-      if (LastErrorCode != ErrorCode) {
-         LastErrorCode = ErrorCode;
-         switch (ErrorCode) {
+   if (ETag != NULL) {
+      header = "If-None-Match: \"" + ETag + "\"";
+   }
+
+   int res = WebRequest("GET", URL, header, timeout, data, result_data, result_headers);
+   if(res==-1) {
+      int error_code = GetLastError();
+      if (LastErrorCode != error_code) {
+         LastErrorCode = error_code;
+         switch (error_code) {
             case ERR_WEBREQUEST_INVALID_ADDRESS:
                Print("WebRequest: Invalid URL");
                break;
@@ -156,22 +181,35 @@ string SendGET(string URL)
                Print("WebRequest: HTTP request failed");
                break;
             default:
-               Print("WebRequest: Unknown Error, Error = ", ErrorCode);
+               Print("WebRequest: Unknown Error, Error = ", error_code);
                break;
          }
       }
-      return "ERROR";
+      return -1;
    }
    if (LastErrorCode != 0) {
       LastErrorCode = 0;
       Print("WebRequest: Recover from Error");
    }
-   if(Result != 200) {
-      Print("WebRequest: Not OK, StatusCode = ", Result);
-      return "ERROR";
+   string tmp_header = result_headers;
+   while (tmp_header != "") {
+      string line;
+      int eol_pos = StringFind(tmp_header, "\r\n");
+      if (eol_pos < 0) {
+         line = tmp_header;
+         tmp_header = "";
+      } else {
+         line = StringSubstr(tmp_header, 0, eol_pos);
+         tmp_header = StringSubstr(tmp_header, eol_pos + 2);
+      }
+      if (StringCompare(StringSubstr(line, 0, 5), "ETag:", false) == 0) {
+         ETag = StringTrimLeft(StringTrimRight(StringSubstr(line, 5)));
+         break;
+      }
    }
    
-   return(CharArrayToString(ReceivedData)); 
+   response = (CharArrayToString(result_data));
+   return res;
 }
 
 string FindSymbol(string SymbolStr) {
