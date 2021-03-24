@@ -3,6 +3,8 @@
 string Endpoint = "http://localhost";
 string OrderEndPoint = Endpoint + "/api/orders";
 string ETag = NULL;
+string ETagResponse = NULL;
+
 int LastErrorCode = 0;
 string ProcessedData = "";
 
@@ -48,15 +50,6 @@ void OnTimer(){
    if (sgResult == -1) {
       // Error
      return;
-   }
-   if (sgResult == 304) {
-      // No change
-      // Print("WebRequest: Not Modified");
-     return;
-   }
-   if(sgResult != 200) {
-      Print("WebRequest: Not OK, StatusCode = ", sgResult);
-      return;
    }
    if (RecievedData != ProcessedData) {
       Print("Processing:", RecievedData);
@@ -152,7 +145,7 @@ void OnTimer(){
 
 int SendGET(string URL, string &response)
 {
-   int timeout = 1000;
+   int timeout = 5000;
    string header = NULL;
    char data[];
    string result_headers;
@@ -204,8 +197,17 @@ int SendGET(string URL, string &response)
       }
       if (StringCompare(StringSubstr(line, 0, 5), "ETag:", false) == 0) {
          ETag = StringTrimLeft(StringTrimRight(StringSubstr(line, 5)));
-         break;
+         ETagResponse = response;
       }
+   }
+
+   if (res == 304) {
+      response = ETagResponse;
+      return 200;
+   }
+   if(res != 200) {
+      Print("WebRequest: Not OK, StatusCode = ", res);
+      return -1;
    }
    
    response = (CharArrayToString(result_data));
