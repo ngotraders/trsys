@@ -1,11 +1,15 @@
 #property strict
 
+bool DEBUG = false;
+bool PERFORMANCE = false;
+
 string Endpoint = "http://localhost";
 string OrderEndPoint = Endpoint + "/api/orders";
 string ETag = NULL;
 string ETagResponse = NULL;
 
 int LastErrorCode = 0;
+int PreviousRes = -1;
 string ProcessedData = "";
 
 double OrderVolume = 1;
@@ -41,22 +45,31 @@ void OnTick()
 //| Expert timer function                                             |
 //+------------------------------------------------------------------+
 void OnTimer(){
-   uint startTime = GetTickCount();
-   Print("OnTimer: start");
+   uint startTime = 0;
+   if (PERFORMANCE) {
+      // Timer
+      startTime = GetTickCount();
+      Print("OnTimer: start");
+   }
 
    string RecievedData;
    int sgResult = SendGET(OrderEndPoint, RecievedData);
-   Print("OnTimer: recieve data in ", GetTickCount() - startTime, "ms");
+   if (PERFORMANCE) {
+      // Timer
+      Print("OnTimer: recieve data in ", GetTickCount() - startTime, "ms");
+   }
    if (sgResult == -1) {
       // Error
      return;
    }
    if (RecievedData != ProcessedData) {
-      Print("Processing:", RecievedData);
+      if (DEBUG) {
+         Print("Processing:", RecievedData);
+      }
       string Data = RecievedData;
       bool Success = True;
       int OrderCount = 0;
-      long OrderData_ticket[100];
+      int OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
    
@@ -78,16 +91,15 @@ void OnTimer(){
          string splittedValues[];
          splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
          if (splittedCount != 3) {
-            Print("Invalid Data", RecievedData);
+            Print("Invalid Data: ", RecievedData);
             return;
          }
          int i = OrderCount;
          //separate the trading data
-         OrderData_ticket[i] = StringToInteger(splittedValues[0]);
+         OrderData_ticket[i] = (int) StringToInteger(splittedValues[0]);
          OrderData_symbol[i] = splittedValues[1];
          OrderData_type[i] = splittedValues[2];
          OrderCount++;
-         // Print(OrderCount, ":", OrderData_ticket[i], ":", OrderData_symbol[i], ":", OrderData_type[i]);
       }
       
       // Search for closed orders and close order.
@@ -105,10 +117,15 @@ void OnTimer(){
          }
          if (Found) continue;
          
+         if (DEBUG) {
+            Print("OrderClose executing: ", OrderMagicNumber());
+         }
          int OrderCloseResult = OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), Slippage);
-         if (!OrderCloseResult) {
+         if (OrderCloseResult < 0) {
             Success = false;
-            Print("Order Close failed, order number: ", OrderTicket(), " Error: ", GetLastError());
+            Print("OrderClose failed.", OrderData_ticket[i], ", OrderTicket = ", OrderTicket(), ", Error = ", GetLastError());
+         } else if (DEBUG) {
+            Print("OrderClose success: ", OrderMagicNumber());
          }
       } 
       
@@ -121,25 +138,32 @@ void OnTimer(){
          if (Symbol_ == NULL) {
             continue;
          }
-         Print("Order Sending: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i]);
+         if (DEBUG) {
+            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i]);
+         }
          int OrderResult;
          if (OrderData_type[i] == "0") {
-            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, (int)OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
          } else if (OrderData_type[i] == "1") {
-            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, (int)OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
          } else {
             continue;
          }
-         if (!OrderResult) {
+         if (OrderResult < 0) {
             Success = false;
-            Print("Order Send failed.", OrderData_ticket[i], " Error: ", GetLastError());
+            Print("OrderSend failed.", OrderData_ticket[i], " Error = ", GetLastError());
+         } else if (DEBUG) {
+            Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", OrderResult);
          }
       }
       if (Success) {
          ProcessedData = RecievedData;
       }
    }
-   Print("OnTimer: finish in ", GetTickCount() - startTime, "ms");
+   if (PERFORMANCE) {
+      // Timer
+      Print("OnTimer: finish in ", GetTickCount() - startTime, "ms");
+   }
 }
 //+------------------------------------------------------------------+
 
@@ -178,13 +202,34 @@ int SendGET(string URL, string &response)
                break;
          }
       }
+      PreviousRes = -1;
       return -1;
    }
    if (LastErrorCode != 0) {
       LastErrorCode = 0;
       Print("WebRequest: Recover from Error");
    }
+
+   if (res == 304) {
+      response = ETagResponse;
+      return 200;
+   }
+
+   if (PreviousRes != res) {
+      if(res == 200) {
+         Print("WebRequest: OK");
+      } else {
+         Print("WebRequest: Not OK, StatusCode = ", res);
+      }
+   }
+   PreviousRes = res;
+
+   if(res != 200) {
+      return -1;
+   }
+
    string tmp_header = result_headers;
+   bool etag_set = false;
    while (tmp_header != "") {
       string line;
       int eol_pos = StringFind(tmp_header, "\r\n");
@@ -197,20 +242,19 @@ int SendGET(string URL, string &response)
       }
       if (StringCompare(StringSubstr(line, 0, 5), "ETag:", false) == 0) {
          ETag = StringTrimLeft(StringTrimRight(StringSubstr(line, 5)));
-         ETagResponse = response;
+         etag_set = true;
       }
    }
 
-   if (res == 304) {
-      response = ETagResponse;
-      return 200;
+   response = (CharArrayToString(result_data));
+   if (etag_set) {
+      ETagResponse = response;
    }
+
+   PreviousRes = res;
    if(res != 200) {
-      Print("WebRequest: Not OK, StatusCode = ", res);
       return -1;
    }
-   
-   response = (CharArrayToString(result_data));
    return res;
 }
 
@@ -224,7 +268,7 @@ string FindSymbol(string SymbolStr) {
    return NULL;
 }
 
-bool IsOrderExists(long MagicNo) {
+bool IsOrderExists(int MagicNo) {
    int TotalNumberOfOrders = OrdersTotal();
    for(int i = TotalNumberOfOrders - 1; i >= 0 ; i--) {
       if (!OrderSelect(i, SELECT_BY_POS)) continue;
