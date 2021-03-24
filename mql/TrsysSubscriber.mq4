@@ -1,6 +1,8 @@
 #property strict
 
-string URL = "http://localhost/api/orders";
+string Endpoint = "http://localhost";
+string OrderEndPoint = Endpoint + "/api/orders";
+int LastErrorCode = 0;
 string ProcessedData = "";
 double OrderVolume = 1;
 int Slippage = 10;
@@ -35,7 +37,10 @@ void OnTick()
 //| Expert timer function                                             |
 //+------------------------------------------------------------------+
 void OnTimer(){
-   string RecievedData = SendGET(URL);
+   string RecievedData = SendGET(OrderEndPoint);
+   if (RecievedData == "ERROR") {
+        return;
+   }
    if (RecievedData != ProcessedData) {
       Print("Processing:", RecievedData);
       string Data = RecievedData;
@@ -127,14 +132,43 @@ void OnTimer(){
 
 string SendGET(string URL)
 {
-   
-   int WebR; 
-   int timeout = 5000;
+   int timeout = 1000;
    string cookie = NULL,headers; 
    char post[],ReceivedData[]; 
  
-   WebR = WebRequest( "GET", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
-   if(!WebR) Print("Web request failed");   
+   int Result = WebRequest( "GET", URL, cookie, NULL, timeout, post, 0, ReceivedData, headers );
+   if(Result==-1) {
+      int ErrorCode = GetLastError();
+      if (LastErrorCode != ErrorCode) {
+         LastErrorCode = ErrorCode;
+         switch (ErrorCode) {
+            case ERR_WEBREQUEST_INVALID_ADDRESS:
+               Print("WebRequest: Invalid URL");
+               break;
+            case ERR_WEBREQUEST_CONNECT_FAILED:
+               Print("WebRequest: Failed to connect");
+               break;
+            case ERR_WEBREQUEST_TIMEOUT:
+               Print("WebRequest: Timeout");
+               break;
+            case ERR_WEBREQUEST_REQUEST_FAILED:
+               Print("WebRequest: HTTP request failed");
+               break;
+            default:
+               Print("WebRequest: Unknown Error, Error = ", ErrorCode);
+               break;
+         }
+      }
+      return "ERROR";
+   }
+   if (LastErrorCode != 0) {
+      LastErrorCode = 0;
+      Print("WebRequest: Recover from Error");
+   }
+   if(Result != 200) {
+      Print("WebRequest: Not OK, StatusCode = ", Result);
+      return "ERROR";
+   }
    
    return(CharArrayToString(ReceivedData)); 
 }
