@@ -1,6 +1,7 @@
  #property strict
  
- string URL = "http://localhost/api/orders";
+ string Endpoint = "http://localhost";
+ string OrderEndpoint = Endpoint + "/api/orders";
  string SentData = "";
  
 //+------------------------------------------------------------------+
@@ -35,7 +36,7 @@ void OnTimer(){
    string Data = TradingData();
    if (SentData != Data) {
       Print("Sending: ", Data);
-      if (SendPOST(URL, Data)) {
+      if (SendPOST(OrderEndpoint, Data)) {
          SentData = Data;
       }
    }
@@ -58,7 +59,7 @@ string TradingData()
          }
          //only forex
          PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
-         PreTradingData += OrderTicket()+":"+PositionSymbol+":"+OrderType();
+         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType());
       } 
    }
    return(PreTradingData);

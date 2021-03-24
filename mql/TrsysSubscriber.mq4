@@ -45,18 +45,15 @@ void OnTimer(){
       Print("Processing:", RecievedData);
       string Data = RecievedData;
       bool Success = True;
-      int OrderData_ticket[100];
+      int OrderCount = 0;
+      long OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
-      int OrderCount = 0;
-      int ColonPos;
    
-      for(int i = 0; i < 100; i++)
+      while( Data != "" )
       {
-         if( Data == "" || Data == "@") break;
-         
-         OrderCount++;
-         
+         if (OrderCount > 100) break;
+
          int AtPos = StringFind(Data,"@");
          string OrderData = "";
          if (AtPos > 0) {
@@ -67,15 +64,19 @@ void OnTimer(){
             Data = StringSubstr(Data, StringLen(OrderData));
          }
          
-         
+         int splittedCount;
+         string splittedValues[];
+         splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
+         if (splittedCount != 3) {
+            Print("Invalid Data", RecievedData);
+            return;
+         }
+         int i = OrderCount;
          //separate the trading data
-         ColonPos = StringFind(OrderData, ":");
-         OrderData_ticket[i] = StringToInteger(StringSubstr(OrderData,0,ColonPos));
-         OrderData = StringSubstr(OrderData, ColonPos+1);
-
-         ColonPos = StringFind(OrderData, ":");
-         OrderData_symbol[i] = StringSubstr(OrderData,0,ColonPos);
-         OrderData_type[i] = StringSubstr(OrderData, ColonPos+1);
+         OrderData_ticket[i] = StringToInteger(splittedValues[0]);
+         OrderData_symbol[i] = splittedValues[1];
+         OrderData_type[i] = splittedValues[2];
+         OrderCount++;
       }
       
       // Search for closed orders and close order.
@@ -112,9 +113,9 @@ void OnTimer(){
          Print("Order Sending: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i]);
          int OrderResult;
          if (OrderData_type[i] == "0") {
-            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, (int)OrderData_ticket[i]);
          } else if (OrderData_type[i] == "1") {
-            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, (int)OrderData_ticket[i]);
          } else {
             continue;
          }
@@ -183,7 +184,7 @@ string FindSymbol(string SymbolStr) {
    return NULL;
 }
 
-bool IsOrderExists(int MagicNo) {
+bool IsOrderExists(long MagicNo) {
    int TotalNumberOfOrders = OrdersTotal();
    for(int i = TotalNumberOfOrders - 1; i >= 0 ; i--) {
       if (!OrderSelect(i, SELECT_BY_POS)) continue;
