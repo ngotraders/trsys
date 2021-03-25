@@ -10,7 +10,7 @@ string ETagResponse = NULL;
 
 int LastErrorCode = 0;
 int PreviousRes = -1;
-string ProcessedData = "";
+string ProcessedData = NULL;
 
 double OrderVolume = 1;
 int Slippage = 10;
@@ -118,14 +118,14 @@ void OnTimer(){
          if (Found) continue;
          
          if (DEBUG) {
-            Print("OrderClose executing: ", OrderMagicNumber());
+            Print("OrderClose executing: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
          }
          int OrderCloseResult = OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), Slippage);
          if (OrderCloseResult < 0) {
             Success = false;
             Print("OrderClose failed.", OrderData_ticket[i], ", OrderTicket = ", OrderTicket(), ", Error = ", GetLastError());
          } else if (DEBUG) {
-            Print("OrderClose success: ", OrderMagicNumber());
+            Print("OrderClose success: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
          }
       } 
       
