@@ -68,7 +68,7 @@ namespace Trsys.Web.Controllers
             if (!string.IsNullOrEmpty(text))
             {
                 var orders = new List<Order>();
-                foreach (var item in text.Split("@"))
+                foreach (var item in text.Trim(Convert.ToChar(0)).Split("@"))
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]"))
                     {
