@@ -13,24 +13,26 @@ interface IndexPageProps {
   };
 }
 
-export default class extends React.Component<IndexPageProps, {}> {
-  constructor(props: IndexPageProps, context: any) {
-    super(props, context);
-  }
-  public render() {
-    return (
+const IndexPage = (props: IndexPageProps) => {
+  return (
+    <div>
+      <h1>コピートレードツール</h1>
       <div>
-        <h1>Hi people</h1>
-        <p>
-          Welcome to your new{" "}
-          <strong>{this.props.data.site.siteMetadata.title}</strong> site.
-        </p>
-        <p>Now go build something great.</p>
-        <Link to="/page-2/">Go to page 2</Link>
+        <h2>ダウンロード</h2>
+        <ul>
+          <li>
+            <a href="/downloads/TrsysPublisher.ex4">配信用</a>
+          </li>
+          <li>
+            <a href="/downloads/TrsysSubscriber.ex4">受信用</a>
+          </li>
+        </ul>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+export default IndexPage;
 
 export const pageQuery = graphql`
   query IndexQuery {

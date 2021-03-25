@@ -26,7 +26,7 @@ const Header = () => (
             textDecoration: "none",
           }}
         >
-          Gatsby
+          Trsys
         </Link>
       </h1>
     </div>
@@ -44,10 +44,10 @@ const DefaultLayout = (props: DefaultLayoutProps) => {
   return (
     <div>
       <Helmet
-        title="Gatsby Default Starter"
+        title="Trsys"
         meta={[
-          { name: "description", content: "Sample" },
-          { name: "keywords", content: "sample, something" },
+          { name: "description", content: "コピートレード" },
+          { name: "keywords", content: "MT4,EA,コピートレード" },
         ]}
       />
       <Header />
