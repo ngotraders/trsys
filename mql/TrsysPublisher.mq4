@@ -38,6 +38,9 @@ void OnTick()
 void OnTimer(){
    string Data = TradingData();
    if (SentData != Data) {
+      if (PreviousRes == 200) {
+         PreviousRes = -1;
+      }
       Print("Sending: ", Data);
       if (SendPOST(OrderEndpoint, Data) > 0) {
          SentData = Data;
