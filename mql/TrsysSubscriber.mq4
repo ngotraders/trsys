@@ -3,7 +3,7 @@
 bool DEBUG = false;
 bool PERFORMANCE = false;
 
-string Endpoint = "https://copy-trading-system.herokuapp.com";
+string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string OrderEndPoint = Endpoint + "/api/orders";
 string ETag = NULL;
 string ETagResponse = NULL;
@@ -251,10 +251,6 @@ int SendGET(string URL, string &response)
       ETagResponse = response;
    }
 
-   PreviousRes = res;
-   if(res != 200) {
-      return -1;
-   }
    return res;
 }
 
