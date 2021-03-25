@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
@@ -13,19 +16,48 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class OrdersApiController : ControllerBase
     {
-        private TrsysContext db;
+        private const string ORDERS_HASH = "ORDERS_HASH";
 
-        public OrdersApiController(TrsysContext db)
+        private readonly TrsysContext db;
+        private readonly IMemoryCache cache;
+
+        public OrdersApiController(TrsysContext db, IMemoryCache cache)
         {
             this.db = db;
+            this.cache = cache;
         }
 
         [HttpGet]
         [Produces("text/plain")]
-        public async Task<string> GetOrders()
+        public async Task<IActionResult> GetOrders()
         {
+            var etag = (string)HttpContext.Request.Headers["If-None-Match"];
+            if (!string.IsNullOrEmpty(etag))
+            {
+                if (cache.TryGetValue(ORDERS_HASH, out var cacheEntry))
+                {
+                    if (etag == $"\"{cacheEntry}\"")
+                    {
+                        return StatusCode(304);
+                    }
+                }
+
+            }
             var orders = await db.Orders.ToListAsync();
-            return string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
+            var hash = CalculateHash(responseText);
+            cache.Set(ORDERS_HASH, hash);
+            HttpContext.Response.Headers["ETag"] = $"{hash}";
+            return Ok(responseText);
+        }
+
+        private string CalculateHash(string responseText)
+        {
+            var sha1 = System.Security.Cryptography.SHA1.Create();
+            var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(responseText));
+            var str = BitConverter.ToString(hash);
+            str = str.Replace("-", string.Empty);
+            return str;
         }
 
         [HttpPost]
@@ -51,6 +83,7 @@ namespace Trsys.Web.Controllers
                 db.Orders.AddRange(orders);
             }
             await db.SaveChangesAsync();
+            cache.Remove(ORDERS_HASH);
             return Ok();
         }
     }
