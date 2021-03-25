@@ -1,5 +1,5 @@
 import * as React from "react";
-import { graphql, Link } from "gatsby";
+import { graphql } from "gatsby";
 
 // Please note that you can use https://github.com/dotansimha/graphql-code-generator
 // to generate all types from graphQL schema
@@ -27,6 +27,25 @@ const IndexPage = (props: IndexPageProps) => {
             <a href="/downloads/TrsysSubscriber.ex4">受信用</a>
           </li>
         </ul>
+      </div>
+      <div>
+        <h2>設定</h2>
+        <div>
+          <img
+            src="/images/mt4-option-ea-red.png"
+            alt="MT4 の EA のオプションの設定"
+          />
+        </div>
+        <ol>
+          <li>メニューのツール -&gt; オプションをクリックする</li>
+          <li>自動売買を許可するにチェックを入れる</li>
+          <li>WebRequest を許可するURLリストにチェックを入れる</li>
+          <li>
+            +新しい URL を追加をダブルクリックし、
+            <code>https://copy-trading-system.azurewebsites.net</code>{" "}
+            を入力する
+          </li>
+        </ol>
       </div>
     </div>
   );
