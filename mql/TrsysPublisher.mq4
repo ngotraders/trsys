@@ -2,7 +2,7 @@
  
  string Endpoint = "https://copy-trading-system.azurewebsites.net";
  string OrderEndpoint = Endpoint + "/api/orders";
- string SentData = "";
+ string SentData = NULL;
  
 int LastErrorCode = 0;
 int PreviousRes = -1;
@@ -39,7 +39,7 @@ void OnTimer(){
    string Data = TradingData();
    if (SentData != Data) {
       Print("Sending: ", Data);
-      if (SendPOST(OrderEndpoint, Data)) {
+      if (SendPOST(OrderEndpoint, Data) > 0) {
          SentData = Data;
       }
    }
