@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
+using Trsys.Web.Models;
+using Trsys.Web.Services;
 
 namespace Trsys.Web
 {
@@ -26,11 +28,12 @@ namespace Trsys.Web
                 options.InputFormatters.Add(new TextPlainInputFormatter());
             });
 
+            services.AddMemoryCache();
             services.AddDbContext<TrsysContext>(options =>
             {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
-            services.AddMemoryCache();
+            services.AddSingleton<ITokenValidator, TokenService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,11 +53,7 @@ namespace Trsys.Web
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
-            app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

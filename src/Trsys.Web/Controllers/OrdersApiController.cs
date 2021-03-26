@@ -8,16 +8,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
+using Trsys.Web.Filters;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/orders")]
     [ApiController]
+    [SecretTokenFilter]
     public class OrdersApiController : ControllerBase
     {
-        private const string ORDERS_HASH = "ORDERS_HASH";
-
         private readonly TrsysContext db;
         private readonly IMemoryCache cache;
 
@@ -34,7 +34,7 @@ namespace Trsys.Web.Controllers
             var etag = (string)HttpContext.Request.Headers["If-None-Match"];
             if (!string.IsNullOrEmpty(etag))
             {
-                if (cache.TryGetValue(ORDERS_HASH, out var cacheEntry))
+                if (cache.TryGetValue(CacheKeys.ORDERS_HASH, out var cacheEntry))
                 {
                     if (etag == $"\"{cacheEntry}\"")
                     {
@@ -46,7 +46,7 @@ namespace Trsys.Web.Controllers
             var orders = await db.Orders.ToListAsync();
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
             var hash = CalculateHash(responseText);
-            cache.Set(ORDERS_HASH, hash);
+            cache.Set(CacheKeys.ORDERS_HASH, hash);
             HttpContext.Response.Headers["ETag"] = $"{hash}";
             return Ok(responseText);
         }
@@ -84,7 +84,7 @@ namespace Trsys.Web.Controllers
                 db.Orders.AddRange(orders);
             }
             await db.SaveChangesAsync();
-            cache.Remove(ORDERS_HASH);
+            cache.Remove(CacheKeys.ORDERS_HASH);
             return Ok();
         }
     }
