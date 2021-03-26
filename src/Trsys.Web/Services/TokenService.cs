@@ -1,12 +1,18 @@
-﻿using Trsys.Web.Models;
+﻿using System.Threading.Tasks;
+using Trsys.Web.Models;
 
 namespace Trsys.Web.Services
 {
-    public class TokenService : ITokenValidator
+    public class TokenService : ITokenGenerator, ITokenValidator
     {
+        public Task<TokenGenerationResult> GenerateTokenAsync(string secretKey)
+        {
+            return Task.FromResult(TokenGenerationResult.Success("VALID_TOKEN"));
+        }
+
         public bool Validate(string token)
         {
-            return true;
+            return token == "VALID_TOKEN";
         }
     }
 }
