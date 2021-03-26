@@ -12,8 +12,8 @@ int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
 
-double OrderVolume = 1;
-int Slippage = 10;
+input double OrderVolume = 1;
+input int Slippage = 10;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
