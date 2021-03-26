@@ -38,6 +38,17 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             var res = await client.PostAsync("/api/token", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
+        }
+
+        [TestMethod]
+        public async Task PostApiToken_should_return_badrequest_given_in_use_secret_key()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            var res = await client.PostAsync("/api/token", new StringContent(SECRET_KEY_IN_USE, Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("TokenInUse", await res.Content.ReadAsStringAsync());
         }
 
         private static TestServer CreateTestServer()
