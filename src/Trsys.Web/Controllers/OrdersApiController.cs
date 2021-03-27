@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System;
@@ -7,28 +8,26 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
-using Trsys.Web.Filters;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/orders")]
     [ApiController]
-    [SecretTokenFilter]
     public class OrdersApiController : ControllerBase
     {
-        private readonly TrsysContext db;
+        private readonly IOrderRepository repository;
         private readonly IMemoryCache cache;
 
-        public OrdersApiController(TrsysContext db, IMemoryCache cache)
+        public OrdersApiController(IOrderRepository repository, IMemoryCache cache)
         {
-            this.db = db;
+            this.repository = repository;
             this.cache = cache;
         }
 
         [HttpGet]
         [Produces("text/plain")]
+        [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
             var etag = (string)HttpContext.Request.Headers["If-None-Match"];
@@ -43,7 +42,7 @@ namespace Trsys.Web.Controllers
                 }
 
             }
-            var orders = await db.Orders.ToListAsync();
+            var orders = await repository.AllOrders.ToListAsync();
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
             var hash = CalculateHash(responseText);
             cache.Set(CacheKeys.ORDERS_HASH, hash);
@@ -62,13 +61,13 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
+        [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Publisher")]
         public async Task<IActionResult> PostOrder([FromBody] string text)
         {
-            db.Orders.RemoveRange(db.Orders);
+            var orders = new List<Order>();
             var requestText = text.Trim(Convert.ToChar(0));
             if (!string.IsNullOrEmpty(requestText))
             {
-                var orders = new List<Order>();
                 foreach (var item in requestText.Split("@"))
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]"))
@@ -81,9 +80,9 @@ namespace Trsys.Web.Controllers
                     var orderType = (OrderType)int.Parse(splitted[2]);
                     orders.Add(new Order() { TicketNo = ticketNo, Symbol = symbol, OrderType = orderType });
                 }
-                db.Orders.AddRange(orders);
             }
-            await db.SaveChangesAsync();
+
+            await repository.SaveOrdersAsync(orders);
             cache.Remove(CacheKeys.ORDERS_HASH);
             return Ok();
         }

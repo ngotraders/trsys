@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Trsys.Web.Auth;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
 
@@ -17,7 +18,6 @@ namespace Trsys.Web.Tests
     [TestClass]
     public class TokenApiTests
     {
-        private const string VALID_SECRET_KEY = "VALID_SECRET_KEY";
         private const string SECRET_KEY_IN_USE = "SECRET_KEY_IN_USE";
         private const string VALID_TOKEN = "VALID_TOKEN";
 
@@ -26,9 +26,24 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            var res = await client.PostAsync("/api/token", new StringContent(VALID_SECRET_KEY, Encoding.UTF8, "text/plain"));
+
+            var repository = server.Services.GetRequiredService<ISecretKeyRepository>();
+            var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
+            await repository.SaveAsync(secretKey);
+            var res = await client.PostAsync("/api/token", new StringContent(secretKey.Key, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual(VALID_TOKEN, await res.Content.ReadAsStringAsync());
+            secretKey = await repository.FindBySecretKeyAsync(secretKey.Key);
+            Assert.AreEqual(secretKey.ValidToken, await res.Content.ReadAsStringAsync());
+        }
+
+        [TestMethod]
+        public async Task PostApiToken_should_return_badrequest_given_not_exsisting_secret_key()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            var res = await client.PostAsync("/api/token", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -38,7 +53,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             var res = await client.PostAsync("/api/token", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
-            Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -46,9 +61,17 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            var res = await client.PostAsync("/api/token", new StringContent(SECRET_KEY_IN_USE, Encoding.UTF8, "text/plain"));
+
+            var repository = server.Services.GetRequiredService<ISecretKeyRepository>();
+            var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
+            await repository.SaveAsync(secretKey);
+
+            var res = await client.PostAsync("/api/token", new StringContent(secretKey.Key, Encoding.UTF8, "text/plain"));
+            var tokenStore = server.Services.GetRequiredService<ISecretTokenStore>();
+            await tokenStore.FindInfoAsync(await res.Content.ReadAsStringAsync());
+            res = await client.PostAsync("/api/token", new StringContent(secretKey.Key, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
-            Assert.AreEqual("TokenInUse", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("SecretKeyInUse", await res.Content.ReadAsStringAsync());
         }
 
         private static TestServer CreateTestServer()
@@ -60,32 +83,7 @@ namespace Trsys.Web.Tests
                             .ConfigureServices(services =>
                             {
                                 services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
-                            })
-                            .ConfigureTestServices(services =>
-                            {
-                                services.AddSingleton<ITokenGenerator, MockTokenGenerator>();
                             }));
-        }
-
-        private class MockTokenGenerator : ITokenGenerator
-        {
-            public Task<TokenGenerationResult> GenerateTokenAsync(string secretKey)
-            {
-                var res = null as TokenGenerationResult;
-                if (secretKey == VALID_SECRET_KEY)
-                {
-                    res = TokenGenerationResult.Success(VALID_TOKEN);
-                }
-                else if (secretKey == SECRET_KEY_IN_USE)
-                {
-                    res = TokenGenerationResult.Fail(TokenGenerationFailureReason.TokenInUse);
-                }
-                else
-                {
-                    res = TokenGenerationResult.Fail(TokenGenerationFailureReason.InvalidToken);
-                }
-                return Task.FromResult(res);
-            }
         }
     }
 }

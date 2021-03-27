@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Trsys.Web.Auth;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
@@ -33,7 +34,11 @@ namespace Trsys.Web
             {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
-            services.AddSingleton<ITokenValidator, TokenService>();
+            services.AddAuthentication().AddSecretTokenAuthentication();
+            services.AddSingleton<IOrderRepository, OrderRepository>();
+            services.AddSingleton<ISecretKeyRepository, SecretKeyRepository>();
+            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
+            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,6 +59,7 @@ namespace Trsys.Web
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

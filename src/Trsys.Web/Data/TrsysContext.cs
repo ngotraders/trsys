@@ -10,5 +10,6 @@ namespace Trsys.Web.Data
         }
 
         public DbSet<Order> Orders { get; set; }
+        public DbSet<SecretKey> SecretKeys { get; set; }
     }
 }

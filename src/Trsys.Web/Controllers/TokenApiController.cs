@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Threading.Tasks;
+using Trsys.Web.Auth;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
@@ -9,11 +9,13 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class TokenApiController : ControllerBase
     {
-        private readonly ITokenGenerator generator;
+        private readonly ISecretKeyRepository repository;
+        private readonly ISecretTokenStore tokenStore;
 
-        public TokenApiController(ITokenGenerator generator)
+        public TokenApiController(ISecretKeyRepository repository, ISecretTokenStore tokenStore)
         {
-            this.generator = generator;
+            this.repository = repository;
+            this.tokenStore = tokenStore;
         }
 
         [HttpPost]
@@ -21,15 +23,29 @@ namespace Trsys.Web.Controllers
         [Produces("text/plain")]
         public async Task<IActionResult> PostToken([FromBody] string secretKey)
         {
-            var result = await generator.GenerateTokenAsync(secretKey);
-            if (result.Succeeded)
+            var result = await repository.FindBySecretKeyAsync(secretKey);
+            if (result == null || result.IsValid)
             {
-                return Ok(result.Token);
+                return BadRequest("InvalidSecretKey");
             }
-            else
+
+            if (!string.IsNullOrEmpty(result.ValidToken))
             {
-                return BadRequest(Enum.GetName(result.Failure.Value.GetType(), result.Failure.Value));
+                var tokenInfo = await tokenStore.FindInfoAsync(result.ValidToken);
+                if (tokenInfo != null)
+                {
+                    if (tokenInfo.IsInUse())
+                    {
+                        return BadRequest("SecretKeyInUse");
+                    }
+                    await tokenStore.UnregisterAsync(result.ValidToken);
+                }
             }
+
+            var token = await tokenStore.RegisterTokenAsync(result.Key, result.KeyType);
+            result.UpdateToken(token);
+            await repository.SaveAsync(result);
+            return Ok(token);
         }
     }
 }
