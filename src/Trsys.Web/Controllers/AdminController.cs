@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Auth;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models;
 using Trsys.Web.ViewModels.Admin;
 

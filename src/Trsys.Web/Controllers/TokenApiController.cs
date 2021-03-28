@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Trsys.Web.Auth;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
@@ -20,7 +20,6 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
-        [Produces("text/plain")]
         public async Task<IActionResult> PostToken([FromBody] string secretKey)
         {
             var result = await repository.FindBySecretKeyAsync(secretKey);
@@ -34,7 +33,7 @@ namespace Trsys.Web.Controllers
                 var tokenInfo = await tokenStore.FindInfoAsync(result.ValidToken);
                 if (tokenInfo != null)
                 {
-                    if (tokenInfo.IsInUse())
+                    if (tokenInfo.IsInUse)
                     {
                         return BadRequest("SecretKeyInUse");
                     }

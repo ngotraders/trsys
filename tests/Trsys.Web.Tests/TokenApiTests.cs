@@ -9,7 +9,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Auth;
+using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
 

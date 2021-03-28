@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Trsys.Web.Auth;
+using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
@@ -30,6 +30,7 @@ namespace Trsys.Web
             {
                 options.InputFormatters.Add(new TextPlainInputFormatter());
             }).AddRazorRuntimeCompilation();
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {

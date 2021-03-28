@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System;
 
-namespace Trsys.Web.Auth
+namespace Trsys.Web.Authentication
 {
     public static class SecretTokenAuthenticationExtension
     {
@@ -17,19 +17,11 @@ namespace Trsys.Web.Auth
             string displayName,
             Action<SecretTokenAuthenticationSchemeOptions> configureOptions)
         {
+            builder.Services.AddSingleton<IPostConfigureOptions<SecretTokenAuthenticationSchemeOptions>, PostConfigureSecretTokenAuthenticationOptions>();
             return builder.AddScheme<SecretTokenAuthenticationSchemeOptions, SecretTokenAuthenticationHandler>(authenticationScheme, displayName,
-                (SecretTokenAuthenticationSchemeOptions options) =>
+                (options) =>
                 {
                     configureOptions?.Invoke(options);
-
-                    if (options.StoreFactory == null)
-                    {
-                        options.StoreFactory = () =>
-                        {
-                            var serviceProvider = builder.Services.BuildServiceProvider();
-                            return serviceProvider.GetService<ISecretTokenStore>();
-                        };
-                    }
                 });
         }
     }

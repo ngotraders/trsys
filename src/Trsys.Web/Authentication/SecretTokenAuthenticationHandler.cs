@@ -7,13 +7,8 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Trsys.Web.Models;
 
-namespace Trsys.Web.Auth
+namespace Trsys.Web.Authentication
 {
-    public class SecretTokenAuthenticationSchemeOptions : AuthenticationSchemeOptions
-    {
-        public Func<ISecretTokenStore> StoreFactory { get; set; }
-    }
-
     public class SecretTokenAuthenticationHandler : AuthenticationHandler<SecretTokenAuthenticationSchemeOptions>
     {
         public SecretTokenAuthenticationHandler(IOptionsMonitor<SecretTokenAuthenticationSchemeOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
@@ -28,7 +23,7 @@ namespace Trsys.Web.Auth
                 return AuthenticateResult.Fail($"X-Secret-Token header is missing.");
             }
 
-            var store = Options.StoreFactory();
+            var store = Options.Store;
             var tokenInfo = await store.FindInfoAsync(token);
             if (tokenInfo == null)
             {

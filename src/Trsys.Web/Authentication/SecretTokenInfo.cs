@@ -1,7 +1,8 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Trsys.Web.Models;
 
-namespace Trsys.Web.Auth
+namespace Trsys.Web.Authentication
 {
     public class SecretTokenInfo
     {
@@ -10,9 +11,12 @@ namespace Trsys.Web.Auth
         public string Token { get; set; }
         public DateTime LastAccessed { get; set; }
 
-        public bool IsInUse()
+        [NotMapped]
+        public bool IsInUse { get; set; }
+
+        public void SetIsInUse()
         {
-            return DateTime.UtcNow - LastAccessed < TimeSpan.FromSeconds(5);
+            IsInUse = DateTime.UtcNow - LastAccessed.ToUniversalTime() < TimeSpan.FromSeconds(5);
         }
 
         public void Access()

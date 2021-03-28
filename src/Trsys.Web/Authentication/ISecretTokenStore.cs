@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Trsys.Web.Models;
 
-namespace Trsys.Web.Auth
+namespace Trsys.Web.Authentication
 {
     public interface ISecretTokenStore
     {

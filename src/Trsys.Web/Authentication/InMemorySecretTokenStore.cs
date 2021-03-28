@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Models;
 
-namespace Trsys.Web.Auth
+namespace Trsys.Web.Authentication
 {
     public class InMemorySecretTokenStore : ISecretTokenStore
     {
@@ -34,6 +34,7 @@ namespace Trsys.Web.Auth
             {
                 if (store.TryGetValue(token, out var value))
                 {
+                    value.SetIsInUse();
                     value.Access();
                     return Task.FromResult(value);
                 }
