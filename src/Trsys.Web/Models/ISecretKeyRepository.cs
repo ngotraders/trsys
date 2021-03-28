@@ -9,6 +9,7 @@ namespace Trsys.Web.Models
 
         Task<SecretKey> CreateNewSecretKeyAsync(SecretKeyType keyType);
         Task<SecretKey> FindBySecretKeyAsync(string secretKey);
-        Task SaveAsync(SecretKey result);
+        Task SaveAsync(SecretKey entity);
+        Task RemoveAsync(SecretKey entity);
     }
 }

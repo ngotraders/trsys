@@ -46,5 +46,11 @@ namespace Trsys.Web.Services
             }
             return db.SaveChangesAsync();
         }
+
+        public Task RemoveAsync(SecretKey entity)
+        {
+            db.SecretKeys.Remove(entity);
+            return db.SaveChangesAsync();
+        }
     }
 }
