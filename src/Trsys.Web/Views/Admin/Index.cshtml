@@ -1,8 +1,45 @@
-﻿@{
+﻿@model Trsys.Web.ViewModels.Admin.IndexViewModel
+
+@{
     ViewBag.Title = "管理画面";
 }
 
-<form method="post" action="/logout">
-    <button>Logout</button>
-</form>
-Admin
+<h1>管理画面</h1>
+
+<div>
+    <form action="/admin/keys/new">
+        <button>新規生成</button>
+    </form>
+</div>
+@if (Model.SecretKeys.Count > 0)
+{
+    <table>
+        <thead>
+            <tr>
+                <th>キー</th>
+                <th>キー種類</th>
+                <th>説明</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var key in Model.SecretKeys)
+            {
+                <tr>
+                    <td>@key.Key</td>
+                    <td>@key.KeyType</td>
+                    <td>@key.Description</td>
+                    <td>
+                        <form action="/admin/keys/@(key.Key)/delete">
+                            <button>削除</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>使用可能なシークレットキーはありません。</p>
+}

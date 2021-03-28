@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Trsys.Web.ViewModels
+namespace Trsys.Web.ViewModels.Home
 {
     public class LoginViewModel
     {

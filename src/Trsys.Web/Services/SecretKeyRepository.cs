@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
@@ -14,6 +15,8 @@ namespace Trsys.Web.Services
         {
             this.db = db;
         }
+
+        public IQueryable<SecretKey> All => db.SecretKeys;
 
         public Task<SecretKey> CreateNewSecretKeyAsync(SecretKeyType keyType)
         {

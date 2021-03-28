@@ -1,5 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+using Trsys.Web.Models;
+using Trsys.Web.ViewModels.Admin;
 
 namespace Trsys.Web.Controllers
 {
@@ -7,10 +12,22 @@ namespace Trsys.Web.Controllers
     [Authorize(Roles = "Administrator")]
     public class AdminController : Controller
     {
-        [HttpGet]
-        public IActionResult Index()
+        private readonly ISecretKeyRepository secretKeyRepository;
+
+        public AdminController(ISecretKeyRepository secretKeyRepository)
         {
-            return View();
+            this.secretKeyRepository = secretKeyRepository;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var model = new IndexViewModel();
+            model.SecretKeys = await secretKeyRepository
+                .All
+                .OrderBy(e => e.Id)
+                .ToListAsync();
+            return View(model);
         }
     }
 }

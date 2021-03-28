@@ -15,7 +15,7 @@ namespace Trsys.Web.Services
             this.db = db;
         }
 
-        public IQueryable<Order> AllOrders => db.Orders;
+        public IQueryable<Order> All => db.Orders;
 
         public Task SaveOrdersAsync(IEnumerable<Order> orders)
         {

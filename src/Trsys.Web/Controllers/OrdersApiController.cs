@@ -42,7 +42,7 @@ namespace Trsys.Web.Controllers
                 }
 
             }
-            var orders = await repository.AllOrders.ToListAsync();
+            var orders = await repository.All.ToListAsync();
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
             var hash = CalculateHash(responseText);
             cache.Set(CacheKeys.ORDERS_HASH, hash);

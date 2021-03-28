@@ -6,6 +6,14 @@
     <title>@ViewBag.Title</title>
 </head>
 <body>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div>
+            <form method="post" action="/logout">
+                <button>ログアウト</button>
+            </form>
+        </div>
+    }
     <div>
         @RenderBody()
     </div>

@@ -13,6 +13,7 @@ namespace Trsys.Web.Models
         public int Id { get; set; }
         public SecretKeyType KeyType { get; set; }
         public string Key { get; set; }
+        public string Description { get; set; }
 
         public bool IsValid { get; set; }
         public DateTime? ApprovedAt { get; set; }

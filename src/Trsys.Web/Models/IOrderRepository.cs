@@ -6,7 +6,7 @@ namespace Trsys.Web.Models
 {
     public interface IOrderRepository
     {
-        IQueryable<Order> AllOrders { get; }
+        IQueryable<Order> All { get; }
         Task SaveOrdersAsync(IEnumerable<Order> orders);
     }
 }
