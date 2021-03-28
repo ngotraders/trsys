@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -24,20 +25,26 @@ namespace Trsys.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers(options =>
+
+            services.AddControllersWithViews(options =>
             {
                 options.InputFormatters.Add(new TextPlainInputFormatter());
             });
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/login";
+                    options.LogoutPath = "/logout";
+                })
+                .AddSecretTokenAuthentication();
 
             services.AddMemoryCache();
             services.AddDbContext<TrsysContext>(options =>
             {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
-            services.AddAuthentication().AddSecretTokenAuthentication();
-            services.AddSingleton<IOrderRepository, OrderRepository>();
-            services.AddSingleton<ISecretKeyRepository, SecretKeyRepository>();
-            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
         }
 
@@ -59,6 +66,7 @@ namespace Trsys.Web
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
