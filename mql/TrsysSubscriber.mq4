@@ -4,7 +4,9 @@ bool DEBUG = false;
 bool PERFORMANCE = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
-string OrderEndPoint = Endpoint + "/api/orders";
+string TokenEndpoint = Endpoint + "/api/token";
+string OrderEndpoint = Endpoint + "/api/orders";
+string Token = NULL;
 string ETag = NULL;
 string ETagResponse = NULL;
 
@@ -12,6 +14,7 @@ int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
 
+input string SecretKey = NULL;
 input double OrderVolume = 1;
 input int Slippage = 10;
 
@@ -51,14 +54,30 @@ void OnTimer(){
       startTime = GetTickCount();
       Print("OnTimer: start");
    }
+   
+   if (Token == NULL) {
+      int skResult = PostSecretKey(SecretKey, Token);
+      if (PERFORMANCE) {
+         // Timer
+         Print("OnTimer: PostSecretKey finish in ", GetTickCount() - startTime, "ms");
+      }
+      if (skResult == -1) {
+         return;
+      }
+      PreviousRes = -1;
+      if (DEBUG) {
+         // Timer
+         Print("Successfully Obtained Token: ", Token);
+      }
+   }
 
    string RecievedData;
-   int sgResult = SendGET(OrderEndPoint, RecievedData);
+   int goResult = GetOrders(Token, RecievedData);
    if (PERFORMANCE) {
       // Timer
-      Print("OnTimer: recieve data in ", GetTickCount() - startTime, "ms");
+      Print("OnTimer: GetOrders finish in ", GetTickCount() - startTime, "ms");
    }
-   if (sgResult == -1) {
+   if (goResult == -1) {
       // Error
      return;
    }
@@ -167,59 +186,93 @@ void OnTimer(){
 }
 //+------------------------------------------------------------------+
 
-int SendGET(string URL, string &response)
+int PostSecretKey(string secretKey, string &token)
 {
    int timeout = 5000;
-   string header = NULL;
-   char data[];
+   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   char request_data[];
    string result_headers;
    char result_data[];
- 
-   if (ETag != NULL) {
-      header = "If-None-Match: \"" + ETag + "\"";
-   }
 
-   int res = WebRequest("GET", URL, header, timeout, data, result_data, result_headers);
+   StringToCharArray(secretKey, request_data, 0, WHOLE_ARRAY, CP_UTF8);
+   
+   int res = WebRequest("POST", TokenEndpoint, request_headers, timeout, request_data, result_data, result_headers);
    if(res==-1) {
       int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
-         switch (error_code) {
-            case ERR_WEBREQUEST_INVALID_ADDRESS:
-               Print("WebRequest: Invalid URL");
-               break;
-            case ERR_WEBREQUEST_CONNECT_FAILED:
-               Print("WebRequest: Failed to connect");
-               break;
-            case ERR_WEBREQUEST_TIMEOUT:
-               Print("WebRequest: Timeout");
-               break;
-            case ERR_WEBREQUEST_REQUEST_FAILED:
-               Print("WebRequest: HTTP request failed");
-               break;
-            default:
-               Print("WebRequest: Unknown Error, Error = ", error_code);
-               break;
-         }
+         LogWebRequestError("PostSecretKey", error_code);
       }
       PreviousRes = -1;
       return -1;
    }
    if (LastErrorCode != 0) {
       LastErrorCode = 0;
-      Print("WebRequest: Recover from Error");
+      Print("PostSecretKey: Recover from Error");
+   }
+
+   if (PreviousRes != res) {
+      if(res == 200) {
+         Print("PostSecretKey: OK");
+      } else {
+         Print("PostSecretKey: Not OK, StatusCode = ", res);
+      }
+   }
+   PreviousRes = res;
+
+   if(res != 200) {
+      return -1;
+   }
+
+   token = (CharArrayToString(result_data));
+   return res;
+}
+
+int GetOrders(string &token, string &response)
+{
+   int timeout = 5000;
+   string request_headers = NULL;
+   char request_data[];
+   string result_headers;
+   char result_data[];
+ 
+   if (ETag != NULL) {
+      request_headers = "If-None-Match: " + ETag;
+   }
+   if (request_headers != NULL) {
+      request_headers += "\r\n";
+   }
+   request_headers = "X-Secret-Token: " + token;
+
+   int res = WebRequest("GET", OrderEndpoint, request_headers, timeout, request_data, result_data, result_headers);
+   if(res==-1) {
+      int error_code = GetLastError();
+      if (LastErrorCode != error_code) {
+         LastErrorCode = error_code;
+         LogWebRequestError("GetOrders", error_code);
+      }
+      PreviousRes = -1;
+      return -1;
+   }
+   if (LastErrorCode != 0) {
+      LastErrorCode = 0;
+      Print("GetOrders: Recover from Error");
    }
 
    if (res == 304) {
       response = ETagResponse;
       return 200;
    }
+   
+   if (res == 401 || res == 403) {
+      token = NULL;
+   }
 
    if (PreviousRes != res) {
       if(res == 200) {
-         Print("WebRequest: OK");
+         Print("GetOrders: OK");
       } else {
-         Print("WebRequest: Not OK, StatusCode = ", res);
+         Print("GetOrders: Not OK, StatusCode = ", res);
       }
    }
    PreviousRes = res;
@@ -252,6 +305,26 @@ int SendGET(string URL, string &response)
    }
 
    return res;
+}
+
+void LogWebRequestError(string name, int error_code) {
+   switch (error_code) {
+      case ERR_WEBREQUEST_INVALID_ADDRESS:
+         Print(name, ": Invalid URL");
+         break;
+      case ERR_WEBREQUEST_CONNECT_FAILED:
+         Print(name, ": Failed to connect");
+         break;
+      case ERR_WEBREQUEST_TIMEOUT:
+         Print(name, ": Timeout");
+         break;
+      case ERR_WEBREQUEST_REQUEST_FAILED:
+         Print(name, ": HTTP request failed");
+         break;
+      default:
+         Print(name, ": Unknown Error, Error = ", error_code);
+         break;
+   }
 }
 
 string FindSymbol(string SymbolStr) {

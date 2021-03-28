@@ -1,11 +1,15 @@
- #property strict
+#property strict
  
  string Endpoint = "https://copy-trading-system.azurewebsites.net";
- string OrderEndpoint = Endpoint + "/api/orders";
- string SentData = NULL;
+string TokenEndpoint = Endpoint + "/api/token";
+string OrderEndpoint = Endpoint + "/api/orders";
+string SentData = NULL;
  
 int LastErrorCode = 0;
 int PreviousRes = -1;
+
+input string SecretKey = NULL;
+string Token = NULL;
  
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -36,18 +40,69 @@ void OnTick()
 //| Expert timer function                                             |
 //+------------------------------------------------------------------+
 void OnTimer(){
+   
+   if (Token == NULL) {
+      int skResult = PostSecretKey(SecretKey, Token);
+      if (skResult == -1) {
+         return;
+      }
+      PreviousRes = -1;
+   }
+
    string Data = TradingData();
    if (SentData != Data) {
       if (PreviousRes == 200) {
          PreviousRes = -1;
       }
       Print("Sending: ", Data);
-      if (SendPOST(OrderEndpoint, Data) > 0) {
+      if (PostOrders(Token, Data) > 0) {
          SentData = Data;
       }
    }
 }
 //+------------------------------------------------------------------+
+
+int PostSecretKey(string secretKey, string &token)
+{
+   int timeout = 5000;
+   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   char request_data[];
+   string result_headers;
+   char result_data[];
+
+   StringToCharArray(secretKey, request_data, 0, WHOLE_ARRAY, CP_UTF8);
+   
+   int res = WebRequest("POST", TokenEndpoint, request_headers, timeout, request_data, result_data, result_headers);
+   if(res==-1) {
+      int error_code = GetLastError();
+      if (LastErrorCode != error_code) {
+         LastErrorCode = error_code;
+         LogWebRequestError("PostSecretKey", error_code);
+      }
+      PreviousRes = -1;
+      return -1;
+   }
+   if (LastErrorCode != 0) {
+      LastErrorCode = 0;
+      Print("PostSecretKey: Recover from Error");
+   }
+
+   if (PreviousRes != res) {
+      if(res == 200) {
+         Print("PostSecretKey: OK");
+      } else {
+         Print("PostSecretKey: Not OK, StatusCode = ", res);
+      }
+   }
+   PreviousRes = res;
+
+   if(res != 200) {
+      return -1;
+   }
+
+   token = (CharArrayToString(result_data));
+   return res;
+}
 
 string TradingData()
 {
@@ -71,52 +126,40 @@ string TradingData()
    return(PreTradingData);
 }
 
-int SendPOST(string URL, string str)
+int PostOrders(string &token, string orders)
 {
    int timeout = 5000;
-   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Secret-Token: " + token;
    char request_data[];
    string response_headers = NULL;
    char response_data[];
  
-   StringToCharArray(str, request_data, 0, WHOLE_ARRAY, CP_UTF8);
+   StringToCharArray(orders, request_data, 0, WHOLE_ARRAY, CP_UTF8);
    
-   int res = WebRequest( "POST", URL, request_headers, timeout, request_data, response_data, response_headers);
+   int res = WebRequest("POST", OrderEndpoint, request_headers, timeout, request_data, response_data, response_headers);
    if(res==-1) {
       int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
-         switch (error_code) {
-            case ERR_WEBREQUEST_INVALID_ADDRESS:
-               Print("WebRequest: Invalid URL");
-               break;
-            case ERR_WEBREQUEST_CONNECT_FAILED:
-               Print("WebRequest: Failed to connect");
-               break;
-            case ERR_WEBREQUEST_TIMEOUT:
-               Print("WebRequest: Timeout");
-               break;
-            case ERR_WEBREQUEST_REQUEST_FAILED:
-               Print("WebRequest: HTTP request failed");
-               break;
-            default:
-               Print("WebRequest: Unknown Error, Error = ", error_code);
-               break;
-         }
+         LogWebRequestError("PostOrders", error_code);
       }
       PreviousRes = -1;
       return -1;
    }
    if (LastErrorCode != 0) {
       LastErrorCode = 0;
-      Print("WebRequest: Recover from Error");
+      Print("PostOrders: Recover from Error");
+   }
+   
+   if (res == 401 || res == 403) {
+      token = NULL;
    }
 
    if (PreviousRes != res) {
       if(res == 200) {
-         Print("WebRequest: OK");
+         Print("PostOrders: OK");
       } else {
-         Print("WebRequest: Not OK, StatusCode = ", res);
+         Print("PostOrders: Not OK, StatusCode = ", res);
       }
    }
    PreviousRes = res;
@@ -128,3 +171,22 @@ int SendPOST(string URL, string str)
    return res;
 }
 
+void LogWebRequestError(string name, int error_code) {
+   switch (error_code) {
+      case ERR_WEBREQUEST_INVALID_ADDRESS:
+         Print(name, ": Invalid URL");
+         break;
+      case ERR_WEBREQUEST_CONNECT_FAILED:
+         Print(name, ": Failed to connect");
+         break;
+      case ERR_WEBREQUEST_TIMEOUT:
+         Print(name, ": Timeout");
+         break;
+      case ERR_WEBREQUEST_REQUEST_FAILED:
+         Print(name, ": HTTP request failed");
+         break;
+      default:
+         Print(name, ": Unknown Error, Error = ", error_code);
+         break;
+   }
+}
