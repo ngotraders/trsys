@@ -2,10 +2,11 @@
 
 namespace Trsys.Web.Models
 {
+    [Flags]
     public enum SecretKeyType
     {
-        Publisher,
-        Subscriber
+        Publisher = 1,
+        Subscriber = 1 << 1,
     }
 
     public class SecretKey
