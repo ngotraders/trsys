@@ -18,22 +18,30 @@ namespace Trsys.Web.Tests
     [TestClass]
     public class TokenApiTests
     {
-        private const string SECRET_KEY_IN_USE = "SECRET_KEY_IN_USE";
-        private const string VALID_TOKEN = "VALID_TOKEN";
-
         [TestMethod]
         public async Task PostApiToken_should_return_ok_given_valid_secret_key()
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            var key = null as string;
 
-            var repository = server.Services.GetRequiredService<ISecretKeyRepository>();
-            var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
-            await repository.SaveAsync(secretKey);
-            var res = await client.PostAsync("/api/token", new StringContent(secretKey.Key, Encoding.UTF8, "text/plain"));
+            using (var scope = server.Services.CreateScope())
+            {
+                var repository = scope.ServiceProvider.GetRequiredService<ISecretKeyRepository>();
+                var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
+                key = secretKey.Key;
+                secretKey.Approve();
+                await repository.SaveAsync(secretKey);
+            }
+            var res = await client.PostAsync("/api/token", new StringContent(key, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            secretKey = await repository.FindBySecretKeyAsync(secretKey.Key);
-            Assert.AreEqual(secretKey.ValidToken, await res.Content.ReadAsStringAsync());
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var repository = scope.ServiceProvider.GetRequiredService<ISecretKeyRepository>();
+                var secretKey = await repository.FindBySecretKeyAsync(key);
+                Assert.AreEqual(secretKey.ValidToken, await res.Content.ReadAsStringAsync());
+            }
         }
 
         [TestMethod]
@@ -64,6 +72,7 @@ namespace Trsys.Web.Tests
 
             var repository = server.Services.GetRequiredService<ISecretKeyRepository>();
             var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
+            secretKey.Approve();
             await repository.SaveAsync(secretKey);
 
             var res = await client.PostAsync("/api/token", new StringContent(secretKey.Key, Encoding.UTF8, "text/plain"));

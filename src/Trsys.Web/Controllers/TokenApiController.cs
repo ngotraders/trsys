@@ -24,7 +24,7 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostToken([FromBody] string secretKey)
         {
             var result = await repository.FindBySecretKeyAsync(secretKey);
-            if (result == null || result.IsValid)
+            if (result == null || !result.IsValid)
             {
                 return BadRequest("InvalidSecretKey");
             }
