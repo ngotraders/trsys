@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Trsys.Web.ViewModels;
 
 namespace Trsys.Web.Controllers
 {
@@ -17,14 +18,26 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpGet("login")]
-        public IActionResult Login(string returnUrl)
+        public IActionResult Login()
         {
-            return View();
+            var model = new LoginViewModel();
+            return View(model);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginExecute(string returnUrl)
+        public async Task<IActionResult> LoginExecute(LoginViewModel model, string returnUrl)
         {
+            if (!ModelState.IsValid)
+            {
+                model.ErrorMessage = "入力に誤りがあります。";
+                return View("Login", model);
+            }
+            if (model.Username != "admin" || model.Password != "P@ssw0rd")
+            {
+                model.ErrorMessage = "ユーザー名またはパスワードが違います。";
+                return View("Login", model);
+            }
+
             var principal = new ClaimsPrincipal();
             principal.AddIdentity(new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, "admin"),

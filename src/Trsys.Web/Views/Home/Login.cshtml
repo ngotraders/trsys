@@ -1,8 +1,24 @@
-﻿@{ 
+﻿@model Trsys.Web.ViewModels.LoginViewModel
+
+@{
     ViewBag.Title = "ログイン";
 }
 
-Login
+<h1>ログイン</h1>
 <form method="post">
-    <button>Login</button>
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div>
+            @Model.ErrorMessage
+        </div>
+    }
+    <div>
+        <input type="text" name="Username" value="@Model.Username" />
+    </div>
+    <div>
+        <input type="password" name="Password" value="@Model.Password" />
+    </div>
+    <div>
+        <button>ログイン</button>
+    </div>
 </form>
