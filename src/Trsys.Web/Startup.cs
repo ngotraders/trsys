@@ -29,7 +29,7 @@ namespace Trsys.Web
             services.AddControllersWithViews(options =>
             {
                 options.InputFormatters.Add(new TextPlainInputFormatter());
-            });
+            }).AddRazorRuntimeCompilation();
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
