@@ -5,13 +5,14 @@
 }
 
 <h1>ログイン</h1>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div>
+        @Model.ErrorMessage
+    </div>
+}
 <form method="post">
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div>
-            @Model.ErrorMessage
-        </div>
-    }
     <div>
         <input type="text" name="Username" value="@Model.Username" />
     </div>

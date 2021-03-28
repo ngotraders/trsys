@@ -6,8 +6,26 @@
 
 <h1>管理画面</h1>
 
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div>
+        @Model.ErrorMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div>
+        @Model.SuccessMessage
+    </div>
+}
 <div>
-    <form action="/admin/keys/new">
+    <form method="post" action="/admin/keys/new">
+        <select name="KeyType">
+            @foreach (var type in Enum.GetValues(typeof(Trsys.Web.Models.SecretKeyType)))
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
         <button>新規生成</button>
     </form>
 </div>
@@ -18,7 +36,7 @@
             <tr>
                 <th>キー</th>
                 <th>キー種類</th>
-                <th>説明</th>
+                <th>状態</th>
                 <th></th>
             </tr>
         </thead>
@@ -28,11 +46,26 @@
                 <tr>
                     <td>@key.Key</td>
                     <td>@key.KeyType</td>
-                    <td>@key.Description</td>
+                    <td>@(key.IsValid ? "有効" : "無効")</td>
                     <td>
-                        <form action="/admin/keys/@(key.Key)/delete">
-                            <button>削除</button>
-                        </form>
+                        @if (key.IsValid)
+                        {
+                            <form method="post" action="/admin/keys/@(key.Key)/revoke">
+                                <button>無効化</button>
+                            </form>
+                            <form method="post" action="/admin/keys/@(key.Key)/delete">
+                                <button disabled>削除</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" action="/admin/keys/@(key.Key)/approve">
+                                <button>有効化</button>
+                            </form>
+                            <form method="post" action="/admin/keys/@(key.Key)/delete">
+                                <button>削除</button>
+                            </form>
+                        }
                     </td>
                 </tr>
             }
