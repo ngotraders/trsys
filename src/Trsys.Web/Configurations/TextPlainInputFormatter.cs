@@ -17,6 +17,7 @@ namespace Trsys.Web.Configurations
         public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
         {
             var result = await context.HttpContext.Request.BodyReader.ReadAsync();
+            context.HttpContext.Request.BodyReader.AdvanceTo(result.Buffer.Start, result.Buffer.End);
             var str = encoding.GetString(result.Buffer.ToArray());
             return InputFormatterResult.Success(str?.Trim('\0'));
         }
