@@ -1,43 +1,58 @@
-﻿@model Trsys.Web.ViewModels.Admin.IndexViewModel
-@using Trsys.Web.Models
+﻿@using Trsys.Web.Models
+@using System.Linq
+@model Trsys.Web.ViewModels.Admin.IndexViewModel
 
 @{
-    ViewBag.Title = "管理画面";
+    ViewBag.Title = "シークレットキー一覧";
 }
-
-<h1>管理画面</h1>
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div>
+    <div class="alert alert-danger mb-4">
         @Model.ErrorMessage
     </div>
 }
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
-    <div>
+    <div class="alert alert-success mb-4">
         @Model.SuccessMessage
     </div>
 }
-<div>
-    <form method="post" action="/admin/keys/new">
-        <select name="KeyType">
-            @foreach (var type in Enum.GetValues(typeof(SecretKeyType)))
-            {
-                <option value="@type">@type</option>
-            }
-            <option value="@(SecretKeyType.Publisher | SecretKeyType.Subscriber)">@(SecretKeyType.Publisher | SecretKeyType.Subscriber)</option>
-        </select>
-        <button>新規生成</button>
-    </form>
-</div>
+
+<h1 class="mb-3">シークレットキー一覧</h1>
+
+<form method="post" action="/admin/keys/new">
+    <div class="mb-4 d-flex">
+        <div class="pr-2">
+            <select name="KeyType">
+                <option value="">---</option>
+                @foreach (var type in Enum.GetValues(typeof(SecretKeyType))
+                  .OfType<SecretKeyType>()
+                  .Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                {
+                    if (Model.KeyType.HasValue && Model.KeyType.Value == type)
+                    {
+                        <option value="@type" selected>@type</option>
+                    }
+                    else
+                    {
+                        <option value="@type">@type</option>
+                    }
+                }
+            </select>
+        </div>
+        <div>
+            <button class="d-block">シークレットキー生成</button>
+        </div>
+    </div>
+</form>
 @if (Model.SecretKeys.Count > 0)
 {
     <table>
         <thead>
             <tr>
-                <th>キー</th>
-                <th>キー種類</th>
+                <th>種類</th>
+                <th>シークレットキー</th>
                 <th>状態</th>
                 <th></th>
             </tr>
@@ -46,27 +61,39 @@
             @foreach (var key in Model.SecretKeys)
             {
                 <tr>
-                    <td>@key.Key</td>
                     <td>@key.KeyType</td>
+                    <td>@key.Key</td>
                     <td>@(key.IsValid ? "有効" : "無効")</td>
                     <td>
                         @if (key.IsValid)
                         {
-                            <form method="post" action="/admin/keys/@(key.Key)/revoke">
-                                <button>無効化</button>
-                            </form>
-                            <form method="post" action="/admin/keys/@(key.Key)/delete">
-                                <button disabled>削除</button>
-                            </form>
+                            <div class="d-flex justify-content-between">
+                                <div class="flex-grow-1 pr-1">
+                                    <form method="post" action="/admin/keys/@(key.Key)/revoke">
+                                        <button class="d-block w-full">無効化</button>
+                                    </form>
+                                </div>
+                                <div class="flex-grow-1 pl-1">
+                                    <form method="post" action="/admin/keys/@(key.Key)/delete">
+                                        <button class="d-block w-full" disabled>削除</button>
+                                    </form>
+                                </div>
+                            </div>
                         }
                         else
                         {
-                            <form method="post" action="/admin/keys/@(key.Key)/approve">
-                                <button>有効化</button>
-                            </form>
-                            <form method="post" action="/admin/keys/@(key.Key)/delete">
-                                <button>削除</button>
-                            </form>
+                            <div class="d-flex justify-content-between">
+                                <div class="flex-grow-1 pr-1">
+                                    <form method="post" action="/admin/keys/@(key.Key)/approve">
+                                        <button class="d-block w-full">有効化</button>
+                                    </form>
+                                </div>
+                                <div class="flex-grow-1 pl-1">
+                                    <form method="post" action="/admin/keys/@(key.Key)/delete">
+                                        <button class="d-block w-full">削除</button>
+                                    </form>
+                                </div>
+                            </div>
                         }
                     </td>
                 </tr>

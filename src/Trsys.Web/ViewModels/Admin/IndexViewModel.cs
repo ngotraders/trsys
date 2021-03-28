@@ -8,6 +8,8 @@ namespace Trsys.Web.ViewModels.Admin
         public string ErrorMessage { get; set; }
         public string SuccessMessage { get; set; }
 
+        public SecretKeyType? KeyType { get; set; }
+
         public List<SecretKey> SecretKeys { get; set; }
     }
 }

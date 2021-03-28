@@ -29,6 +29,11 @@ namespace Trsys.Web.Controllers
             var model = new IndexViewModel();
             model.ErrorMessage = TempData["ErrorMessage"] as string;
             model.SuccessMessage = TempData["SuccessMessage"] as string;
+            if (TempData["KeyType"] != null)
+            {
+                model.KeyType = (SecretKeyType)TempData["KeyType"];
+            }
+
             model.SecretKeys = await secretKeyRepository
                 .All
                 .OrderBy(e => e.KeyType)
@@ -40,6 +45,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/new")]
         public async Task<IActionResult> PostKeyNew(PostNewKeyRequest request)
         {
+            TempData["KeyType"] = request.KeyType;
             if (!ModelState.IsValid)
             {
                 TempData["ErrorMessage"] = "キーの種類が指定されていません。";

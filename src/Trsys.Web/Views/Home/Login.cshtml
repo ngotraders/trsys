@@ -4,22 +4,27 @@
     ViewBag.Title = "ログイン";
 }
 
-<h1>ログイン</h1>
-
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div>
+    <div class="alert alert-danger mb-4">
         @Model.ErrorMessage
     </div>
 }
+
+<h1 class="mb-3">ログイン</h1>
+
 <form method="post">
-    <div>
-        <input type="text" name="Username" value="@Model.Username" />
-    </div>
-    <div>
-        <input type="password" name="Password" value="@Model.Password" />
-    </div>
-    <div>
-        <button>ログイン</button>
+    <div style="max-width: 40rem">
+        <div class="mb-2">
+            <label>ユーザー名</label>
+            <input type="text" name="Username" value="@Model.Username" />
+        </div>
+        <div class="mb-3">
+            <label>パスワード</label>
+            <input type="password" name="Password" value="@Model.Password" />
+        </div>
+        <div>
+            <button class="primary">ログイン</button>
+        </div>
     </div>
 </form>

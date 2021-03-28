@@ -18,8 +18,12 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpGet("login")]
-        public IActionResult Login()
+        public IActionResult Login(string returnUrl)
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                return Redirect(returnUrl ?? "/");
+            }
             var model = new LoginViewModel();
             return View(model);
         }
