@@ -101,12 +101,7 @@ namespace Trsys.Web.Authentication
 
         public Task<string> RegisterTokenAsync(string secretKey, SecretKeyType keyType)
         {
-            SecretTokenInfo info = new SecretTokenInfo()
-            {
-                SecretKey = secretKey,
-                KeyType = keyType,
-                Token = Guid.NewGuid().ToString()
-            };
+            SecretTokenInfo info = new SecretTokenInfo(secretKey, keyType, Guid.NewGuid().ToString());
             lock (store)
             {
                 store.Add(info);

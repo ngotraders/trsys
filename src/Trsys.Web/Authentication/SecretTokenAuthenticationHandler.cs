@@ -1,12 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
 
 namespace Trsys.Web.Authentication
 {
@@ -30,19 +26,7 @@ namespace Trsys.Web.Authentication
             {
                 return AuthenticateResult.Fail("unknown token.");
             }
-
-            var principal = new ClaimsPrincipal();
-            var claims = new List<Claim>() { new Claim(ClaimTypes.NameIdentifier, tokenInfo.SecretKey) };
-            foreach (SecretKeyType key in Enum.GetValues(typeof(SecretKeyType)))
-            {
-                if (tokenInfo.KeyType.HasFlag(key))
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, Enum.GetName(typeof(SecretKeyType), key)));
-                }
-            }
-            principal.AddIdentity(new ClaimsIdentity(claims, Scheme.Name));
-            var ticket = new AuthenticationTicket(principal, Scheme.Name);
-            return AuthenticateResult.Success(ticket);
+            return AuthenticateResult.Success(tokenInfo.Ticket);
         }
     }
 }

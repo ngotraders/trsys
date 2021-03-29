@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using NBomber;
+﻿using NBomber;
 using NBomber.Contracts;
 using NBomber.CSharp;
+using NBomber.Plugins.Http.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +14,8 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 30;
-        const string ENDPOINT_URL = "https://localhost:5001/";
+        const int COUNT_OF_CLIENTS = 60;
+        const string ENDPOINT_URL = "https://localhost:5001";
         const string ORDER_DATA = "1:USDJPY:0@2:EURUSD:1";
 
         static void Main(string[] _)
@@ -25,28 +25,26 @@ namespace LoadTesting
             var secretTokens = GenerateSecretTokens(COUNT_OF_CLIENTS).Result;
             SetPublisherData(ORDER_DATA, secretTokens.FirstOrDefault()).Wait();
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretTokens).ShuffleData());
-            var step = Step.Create("subscriber", feeds, async context =>
-            {
-                var client = new HttpClient();
-                client.BaseAddress = new Uri(ENDPOINT_URL);
-                client.DefaultRequestHeaders.Add("X-Secret-Token", context.FeedItem);
-                var res = await client.GetAsync("/api/orders");
-                if (!res.IsSuccessStatusCode)
+            var step = HttpStep.Create("subscriber", feeds,
+                context =>
                 {
-                    context.Logger.Error($"GET /api/orders finished unsuccessful status code: {res.StatusCode}");
-                    return Response.Fail();
-                }
-                var responseText = await res.Content.ReadAsStringAsync();
-                if (ORDER_DATA == responseText)
-                {
-                    return Response.Ok();
-                }
-                else
-                {
-                    context.Logger.Error($"GET /api/orders finished with invalid response: {responseText}");
-                    return Response.Fail();
-                }
-            });
+                    return Http.CreateRequest("GET", ENDPOINT_URL + "/api/orders")
+                        .WithHeader("X-Secret-Token", context.FeedItem)
+                        .WithCheck(async res =>
+                        {
+                            if (!res.IsSuccessStatusCode)
+                            {
+                                return Response.Fail($"Not successful status code: {res.StatusCode}");
+                            }
+                            var responseText = await res.Content.ReadAsStringAsync();
+                            if (responseText != ORDER_DATA)
+                            {
+                                return Response.Fail($"Invalid response: {responseText}");
+                            }
+                            return Response.Ok();
+                        });
+                });
+
 
             var scenario = ScenarioBuilder
                 .CreateScenario("sub", step)

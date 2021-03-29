@@ -167,21 +167,11 @@ namespace Trsys.Web.Tests
                 var tokenInfo = null as SecretTokenInfo;
                 if (token == VALID_PUBLISHER_TOKEN)
                 {
-                    tokenInfo = new SecretTokenInfo()
-                    {
-                        Token = VALID_PUBLISHER_TOKEN,
-                        SecretKey = "SECRETKEY",
-                        KeyType = SecretKeyType.Publisher
-                    };
+                    tokenInfo = new SecretTokenInfo("SECRETKEY", SecretKeyType.Publisher, VALID_PUBLISHER_TOKEN);
                 }
                 else if (token == VALID_SUBSCRIBER_TOKEN)
                 {
-                    tokenInfo = new SecretTokenInfo()
-                    {
-                        Token = VALID_SUBSCRIBER_TOKEN,
-                        SecretKey = "SECRETKEY",
-                        KeyType = SecretKeyType.Subscriber
-                    };
+                    tokenInfo = new SecretTokenInfo("SECRETKEY", SecretKeyType.Subscriber, VALID_SUBSCRIBER_TOKEN);
                 }
                 return Task.FromResult(tokenInfo);
             }

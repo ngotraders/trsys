@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Primitives;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Authentication
