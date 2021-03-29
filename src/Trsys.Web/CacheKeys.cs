@@ -2,9 +2,6 @@ namespace Trsys.Web
 {
     static class CacheKeys
     {
-        public const string ORDERS_HASH = "ORDERS_HASH";
-        public const string ORDERS_TEXT = "ORDERS_TEXT";
-        public const string VALID_SECRET_TOKEN_SET = "VALID_SECRET_TOKEN_SET";
-
+        public const string ORDERS_CACHE = "ORDERS_CACHE";
     }
 }

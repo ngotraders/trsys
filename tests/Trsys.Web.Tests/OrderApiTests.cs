@@ -80,6 +80,41 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
+        public async Task GetApiOrders_should_return_not_modified_given_cache_exists()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+
+            var repository = server.Services.GetRequiredService<IOrderRepository>();
+            await repository.SaveOrdersAsync(new[] {
+                new Order() {
+                    TicketNo = "1",
+                    Symbol = "USDJPY",
+                    OrderType = OrderType.BUY
+                },
+                new Order() {
+                    TicketNo = "2",
+                    Symbol = "EURUSD",
+                    OrderType = OrderType.SELL
+                }
+            });
+
+            var res1 = await client.GetAsync("/api/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
+            Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res1.Content.ReadAsStringAsync());
+
+            var res2 = await client.GetAsync("/api/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
+            Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res2.Content.ReadAsStringAsync());
+            Assert.AreEqual(res1.Headers.ETag, res2.Headers.ETag);
+
+            client.DefaultRequestHeaders.Add("If-None-Match", res2.Headers.ETag.Tag);
+            var res3 = await client.GetAsync("/api/orders");
+            Assert.AreEqual(HttpStatusCode.NotModified, res3.StatusCode);
+        }
+
+        [TestMethod]
         public async Task GetApiOrders_should_return_unauthorized_given_invalid_token()
         {
             var server = CreateTestServer();

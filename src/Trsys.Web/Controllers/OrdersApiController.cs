@@ -30,28 +30,15 @@ namespace Trsys.Web.Controllers
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
-            var etag = (string)HttpContext.Request.Headers["If-None-Match"];
-            if (!string.IsNullOrEmpty(etag))
+            if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
             {
-                if (cache.TryGetValue(CacheKeys.ORDERS_HASH, out var cacheEntry))
-                {
-                    if (etag == $"\"{cacheEntry}\"")
-                    {
-                        return StatusCode(304);
-                    }
-                }
-
-            }
-
-            if (cache.TryGetValue(CacheKeys.ORDERS_TEXT, out var text))
-            {
-                var cachedTextHash = CalculateHash(text as string);
+                var etag = (string)HttpContext.Request.Headers["If-None-Match"];
                 if (string.IsNullOrEmpty(etag))
                 {
-                    HttpContext.Response.Headers["ETag"] = $"\"{cachedTextHash}\"";
-                    return Ok(text);
+                    HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
+                    return Ok(cacheEntry.Text);
                 }
-                if (etag == $"\"{cachedTextHash}\"")
+                else if (etag == $"\"{cacheEntry.Hash}\"")
                 {
                     return StatusCode(304);
                 }
@@ -60,19 +47,13 @@ namespace Trsys.Web.Controllers
             var orders = await repository.All.ToListAsync();
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
             var hash = CalculateHash(responseText);
-            cache.Set(CacheKeys.ORDERS_TEXT, responseText);
-            cache.Set(CacheKeys.ORDERS_HASH, hash);
+            cache.Set(CacheKeys.ORDERS_CACHE, new OrdersCache
+            {
+                Hash = hash,
+                Text = responseText,
+            });
             HttpContext.Response.Headers["ETag"] = $"\"{hash}\"";
             return Ok(responseText);
-        }
-
-        private string CalculateHash(string responseText)
-        {
-            var sha1 = System.Security.Cryptography.SHA1.Create();
-            var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(responseText));
-            var str = BitConverter.ToString(hash);
-            str = str.Replace("-", string.Empty);
-            return str;
         }
 
         [HttpPost]
@@ -100,9 +81,27 @@ namespace Trsys.Web.Controllers
 
             await repository.SaveOrdersAsync(orders);
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
-            cache.Set(CacheKeys.ORDERS_TEXT, responseText);
-            cache.Set(CacheKeys.ORDERS_HASH, CalculateHash(responseText));
+            cache.Set(CacheKeys.ORDERS_CACHE, new OrdersCache
+            {
+                Hash = CalculateHash(responseText),
+                Text = responseText,
+            });
             return Ok();
+        }
+
+        private string CalculateHash(string responseText)
+        {
+            var sha1 = System.Security.Cryptography.SHA1.Create();
+            var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(responseText));
+            var str = BitConverter.ToString(hash);
+            str = str.Replace("-", string.Empty);
+            return str;
+        }
+
+        private class OrdersCache
+        {
+            public string Hash { get; set; }
+            public string Text { get; set; }
         }
     }
 }

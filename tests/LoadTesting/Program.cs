@@ -15,7 +15,7 @@ namespace LoadTesting
     class Program
     {
         const int COUNT_OF_CLIENTS = 50;
-        const int LENGTH_OF_TEST_MINUTES = 1;
+        const int LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
         static readonly string[] ORDER_DATA = new[] {
             "1:USDJPY:0",
