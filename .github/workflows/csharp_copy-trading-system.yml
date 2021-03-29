@@ -22,10 +22,10 @@ jobs:
         dotnet-version: '5.0.201'
 
     - name: Build with dotnet
-      run: dotnet build --configuration Release
+      run: dotnet build ./src/Trsys.Web/Trsys.Web.csproj --configuration Release
 
     - name: dotnet publish
-      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      run: dotnet publish ./src/Trsys.Web/Trsys.Web.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v2
