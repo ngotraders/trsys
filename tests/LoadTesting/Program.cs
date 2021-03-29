@@ -4,6 +4,7 @@ using NBomber.Contracts;
 using NBomber.CSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,16 +14,21 @@ namespace LoadTesting
 
     class Program
     {
+        const int COUNT_OF_CLIENTS = 10;
+        const string ENDPOINT_URL = "https://localhost:5001/";
+        const string ORDER_DATA = "1:USDJPY:0@2:EURUSD:1";
+
         static void Main(string[] _)
         {
             using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
-            const int countOfClients = 10;
-            var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(GenerateSecretTokens(countOfClients).Result).ShuffleData());
+            var secretTokens = GenerateSecretTokens(COUNT_OF_CLIENTS).Result;
+            SetPublisherData(ORDER_DATA, secretTokens.FirstOrDefault()).Wait();
+            var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretTokens).ShuffleData());
             var step = Step.Create("subscriber", feeds, async context =>
             {
                 var client = new HttpClient();
-                client.BaseAddress = new Uri("https://localhost:5001");
+                client.BaseAddress = new Uri(ENDPOINT_URL);
                 client.DefaultRequestHeaders.Add("X-Secret-Token", context.FeedItem);
                 var res = await client.GetAsync("/api/orders");
                 if (!res.IsSuccessStatusCode)
@@ -30,13 +36,22 @@ namespace LoadTesting
                     context.Logger.Error($"GET /api/orders finished unsuccessful status code: {res.StatusCode}");
                     return Response.Fail();
                 }
-                return Response.Ok();
+                var responseText = await res.Content.ReadAsStringAsync();
+                if (ORDER_DATA == responseText)
+                {
+                    return Response.Ok();
+                }
+                else
+                {
+                    context.Logger.Error($"GET /api/orders finished with invalid response: {responseText}");
+                    return Response.Fail();
+                }
             });
 
             var scenario = ScenarioBuilder
                 .CreateScenario("sub", step)
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * countOfClients, TimeSpan.FromMinutes(3)));
+                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(3)));
 
             NBomberRunner
                 .RegisterScenarios(scenario)
@@ -46,7 +61,7 @@ namespace LoadTesting
         private static async Task<IEnumerable<string>> GenerateSecretTokens(int count)
         {
             var client = new HttpClient();
-            client.BaseAddress = new Uri("https://localhost:5001");
+            client.BaseAddress = new Uri(ENDPOINT_URL);
             await client.PostAsync("/login", new FormUrlEncodedContent(
                 new KeyValuePair<string, string>[] {
                     KeyValuePair.Create("Username", "admin"),
@@ -64,7 +79,7 @@ namespace LoadTesting
             {
                 await client.PostAsync("/admin/keys/new", new FormUrlEncodedContent(
                     new KeyValuePair<string, string>[] {
-                        KeyValuePair.Create("KeyType", "2"),
+                        KeyValuePair.Create("KeyType", "3"),
                     }));
             }
 
@@ -80,6 +95,15 @@ namespace LoadTesting
             }
 
             return secretTokens;
+        }
+
+        private static async Task SetPublisherData(string data, string secretToken)
+        {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri(ENDPOINT_URL);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", secretToken);
+            var res = await client.PostAsync("/api/orders", new StringContent(data, Encoding.UTF8, "text/plain"));
+            res.EnsureSuccessStatusCode();
         }
 
         private static async Task<IEnumerable<string>> GetSecretKeysAsync(HttpClient client)
