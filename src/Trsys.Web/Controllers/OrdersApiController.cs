@@ -42,11 +42,27 @@ namespace Trsys.Web.Controllers
                 }
 
             }
+
+            if (cache.TryGetValue(CacheKeys.ORDERS_TEXT, out var text))
+            {
+                var cachedTextHash = CalculateHash(text as string);
+                if (string.IsNullOrEmpty(etag))
+                {
+                    HttpContext.Response.Headers["ETag"] = $"\"{cachedTextHash}\"";
+                    return Ok(text);
+                }
+                if (etag == $"\"{cachedTextHash}\"")
+                {
+                    return StatusCode(304);
+                }
+            }
+
             var orders = await repository.All.ToListAsync();
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
             var hash = CalculateHash(responseText);
+            cache.Set(CacheKeys.ORDERS_TEXT, responseText);
             cache.Set(CacheKeys.ORDERS_HASH, hash);
-            HttpContext.Response.Headers["ETag"] = $"{hash}";
+            HttpContext.Response.Headers["ETag"] = $"\"{hash}\"";
             return Ok(responseText);
         }
 
@@ -83,7 +99,9 @@ namespace Trsys.Web.Controllers
             }
 
             await repository.SaveOrdersAsync(orders);
-            cache.Remove(CacheKeys.ORDERS_HASH);
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
+            cache.Set(CacheKeys.ORDERS_TEXT, responseText);
+            cache.Set(CacheKeys.ORDERS_HASH, CalculateHash(responseText));
             return Ok();
         }
     }
