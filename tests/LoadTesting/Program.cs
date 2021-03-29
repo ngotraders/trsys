@@ -14,18 +14,43 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 60;
+        const int COUNT_OF_CLIENTS = 50;
+        const int LENGTH_OF_TEST_MINUTES = 1;
         const string ENDPOINT_URL = "https://localhost:5001";
-        const string ORDER_DATA = "1:USDJPY:0@2:EURUSD:1";
+        static readonly string[] ORDER_DATA = new[] {
+            "1:USDJPY:0",
+            "1:USDJPY:0@2:EURUSD:1",
+            "2:EURUSD:1",
+            "2:EURUSD:1@3:CNYUSD:1",
+            "3:CNYUSD:1",
+            "3:CNYUSD:1@4:GBPUSD:0",
+            "4:GBPUSD:0"
+        };
 
         static void Main(string[] _)
         {
             using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretTokens = GenerateSecretTokens(COUNT_OF_CLIENTS).Result;
-            SetPublisherData(ORDER_DATA, secretTokens.FirstOrDefault()).Wait();
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretTokens).ShuffleData());
-            var step = HttpStep.Create("subscriber", feeds,
+            var random = new Random();
+            var client = new HttpClient();
+            client.BaseAddress = new Uri(ENDPOINT_URL);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", secretTokens.FirstOrDefault());
+            SetPublisherData(client, ORDER_DATA[0]).Wait();
+
+            var step1 = Step.Create("publisher", feeds,
+                async context =>
+                {
+                    if (random.Next(COUNT_OF_CLIENTS * 100) == 0)
+                    {
+                        var orders = ORDER_DATA[random.Next(0, ORDER_DATA.Length)];
+                        context.Logger.Debug($"Setting order {orders}");
+                        await SetPublisherData(client, orders);
+                    }
+                    return Response.Ok();
+                });
+            var step2 = HttpStep.Create("subscriber", feeds,
                 context =>
                 {
                     return Http.CreateRequest("GET", ENDPOINT_URL + "/api/orders")
@@ -37,7 +62,7 @@ namespace LoadTesting
                                 return Response.Fail($"Not successful status code: {res.StatusCode}");
                             }
                             var responseText = await res.Content.ReadAsStringAsync();
-                            if (responseText != ORDER_DATA)
+                            if (Array.IndexOf(ORDER_DATA, responseText) == -1)
                             {
                                 return Response.Fail($"Invalid response: {responseText}");
                             }
@@ -45,11 +70,10 @@ namespace LoadTesting
                         });
                 });
 
-
             var scenario = ScenarioBuilder
-                .CreateScenario("sub", step)
+                .CreateScenario("pubsub", step1, step2)
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(3)));
+                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
 
             NBomberRunner
                 .RegisterScenarios(scenario)
@@ -95,11 +119,8 @@ namespace LoadTesting
             return secretTokens;
         }
 
-        private static async Task SetPublisherData(string data, string secretToken)
+        private static async Task SetPublisherData(HttpClient client, string data)
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(ENDPOINT_URL);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", secretToken);
             var res = await client.PostAsync("/api/orders", new StringContent(data, Encoding.UTF8, "text/plain"));
             res.EnsureSuccessStatusCode();
         }
