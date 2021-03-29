@@ -242,7 +242,7 @@ int GetOrders(string &token, string &response)
    if (request_headers != NULL) {
       request_headers += "\r\n";
    }
-   request_headers = "X-Secret-Token: " + token;
+   request_headers += "X-Secret-Token: " + token;
 
    int res = WebRequest("GET", OrderEndpoint, request_headers, timeout, request_data, result_data, result_headers);
    if(res==-1) {
