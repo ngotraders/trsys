@@ -32,15 +32,21 @@ namespace Trsys.Web.Controllers
         {
             if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
             {
-                var etag = (string)HttpContext.Request.Headers["If-None-Match"];
-                if (string.IsNullOrEmpty(etag))
+                var etags = HttpContext.Request.Headers["If-None-Match"];
+                if (!etags.Any())
                 {
                     HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
                     return Ok(cacheEntry.Text);
                 }
-                else if (etag == $"\"{cacheEntry.Hash}\"")
+                else
                 {
-                    return StatusCode(304);
+                    foreach (var etag in etags)
+                    {
+                        if (etag == $"\"{cacheEntry.Hash}\"")
+                        {
+                            return StatusCode(304);
+                        }
+                    }
                 }
             }
 

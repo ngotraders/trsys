@@ -104,6 +104,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
             Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res1.Content.ReadAsStringAsync());
 
+            client.DefaultRequestHeaders.Add("If-None-Match", "\"INVALID_TAG\"");
             var res2 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
             Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res2.Content.ReadAsStringAsync());
