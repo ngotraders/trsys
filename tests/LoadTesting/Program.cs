@@ -14,7 +14,7 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 10;
+        const int COUNT_OF_CLIENTS = 30;
         const string ENDPOINT_URL = "https://localhost:5001/";
         const string ORDER_DATA = "1:USDJPY:0@2:EURUSD:1";
 

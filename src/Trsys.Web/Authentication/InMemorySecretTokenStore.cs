@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Models;
 
@@ -41,7 +42,62 @@ namespace Trsys.Web.Authentication
             }
         }
 
-        private readonly InternalTokenStore store = new InternalTokenStore();
+        private class StoreProvider
+        {
+            private static char[] firstChars = new[]
+            {
+                '0',
+                '1',
+                '2',
+                '3',
+                '4',
+                '5',
+                '6',
+                '7',
+                '8',
+                '9',
+                'A',
+                'B',
+                'C',
+                'D',
+                'E',
+                'F',
+            };
+
+            private readonly InternalTokenStore[] stores = Enumerable
+                .Range(0, firstChars.Length)
+                .Select(_ => new InternalTokenStore())
+                .ToArray();
+            private readonly InternalTokenStore defaultStore = new InternalTokenStore();
+
+            public StoreProvider()
+            {
+
+            }
+
+            private InternalTokenStore FindStoreForToken(string token)
+            {
+                var index = Array.IndexOf(firstChars, token.Substring(0, 1).ToUpper()[0]);
+                return index >= 0 ? stores[index] : defaultStore;
+            }
+
+            public SecretTokenInfo Find(string token)
+            {
+                return FindStoreForToken(token).Find(token);
+            }
+
+            public void Add(SecretTokenInfo info)
+            {
+                FindStoreForToken(info.Token).Add(info);
+            }
+
+            public void Remove(string token)
+            {
+                FindStoreForToken(token).Remove(token);
+            }
+        }
+
+        private readonly StoreProvider store = new StoreProvider();
 
         public Task<string> RegisterTokenAsync(string secretKey, SecretKeyType keyType)
         {
