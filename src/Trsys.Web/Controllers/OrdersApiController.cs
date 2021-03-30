@@ -9,12 +9,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Caching;
+using Trsys.Web.Filters;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/orders")]
     [ApiController]
+    [EaVersion("20210331")]
     public class OrdersApiController : ControllerBase
     {
         private readonly IOrderRepository repository;
@@ -44,20 +46,14 @@ namespace Trsys.Web.Controllers
                         }
                     }
                 }
-                HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
-                return Ok(cacheEntry.Text);
             }
-
-            var orders = await repository.All.ToListAsync();
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
-            var hash = CalculateHash(responseText);
-            cache.Set(CacheKeys.ORDERS_CACHE, new OrdersCache
+            else
             {
-                Hash = hash,
-                Text = responseText,
-            });
-            HttpContext.Response.Headers["ETag"] = $"\"{hash}\"";
-            return Ok(responseText);
+                var orders = await repository.All.ToListAsync();
+                cacheEntry = RegisterCache(orders);
+            }
+            HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
+            return Ok(cacheEntry.Text);
         }
 
         [HttpPost]
@@ -71,7 +67,7 @@ namespace Trsys.Web.Controllers
             {
                 foreach (var item in requestText.Split("@"))
                 {
-                    if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]"))
+                    if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?"))
                     {
                         return BadRequest();
                     }
@@ -79,18 +75,32 @@ namespace Trsys.Web.Controllers
                     var ticketNo = splitted[0];
                     var symbol = splitted[1];
                     var orderType = (OrderType)int.Parse(splitted[2]);
-                    orders.Add(new Order() { TicketNo = ticketNo, Symbol = symbol, OrderType = orderType });
+                    var volumeCreditRate = splitted[3];
+                    orders.Add(new Order()
+                    {
+                        TicketNo = int.Parse(ticketNo),
+                        Symbol = symbol,
+                        OrderType = orderType,
+                        VolumeCreditRate = decimal.Parse(volumeCreditRate),
+                    });
                 }
             }
 
             await repository.SaveOrdersAsync(orders);
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}"));
-            cache.Set(CacheKeys.ORDERS_CACHE, new OrdersCache
+            RegisterCache(orders);
+            return Ok();
+        }
+
+        private OrdersCache RegisterCache(List<Order> orders)
+        {
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.VolumeCreditRate}"));
+            var ordersCache = new OrdersCache
             {
                 Hash = CalculateHash(responseText),
                 Text = responseText,
-            });
-            return Ok();
+            };
+            cache.Set(CacheKeys.ORDERS_CACHE, ordersCache);
+            return ordersCache;
         }
 
         private string CalculateHash(string responseText)

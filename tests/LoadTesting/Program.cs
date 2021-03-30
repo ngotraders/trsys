@@ -18,13 +18,13 @@ namespace LoadTesting
         const int LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
         static readonly string[] ORDER_DATA = new[] {
-            "1:USDJPY:0",
-            "1:USDJPY:0@2:EURUSD:1",
-            "2:EURUSD:1",
-            "2:EURUSD:1@3:CNYUSD:1",
-            "3:CNYUSD:1",
-            "3:CNYUSD:1@4:GBPUSD:0",
-            "4:GBPUSD:0"
+            "1:USDJPY:0:1",
+            "1:USDJPY:0:1@2:EURUSD:1:0.5",
+            "2:EURUSD:1:0.5",
+            "2:EURUSD:1:0.5@3:CNYUSD:1:0.05",
+            "3:CNYUSD:1:0.05",
+            "3:CNYUSD:1:0.05@4:GBPUSD:0:10.05",
+            "4:GBPUSD:0:10.05"
         };
 
         static void Main(string[] _)
@@ -36,6 +36,7 @@ namespace LoadTesting
             var random = new Random();
             var client = new HttpClient();
             client.BaseAddress = new Uri(ENDPOINT_URL);
+            client.DefaultRequestHeaders.Add("Version", "20210331");
             client.DefaultRequestHeaders.Add("X-Secret-Token", secretTokens.FirstOrDefault());
             SetPublisherData(client, ORDER_DATA[0]).Wait();
 
@@ -54,6 +55,7 @@ namespace LoadTesting
                 context =>
                 {
                     return Http.CreateRequest("GET", ENDPOINT_URL + "/api/orders")
+                        .WithHeader("Version", "20210331")
                         .WithHeader("X-Secret-Token", context.FeedItem)
                         .WithCheck(async res =>
                         {

@@ -20,12 +20,14 @@ namespace Trsys.Web.Tests
     {
         private const string VALID_SUBSCRIBER_TOKEN = "VALID_SUBSCRIBER_TOKEN";
         private const string VALID_PUBLISHER_TOKEN = "VALID_PUBLISHER_TOKEN";
+        private const string VALID_VERSION = "20210331";
 
         [TestMethod]
         public async Task GetApiOrders_should_return_ok_given_no_data_exists()
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -37,20 +39,22 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
             await repository.SaveOrdersAsync(new[] {
                 new Order() {
-                    TicketNo = "1",
+                    TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY
+                    OrderType = OrderType.BUY,
+                    VolumeCreditRate = 1,
                 }
             });
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -58,25 +62,28 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
             await repository.SaveOrdersAsync(new[] {
                 new Order() {
-                    TicketNo = "1",
+                    TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY
+                    OrderType = OrderType.BUY,
+                    VolumeCreditRate = 1.2m,
                 },
                 new Order() {
-                    TicketNo = "2",
+                    TicketNo = 2,
                     Symbol = "EURUSD",
-                    OrderType = OrderType.SELL
+                    OrderType = OrderType.SELL,
+                    VolumeCreditRate = 0,
                 }
             });
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1.2@2:EURUSD:1:0", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -84,30 +91,33 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
             await repository.SaveOrdersAsync(new[] {
                 new Order() {
-                    TicketNo = "1",
+                    TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY
+                    OrderType = OrderType.BUY,
+                    VolumeCreditRate = 1,
                 },
                 new Order() {
-                    TicketNo = "2",
+                    TicketNo = 2,
                     Symbol = "EURUSD",
-                    OrderType = OrderType.SELL
+                    OrderType = OrderType.SELL,
+                    VolumeCreditRate = 180,
                 }
             });
 
             var res1 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
-            Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res1.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1@2:EURUSD:1:180", await res1.Content.ReadAsStringAsync());
 
             client.DefaultRequestHeaders.Add("If-None-Match", "\"INVALID_TAG\"");
             var res2 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
-            Assert.AreEqual("1:USDJPY:0@2:EURUSD:1", await res2.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1@2:EURUSD:1:180", await res2.Content.ReadAsStringAsync());
             Assert.AreEqual(res1.Headers.ETag, res2.Headers.ETag);
 
             client.DefaultRequestHeaders.Add("If-None-Match", res2.Headers.ETag.Tag);
@@ -120,8 +130,19 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task GetApiOrders_should_return_bad_request_given_invalid_version()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+            var res = await client.GetAsync("/api/orders");
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
         }
 
         [TestMethod]
@@ -129,6 +150,7 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
             var res = await client.PostAsync("/api/orders", new StringContent("", Encoding.UTF8, "text/plain"));
@@ -144,9 +166,10 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
@@ -159,9 +182,10 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0@2:EURUSD:1", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1@2:EURUSD:1:1.2", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
@@ -174,8 +198,19 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0@2:EURUSD:1", Encoding.UTF8, "text/plain"));
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:2@2:EURUSD:1:0.023", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PostApiOrders_should_return_bad_request_given_invalid_version()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:120.23@2:EURUSD:1:0.0001", Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
         }
 
 
