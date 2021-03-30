@@ -83,6 +83,71 @@ namespace Trsys.Web.Tests
             Assert.AreEqual("SecretKeyInUse", await res.Content.ReadAsStringAsync());
         }
 
+        [TestMethod]
+        public async Task PostApiTokenRelease_should_return_ok_given_valid_token_and_secret_key()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            var key = null as string;
+            var token = null as string;
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var repository = scope.ServiceProvider.GetRequiredService<ISecretKeyRepository>();
+                var secretKey = await repository.CreateNewSecretKeyAsync(SecretKeyType.Subscriber);
+                key = secretKey.Key;
+                secretKey.Approve();
+                await repository.SaveAsync(secretKey);
+                var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
+                token = await store.RegisterTokenAsync(key, SecretKeyType.Publisher);
+            }
+            var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
+                Assert.IsNull(await store.FindInfoAsync(token));
+                var repository = scope.ServiceProvider.GetRequiredService<ISecretKeyRepository>();
+                var secretKey = await repository.FindBySecretKeyAsync(key);
+                Assert.IsNull(secretKey.ValidToken);
+            }
+        }
+
+        [TestMethod]
+        public async Task PostApiTokenRelease_should_return_ok_given_valid_token()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            var token = null as string;
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
+                token = await store.RegisterTokenAsync("AAA", SecretKeyType.Publisher);
+            }
+            var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
+                Assert.IsNull(await store.FindInfoAsync(token));
+            }
+        }
+
+        [TestMethod]
+        public async Task PostApiTokenRelease_should_return_badrequest_given_invalid_token()
+        {
+            var server = CreateTestServer();
+            var client = server.CreateClient();
+            var res = await client.PostAsync("/api/token/INVALID_TOKEN/release", new StringContent("", Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
+        }
+
         private static TestServer CreateTestServer()
         {
             var databaseName = Guid.NewGuid().ToString();

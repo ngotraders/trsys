@@ -143,6 +143,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -211,6 +212,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:120.23@2:EURUSD:1:0.0001", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
         }
 
 
@@ -233,7 +235,7 @@ namespace Trsys.Web.Tests
 
         private class MockTokenStore : ISecretTokenStore
         {
-            public Task<SecretTokenInfo> FindInfoAsync(string token)
+            public Task<SecretTokenInfo> FindInfoUpdatingAccessTimeAsync(string token)
             {
                 var tokenInfo = null as SecretTokenInfo;
                 if (token == VALID_PUBLISHER_TOKEN)
@@ -245,6 +247,11 @@ namespace Trsys.Web.Tests
                     tokenInfo = new SecretTokenInfo("SECRETKEY", SecretKeyType.Subscriber, VALID_SUBSCRIBER_TOKEN);
                 }
                 return Task.FromResult(tokenInfo);
+            }
+
+            public Task<SecretTokenInfo> FindInfoAsync(string token)
+            {
+                throw new NotImplementedException();
             }
 
             public Task<string> RegisterTokenAsync(string secretKey, SecretKeyType keyType)

@@ -39,11 +39,10 @@ namespace Trsys.Web.Authentication
         public AuthenticationTicket Ticket { get; }
 
         public DateTime LastAccessed { get; private set; }
-        public bool IsInUse { get; private set; }
 
-        public void SetIsInUse()
+        public bool IsInUse()
         {
-            IsInUse = DateTime.UtcNow - LastAccessed.ToUniversalTime() < TimeSpan.FromSeconds(5);
+            return DateTime.UtcNow - LastAccessed.ToUniversalTime() < TimeSpan.FromSeconds(5);
         }
 
         public void Access()

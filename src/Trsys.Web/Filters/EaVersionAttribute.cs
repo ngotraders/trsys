@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.Net;
 
 namespace Trsys.Web.Filters
 {
@@ -17,8 +16,7 @@ namespace Trsys.Web.Filters
         {
             if (context.HttpContext.Request.Headers["Version"] != Version)
             {
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                context.Result = new EmptyResult();
+                context.Result = new BadRequestObjectResult("InvalidVersion");
             }
         }
 

@@ -22,28 +22,48 @@ namespace Trsys.Web.Controllers
         [Consumes("text/plain")]
         public async Task<IActionResult> PostToken([FromBody] string secretKey)
         {
-            var result = await repository.FindBySecretKeyAsync(secretKey);
-            if (result == null || !result.IsValid)
+            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
+            if (secretKeyEntity == null || !secretKeyEntity.IsValid)
             {
                 return BadRequest("InvalidSecretKey");
             }
 
-            if (!string.IsNullOrEmpty(result.ValidToken))
+            if (!string.IsNullOrEmpty(secretKeyEntity.ValidToken))
             {
-                var tokenInfo = await tokenStore.FindInfoAsync(result.ValidToken);
+                var tokenInfo = await tokenStore.FindInfoAsync(secretKeyEntity.ValidToken);
                 if (tokenInfo != null)
                 {
-                    if (tokenInfo.IsInUse)
+                    if (tokenInfo.IsInUse())
                     {
                         return BadRequest("SecretKeyInUse");
                     }
-                    await tokenStore.UnregisterAsync(result.ValidToken);
+                    await tokenStore.UnregisterAsync(secretKeyEntity.ValidToken);
                 }
             }
 
-            var token = await tokenStore.RegisterTokenAsync(result.Key, result.KeyType);
-            result.UpdateToken(token);
-            await repository.SaveAsync(result);
+            var token = await tokenStore.RegisterTokenAsync(secretKeyEntity.Key, secretKeyEntity.KeyType);
+            secretKeyEntity.UpdateToken(token);
+            await repository.SaveAsync(secretKeyEntity);
+            return Ok(token);
+        }
+
+        [HttpPost("{token}/release")]
+        [Consumes("text/plain")]
+        public async Task<IActionResult> PostTokenRelease(string token)
+        {
+            var tokenInfo = await tokenStore.FindInfoAsync(token);
+            if (tokenInfo == null)
+            {
+                return BadRequest("InvalidToken");
+            }
+
+            await tokenStore.UnregisterAsync(token);
+            var secretKey = await repository.FindBySecretKeyAsync(tokenInfo.SecretKey);
+            if (secretKey != null)
+            {
+                secretKey.ReleaseToken();
+                await repository.SaveAsync(secretKey);
+            }
             return Ok(token);
         }
     }

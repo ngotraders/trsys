@@ -7,6 +7,7 @@ namespace Trsys.Web.Authentication
     {
         Task<string> RegisterTokenAsync(string secretKey, SecretKeyType keyType);
         Task<SecretTokenInfo> FindInfoAsync(string token);
+        Task<SecretTokenInfo> FindInfoUpdatingAccessTimeAsync(string token);
         Task UnregisterAsync(string token);
     }
 }

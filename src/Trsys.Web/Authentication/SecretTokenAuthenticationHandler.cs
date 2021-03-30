@@ -21,7 +21,7 @@ namespace Trsys.Web.Authentication
             }
 
             var store = Options.Store;
-            var tokenInfo = await store.FindInfoAsync(token);
+            var tokenInfo = await store.FindInfoUpdatingAccessTimeAsync(token);
             if (tokenInfo == null)
             {
                 return AuthenticateResult.Fail("unknown token.");

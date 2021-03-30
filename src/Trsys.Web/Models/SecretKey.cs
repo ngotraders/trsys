@@ -38,5 +38,10 @@ namespace Trsys.Web.Models
         {
             ValidToken = token;
         }
+
+        public void ReleaseToken()
+        {
+            ValidToken = null;
+        }
     }
 }
