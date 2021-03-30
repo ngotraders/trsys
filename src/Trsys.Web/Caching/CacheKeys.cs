@@ -1,4 +1,4 @@
-namespace Trsys.Web
+namespace Trsys.Web.Caching
 {
     static class CacheKeys
     {

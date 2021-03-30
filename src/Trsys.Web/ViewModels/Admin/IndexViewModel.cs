@@ -11,5 +11,6 @@ namespace Trsys.Web.ViewModels.Admin
         public SecretKeyType? KeyType { get; set; }
 
         public List<SecretKey> SecretKeys { get; set; }
+        public string CacheOrderText { get; internal set; }
     }
 }

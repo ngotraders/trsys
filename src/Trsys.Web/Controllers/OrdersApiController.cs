@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Trsys.Web.Caching;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Controllers
@@ -33,12 +34,7 @@ namespace Trsys.Web.Controllers
             if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
             {
                 var etags = HttpContext.Request.Headers["If-None-Match"];
-                if (!etags.Any())
-                {
-                    HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
-                    return Ok(cacheEntry.Text);
-                }
-                else
+                if (etags.Any())
                 {
                     foreach (var etag in etags)
                     {
@@ -48,6 +44,8 @@ namespace Trsys.Web.Controllers
                         }
                     }
                 }
+                HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
+                return Ok(cacheEntry.Text);
             }
 
             var orders = await repository.All.ToListAsync();
@@ -102,12 +100,6 @@ namespace Trsys.Web.Controllers
             var str = BitConverter.ToString(hash);
             str = str.Replace("-", string.Empty);
             return str;
-        }
-
-        private class OrdersCache
-        {
-            public string Hash { get; set; }
-            public string Text { get; set; }
         }
     }
 }

@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
+using Trsys.Web.Caching;
 using Trsys.Web.Models;
 using Trsys.Web.ViewModels.Admin;
 
@@ -16,11 +18,13 @@ namespace Trsys.Web.Controllers
     {
         private readonly ISecretKeyRepository secretKeyRepository;
         private readonly ISecretTokenStore tokenStore;
+        private readonly IMemoryCache cache;
 
-        public AdminController(ISecretKeyRepository secretKeyRepository, ISecretTokenStore tokenStore)
+        public AdminController(ISecretKeyRepository secretKeyRepository, ISecretTokenStore tokenStore, IMemoryCache cache)
         {
             this.secretKeyRepository = secretKeyRepository;
             this.tokenStore = tokenStore;
+            this.cache = cache;
         }
 
         [HttpGet]
@@ -32,6 +36,11 @@ namespace Trsys.Web.Controllers
             if (TempData["KeyType"] != null)
             {
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
+            }
+
+            if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
+            {
+                model.CacheOrderText = cacheEntry.Text;
             }
 
             model.SecretKeys = await secretKeyRepository

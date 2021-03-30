@@ -19,6 +19,12 @@
     </div>
 }
 
+@if (!string.IsNullOrEmpty(Model.CacheOrderText))
+{
+    <h1 class="mb-3">注文キャッシュ</h1>
+    <p class="mb-4">@Model.CacheOrderText</p>
+}
+
 <h1 class="mb-3">シークレットキー一覧</h1>
 
 <form method="post" action="/admin/keys/new">
@@ -27,8 +33,8 @@
             <select name="KeyType">
                 <option value="">---</option>
                 @foreach (var type in Enum.GetValues(typeof(SecretKeyType))
-                  .OfType<SecretKeyType>()
-                  .Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                   .OfType<SecretKeyType>()
+                   .Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
                 {
                     if (Model.KeyType.HasValue && Model.KeyType.Value == type)
                     {
