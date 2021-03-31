@@ -82,6 +82,7 @@
                     @for (var i = 0; i < Model.SecretKeys.Count; i++)
                     {
                         var key = Model.SecretKeys[i];
+                        var escapedKey = Uri.EscapeDataString(Uri.EscapeDataString(key.Key));
                         <tr>
                             <td>
                                 @if (key.IsValid)
@@ -116,24 +117,24 @@
                             <td>
                                 <div class="d-flex justify-content-between">
                                     <div class="flex-grow-1 pr-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/update">変更</button>
+                                        <button class="d-block w-full" formaction="/admin/keys/@escapedKey/update">変更</button>
                                     </div>
                                     @if (key.IsValid)
                                     {
                                         <div class="flex-grow-1 pr-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/revoke">無効化</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/revoke">無効化</button>
                                         </div>
                                         <div class="flex-grow-1 pl-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/delete" disabled>削除</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/delete" disabled>削除</button>
                                         </div>
                                     }
                                     else
                                     {
                                         <div class="flex-grow-1 pr-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/approve">有効化</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve">有効化</button>
                                         </div>
                                         <div class="flex-grow-1 pl-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/delete">削除</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/delete">削除</button>
                                         </div>
                                     }
                                 </div>

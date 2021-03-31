@@ -81,7 +81,7 @@ namespace Trsys.Web.Controllers
                         TicketNo = int.Parse(ticketNo),
                         Symbol = symbol,
                         OrderType = orderType,
-                        VolumeCreditRate = decimal.Parse(volumeCreditRate),
+                        VolumeCreditRate = decimal.Parse(volumeCreditRate.TrimEnd('0')),
                     });
                 }
             }

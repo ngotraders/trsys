@@ -89,6 +89,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/update")]
         public async Task<IActionResult> PostKeyUpdate(string id, IndexViewModel model)
         {
+            id = System.Uri.UnescapeDataString(id);
             var secretKey = await secretKeyRepository
                 .FindBySecretKeyAsync(id);
             if (secretKey == null)
@@ -122,6 +123,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/approve")]
         public async Task<IActionResult> PostKeyApprove(string id, IndexViewModel model)
         {
+            id = System.Uri.UnescapeDataString(id);
             var secretKey = await secretKeyRepository
                 .FindBySecretKeyAsync(id);
             if (secretKey == null || secretKey.IsValid)
@@ -140,6 +142,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/revoke")]
         public async Task<IActionResult> PostKeyRevoke(string id, IndexViewModel model)
         {
+            id = System.Uri.UnescapeDataString(id);
             var secretKey = await secretKeyRepository
                 .FindBySecretKeyAsync(id);
             if (secretKey == null || !secretKey.IsValid)
@@ -165,6 +168,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/delete")]
         public async Task<IActionResult> PostKeyDelete(string id, IndexViewModel model)
         {
+            id = System.Uri.UnescapeDataString(id);
             var secretKey = await secretKeyRepository
                 .FindBySecretKeyAsync(id);
             if (secretKey == null || secretKey.IsValid)
