@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Caching;
@@ -20,9 +17,9 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly IOrderRepository repository;
-        private readonly IMemoryCache cache;
+        private readonly OrdersCacheManager cache;
 
-        public OrdersApiController(IOrderRepository repository, IMemoryCache cache)
+        public OrdersApiController(IOrderRepository repository, OrdersCacheManager cache)
         {
             this.repository = repository;
             this.cache = cache;
@@ -33,7 +30,7 @@ namespace Trsys.Web.Controllers
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
-            if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
+            if (cache.TryGetCache(out var cacheEntry))
             {
                 var etags = HttpContext.Request.Headers["If-None-Match"];
                 if (etags.Any())
@@ -50,7 +47,7 @@ namespace Trsys.Web.Controllers
             else
             {
                 var orders = await repository.All.ToListAsync();
-                cacheEntry = RegisterCache(orders);
+                cacheEntry = cache.UpdateOrdersCache(orders);
             }
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
@@ -62,10 +59,9 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostOrder([FromBody] string text)
         {
             var orders = new List<Order>();
-            var requestText = text.Trim(Convert.ToChar(0));
-            if (!string.IsNullOrEmpty(requestText))
+            if (!string.IsNullOrEmpty(text))
             {
-                foreach (var item in requestText.Split("@"))
+                foreach (var item in text.Split("@"))
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?"))
                     {
@@ -81,35 +77,22 @@ namespace Trsys.Web.Controllers
                         TicketNo = int.Parse(ticketNo),
                         Symbol = symbol,
                         OrderType = orderType,
-                        AccountBalanceLotsRate = decimal.Parse(volumeCreditRate.TrimEnd('0')),
+                        AccountBalanceLotsRate = decimal.Parse(volumeCreditRate).Normalize(),
                     });
                 }
             }
 
             await repository.SaveOrdersAsync(orders);
-            RegisterCache(orders);
+            cache.UpdateOrdersCache(orders);
             return Ok();
         }
+    }
 
-        private OrdersCache RegisterCache(List<Order> orders)
+    static class DecimalExtension
+    {
+        public static decimal Normalize(this decimal value)
         {
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.AccountBalanceLotsRate}"));
-            var ordersCache = new OrdersCache
-            {
-                Hash = CalculateHash(responseText),
-                Text = responseText,
-            };
-            cache.Set(CacheKeys.ORDERS_CACHE, ordersCache);
-            return ordersCache;
-        }
-
-        private string CalculateHash(string responseText)
-        {
-            var sha1 = System.Security.Cryptography.SHA1.Create();
-            var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(responseText));
-            var str = BitConverter.ToString(hash);
-            str = str.Replace("-", string.Empty);
-            return str;
+            return value / 1.000000000000000000000000000000000m;
         }
     }
 }

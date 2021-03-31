@@ -19,15 +19,18 @@
     </div>
 }
 
-@if (!string.IsNullOrEmpty(Model.CacheOrderText))
-{
-    <h1 class="mb-3">注文キャッシュ</h1>
-    <p class="mb-4">@Model.CacheOrderText</p>
-}
-
-<h1 class="mb-3">シークレットキー一覧</h1>
-
 <form method="post" action="/admin/keys/new">
+    @if (!string.IsNullOrEmpty(Model.CacheOrderText))
+    {
+        <h1 class="mb-3">注文キャッシュ</h1>
+        <div class="mb-4">
+            <p>@Model.CacheOrderText</p>
+            <button formaction="/admin/orders/clear">クリア</button>
+        </div>
+    }
+
+    <h1 class="mb-3">シークレットキー一覧</h1>
+
     <div class="mb-4 d-flex align-items-end">
         <div class="pr-2">
             <label>種類</label>

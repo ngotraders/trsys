@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Trsys.Web.Authentication;
+using Trsys.Web.Caching;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
@@ -50,6 +51,7 @@ namespace Trsys.Web
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
+            services.AddTransient<OrdersCacheManager>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
@@ -16,15 +16,21 @@ namespace Trsys.Web.Controllers
     [Authorize(Roles = "Administrator")]
     public class AdminController : Controller
     {
+        private readonly IOrderRepository orderRepository;
+        private readonly OrdersCacheManager cacheManager;
         private readonly ISecretKeyRepository secretKeyRepository;
         private readonly ISecretTokenStore tokenStore;
-        private readonly IMemoryCache cache;
 
-        public AdminController(ISecretKeyRepository secretKeyRepository, ISecretTokenStore tokenStore, IMemoryCache cache)
+        public AdminController(
+            IOrderRepository orderRepository,
+            OrdersCacheManager cacheManager,
+            ISecretKeyRepository secretKeyRepository, 
+            ISecretTokenStore tokenStore)
         {
+            this.orderRepository = orderRepository;
+            this.cacheManager = cacheManager;
             this.secretKeyRepository = secretKeyRepository;
             this.tokenStore = tokenStore;
-            this.cache = cache;
         }
 
         [HttpGet]
@@ -36,7 +42,7 @@ namespace Trsys.Web.Controllers
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
             }
 
-            if (cache.TryGetValue(CacheKeys.ORDERS_CACHE, out OrdersCache cacheEntry))
+            if (cacheManager.TryGetCache(out OrdersCache cacheEntry))
             {
                 model.CacheOrderText = cacheEntry.Text;
             }
@@ -47,6 +53,15 @@ namespace Trsys.Web.Controllers
                 .ThenBy(e => e.Id)
                 .ToListAsync();
             return View(model);
+        }
+
+        [HttpPost("orders/clear")]
+        public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
+        {
+            var orders = new List<Order>();
+            await orderRepository.SaveOrdersAsync(orders);
+            cacheManager.UpdateOrdersCache(orders);
+            return SaveModelAndRedirectToIndex(model);
         }
 
         [HttpPost("keys/new")]
