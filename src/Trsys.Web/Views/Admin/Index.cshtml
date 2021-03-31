@@ -28,13 +28,12 @@
 <h1 class="mb-3">シークレットキー一覧</h1>
 
 <form method="post" action="/admin/keys/new">
-    <div class="mb-4 d-flex">
+    <div class="mb-4 d-flex align-items-end">
         <div class="pr-2">
+            <label>種類</label>
             <select name="KeyType">
                 <option value="">---</option>
-                @foreach (var type in Enum.GetValues(typeof(SecretKeyType))
-              .OfType<SecretKeyType>()
-              .Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                @foreach (var type in Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
                 {
                     if (Model.KeyType.HasValue && Model.KeyType.Value == type)
                     {
@@ -47,56 +46,103 @@
                 }
             </select>
         </div>
+        <div class="pr-2">
+            <label>シークレットキー</label>
+            <input type="text" name="Key" value="@Model.Key" />
+        </div>
+        <div class="pr-2">
+            <label>説明</label>
+            <input type="text" name="Description" value="@Model.Description" />
+        </div>
         <div>
             <button class="d-block">シークレットキー生成</button>
         </div>
     </div>
     @if (Model.SecretKeys.Count > 0)
     {
-        <table>
-            <thead>
-                <tr>
-                    <th>種類</th>
-                    <th>シークレットキー</th>
-                    <th>状態</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var key in Model.SecretKeys)
-                {
+        <div style="overflow: auto; min-width: 60em">
+            <table style="table-layout: fixed">
+                <colgroup>
+                    <col style="width: 12em" />
+                    <col />
+                    <col />
+                    <col style="width: 4em" />
+                    <col style="width: 12em" />
+                </colgroup>
+                <thead>
                     <tr>
-                        <td>@key.KeyType</td>
-                        <td class="secret-key">@key.Key</td>
-                        <td>@(key.IsValid ? "有効" : "無効")</td>
-                        <td>
-                            @if (key.IsValid)
-                            {
-                                <div class="d-flex justify-content-between">
-                                    <div class="flex-grow-1 pr-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@(key.Key)/revoke">無効化</button>
-                                    </div>
-                                    <div class="flex-grow-1 pl-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@(key.Key)/delete" disabled>削除</button>
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="d-flex justify-content-between">
-                                    <div class="flex-grow-1 pr-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@(key.Key)/approve">有効化</button>
-                                    </div>
-                                    <div class="flex-grow-1 pl-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@(key.Key)/delete">削除</button>
-                                    </div>
-                                </div>
-                            }
-                        </td>
+                        <th>種類</th>
+                        <th>シークレットキー</th>
+                        <th>説明</th>
+                        <th>状態</th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.SecretKeys.Count; i++)
+                    {
+                        var key = Model.SecretKeys[i];
+                        <tr>
+                            <td>
+                                @if (key.IsValid)
+                                {
+                                    @key.KeyType
+                                    <input type="hidden" name="SecretKeys[@i].KeyType" value="@key.KeyType" />
+                                }
+                                else
+                                {
+                                    <select name="SecretKeys[@i].KeyType">
+                                        <option value="">---</option>
+                                        @foreach (var type in Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                                        {
+                                            if (key.KeyType.HasValue && key.KeyType.Value == type)
+                                            {
+                                                <option value="@type" selected>@type</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@type">@type</option>
+                                            }
+                                        }
+                                    </select>
+                                }
+                            </td>
+                            <td>
+                                <span class="secret-key">@key.Key</span>
+                                <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
+                            </td>
+                            <td class="secret-key"><input type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
+                            <td>@(key.IsValid ? "有効" : "無効")</td>
+                            <td>
+                                <div class="d-flex justify-content-between">
+                                    <div class="flex-grow-1 pr-1">
+                                        <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/update">変更</button>
+                                    </div>
+                                    @if (key.IsValid)
+                                    {
+                                        <div class="flex-grow-1 pr-1">
+                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/revoke">無効化</button>
+                                        </div>
+                                        <div class="flex-grow-1 pl-1">
+                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/delete" disabled>削除</button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex-grow-1 pr-1">
+                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/approve">有効化</button>
+                                        </div>
+                                        <div class="flex-grow-1 pl-1">
+                                            <button class="d-block w-full" formaction="/admin/keys/@(Uri.EscapeDataString(key.Key))/delete">削除</button>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
     else
     {

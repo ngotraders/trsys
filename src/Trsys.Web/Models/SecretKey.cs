@@ -12,7 +12,7 @@ namespace Trsys.Web.Models
     public class SecretKey
     {
         public int Id { get; set; }
-        public SecretKeyType KeyType { get; set; }
+        public SecretKeyType? KeyType { get; set; }
         public string Key { get; set; }
         public string Description { get; set; }
 

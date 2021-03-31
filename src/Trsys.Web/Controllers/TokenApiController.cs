@@ -22,9 +22,22 @@ namespace Trsys.Web.Controllers
         [Consumes("text/plain")]
         public async Task<IActionResult> PostToken([FromBody] string secretKey)
         {
-            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
-            if (secretKeyEntity == null || !secretKeyEntity.IsValid)
+            if (string.IsNullOrEmpty(secretKey))
             {
+                return BadRequest("InvalidSecretKey");
+            }
+
+            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
+            if (secretKeyEntity == null || !secretKeyEntity.IsValid || !secretKeyEntity.KeyType.HasValue)
+            {
+                if (secretKeyEntity == null)
+                {
+                    secretKeyEntity = new SecretKey()
+                    {
+                        Key = secretKey,
+                    };
+                    await repository.SaveAsync(secretKeyEntity);
+                }
                 return BadRequest("InvalidSecretKey");
             }
 
@@ -41,7 +54,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            var token = await tokenStore.RegisterTokenAsync(secretKeyEntity.Key, secretKeyEntity.KeyType);
+            var token = await tokenStore.RegisterTokenAsync(secretKeyEntity.Key, secretKeyEntity.KeyType.Value);
             secretKeyEntity.UpdateToken(token);
             await repository.SaveAsync(secretKeyEntity);
             return Ok(token);

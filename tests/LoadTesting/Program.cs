@@ -132,16 +132,21 @@ namespace LoadTesting
             var secretKeys = new List<string>();
             var adminRes = await client.GetAsync("/admin");
             var html = await adminRes.Content.ReadAsStringAsync();
-            var index = html.IndexOf("<table>");
+            var index = html.IndexOf("<table");
             if (index >= 0)
             {
-                index = html.IndexOf("<td class=\"secret-key\"", index);
+                index = html.IndexOf("<span class=\"secret-key\"", index);
             }
             while (index >= 0)
             {
-                var secretKey = html.Substring(index + 23, 36);
+                var endIndex = html.IndexOf("</span>", index);
+                if (endIndex < 0)
+                {
+                    break;
+                }
+                var secretKey = html.Substring(index + 25, endIndex - (index + 25));
                 secretKeys.Add(secretKey);
-                index = html.IndexOf("<td class=\"secret-key\">", index + 1);
+                index = html.IndexOf("<span class=\"secret-key\">", index + 1);
             }
             return secretKeys;
         }

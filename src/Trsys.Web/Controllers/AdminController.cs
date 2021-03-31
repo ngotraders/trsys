@@ -42,7 +42,8 @@ namespace Trsys.Web.Controllers
             }
             model.SecretKeys = await secretKeyRepository
                 .All
-                .OrderBy(e => e.KeyType)
+                .OrderBy(e => e.IsValid)
+                .ThenBy(e => e.KeyType)
                 .ThenBy(e => e.Id)
                 .ToListAsync();
             return View(model);
@@ -56,10 +57,65 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "キーの種類が指定されていません。";
                 return SaveModelAndRedirectToIndex(model);
             }
-            var newSecretKey = await secretKeyRepository
-                .CreateNewSecretKeyAsync(model.KeyType.Value);
+
+            SecretKey newSecretKey;
+            if (string.IsNullOrEmpty(model.Key))
+            {
+                newSecretKey = await secretKeyRepository.CreateNewSecretKeyAsync(model.KeyType.Value);
+            }
+            else
+            {
+                newSecretKey = await secretKeyRepository.FindBySecretKeyAsync(model.Key);
+                if (newSecretKey != null)
+                {
+                    model.ErrorMessage = "既に存在するキーです。";
+                    return SaveModelAndRedirectToIndex(model);
+                }
+                newSecretKey = new SecretKey()
+                {
+                    Key = model.Key,
+                    KeyType = model.KeyType,
+                    Description = model.Description,
+                };
+            }
             await secretKeyRepository.SaveAsync(newSecretKey);
             model.SuccessMessage = $"シークレットキー: {newSecretKey.Key} を作成しました。";
+            model.KeyType = null;
+            model.Key = null;
+            model.Description = null;
+            return SaveModelAndRedirectToIndex(model);
+        }
+
+        [HttpPost("keys/{id}/update")]
+        public async Task<IActionResult> PostKeyUpdate(string id, IndexViewModel model)
+        {
+            var secretKey = await secretKeyRepository
+                .FindBySecretKeyAsync(id);
+            if (secretKey == null)
+            {
+                model.ErrorMessage = $"シークレットキー: {id} を編集できません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+
+            var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Key == id);
+            if (updateRequest == null || !updateRequest.KeyType.HasValue)
+            {
+                model.ErrorMessage = $"シークレットキー: {id} を編集できません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+
+            if (secretKey.IsValid && updateRequest.KeyType.Value != secretKey.KeyType.Value)
+            {
+                model.ErrorMessage = $"シークレットキー: {id} を編集できません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+
+            secretKey.KeyType = updateRequest.KeyType;
+            secretKey.Description = updateRequest.Description;
+
+            await secretKeyRepository.SaveAsync(secretKey);
+
+            model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
             return SaveModelAndRedirectToIndex(model);
         }
 
