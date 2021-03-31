@@ -14,8 +14,6 @@ int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
 
-input string SecretKey = NULL;
-input double OrderVolume = 1;
 input int Slippage = 10;
 
 //+------------------------------------------------------------------+
@@ -56,6 +54,7 @@ void OnTimer(){
    }
    
    if (Token == NULL) {
+      string SecretKey = GenerateSecretKey();
       int skResult = PostSecretKey(SecretKey, Token);
       if (PERFORMANCE) {
          // Timer
@@ -91,6 +90,7 @@ void OnTimer(){
       int OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
+      double OrderData_ab_l_rate[100];
    
       while( Data != "" )
       {
@@ -109,7 +109,7 @@ void OnTimer(){
          int splittedCount;
          string splittedValues[];
          splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
-         if (splittedCount != 3) {
+         if (splittedCount != 4) {
             Print("Invalid Data: ", RecievedData);
             return;
          }
@@ -118,6 +118,7 @@ void OnTimer(){
          OrderData_ticket[i] = (int) StringToInteger(splittedValues[0]);
          OrderData_symbol[i] = splittedValues[1];
          OrderData_type[i] = splittedValues[2];
+         OrderData_ab_l_rate[i] = StringToDouble(splittedValues[3]);
          OrderCount++;
       }
       
@@ -154,17 +155,18 @@ void OnTimer(){
             continue;
          }
          string Symbol_ = FindSymbol(OrderData_symbol[i]);
+         double orderLots = CalculateVolume(OrderData_ab_l_rate[i]);
          if (Symbol_ == NULL) {
             continue;
          }
          if (DEBUG) {
-            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i]);
+            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
          }
          int OrderResult;
          if (OrderData_type[i] == "0") {
-            OrderResult = OrderSend(Symbol_, OP_BUY, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_BUY, orderLots, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
          } else if (OrderData_type[i] == "1") {
-            OrderResult = OrderSend(Symbol_, OP_SELL, OrderVolume, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            OrderResult = OrderSend(Symbol_, OP_SELL, orderLots, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
          } else {
             continue;
          }
@@ -186,10 +188,14 @@ void OnTimer(){
 }
 //+------------------------------------------------------------------+
 
+string GenerateSecretKey() {
+   return AccountCompany() + "/" + IntegerToString(AccountNumber()) + "/" + IntegerToString(IsDemo());
+}
+
 int PostSecretKey(string secretKey, string &token)
 {
    int timeout = 5000;
-   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   string request_headers = "Content-Type: text/plain; charset=UTF-8;";
    char request_data[];
    string result_headers;
    char result_data[];
@@ -242,7 +248,7 @@ int GetOrders(string &token, string &response)
    if (request_headers != NULL) {
       request_headers += "\r\n";
    }
-   request_headers += "X-Secret-Token: " + token;
+   request_headers += "Version: 20210331\r\nX-Secret-Token: " + token;
 
    int res = WebRequest("GET", OrderEndpoint, request_headers, timeout, request_data, result_data, result_headers);
    if(res==-1) {
@@ -347,4 +353,9 @@ bool IsOrderExists(int MagicNo) {
       }
    } 
    return false;
+}
+
+double CalculateVolume(double accountBalanceLotsRate) {
+   double volume = 1.0 / (accountBalanceLotsRate / AccountBalance());
+   return MathRound(volume*100)/100;
 }

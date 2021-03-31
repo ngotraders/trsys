@@ -1,6 +1,6 @@
 #property strict
  
- string Endpoint = "https://copy-trading-system.azurewebsites.net";
+string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string TokenEndpoint = Endpoint + "/api/token";
 string OrderEndpoint = Endpoint + "/api/orders";
 string SentData = NULL;
@@ -8,7 +8,6 @@ string SentData = NULL;
 int LastErrorCode = 0;
 int PreviousRes = -1;
 
-input string SecretKey = NULL;
 string Token = NULL;
  
 //+------------------------------------------------------------------+
@@ -42,6 +41,7 @@ void OnTick()
 void OnTimer(){
    
    if (Token == NULL) {
+      string SecretKey = GenerateSecretKey();
       int skResult = PostSecretKey(SecretKey, Token);
       if (skResult == -1) {
          return;
@@ -61,6 +61,10 @@ void OnTimer(){
    }
 }
 //+------------------------------------------------------------------+
+
+string GenerateSecretKey() {
+   return AccountCompany() + "/" + IntegerToString(AccountNumber()) + "/" + IntegerToString(IsDemo());
+}
 
 int PostSecretKey(string secretKey, string &token)
 {
@@ -120,7 +124,7 @@ string TradingData()
          }
          //only forex
          PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
-         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType());
+         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType())+":"+DoubleToString(AccountBalance()/OrderLots());
       } 
    }
    return(PreTradingData);
@@ -129,7 +133,7 @@ string TradingData()
 int PostOrders(string &token, string orders)
 {
    int timeout = 5000;
-   string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Secret-Token: " + token;
+   string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + token;
    char request_data[];
    string response_headers = NULL;
    char response_data[];
