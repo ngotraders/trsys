@@ -81,7 +81,7 @@ namespace Trsys.Web.Controllers
                         TicketNo = int.Parse(ticketNo),
                         Symbol = symbol,
                         OrderType = orderType,
-                        VolumeCreditRate = decimal.Parse(volumeCreditRate.TrimEnd('0')),
+                        AccountBalanceLotsRate = decimal.Parse(volumeCreditRate.TrimEnd('0')),
                     });
                 }
             }
@@ -93,7 +93,7 @@ namespace Trsys.Web.Controllers
 
         private OrdersCache RegisterCache(List<Order> orders)
         {
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.VolumeCreditRate}"));
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.AccountBalanceLotsRate}"));
             var ordersCache = new OrdersCache
             {
                 Hash = CalculateHash(responseText),

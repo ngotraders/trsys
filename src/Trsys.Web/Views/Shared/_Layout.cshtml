@@ -12,13 +12,23 @@
             box-sizing: border-box;
         }
 
-        input, button, select {
+        input, button, select, .btn {
+            font-size: 1rem;
             min-height: 2rem;
             border-radius: 0.25rem 0.25rem;
             padding: 0.1rem 0.5rem;
         }
 
-            input:focus, button:focus, select:focus {
+        button, .btn {
+            font-size: 1rem;
+            line-height: 1rem;
+            border: solid 2px #efefef;
+            color: black;
+            background: #efefef;
+            text-decoration: none;
+        }
+
+            input:focus, button:focus, select:focus, .btn:focus {
                 outline-offset: 1px;
                 outline: 1px solid #3ebeff;
             }
@@ -193,13 +203,18 @@
 </head>
 <body>
     <hearder class="d-flex justify-content-between align-items-center">
-        <h1>Trsys</h1>
+        <h1><a href="/" style="color: white; text-decoration: none">Trsys</a></h1>
         @if (User.Identity.IsAuthenticated)
         {
-            <div>
-                <form method="post" action="/logout">
-                    <button>ログアウト</button>
-                </form>
+            <div class="d-flex align-items-center">
+                <div class="pr-1">
+                    <a href="/changePassword" class="btn">パスワード変更</a>
+                </div>
+                <div class="pl-1">
+                    <form method="post" action="/logout">
+                        <button>ログアウト</button>
+                    </form>
+                </div>
             </div>
         }
     </hearder>

@@ -4,20 +4,29 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Trsys.Web.Models;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers
 {
     [Route("/")]
+    [Authorize]
     public class HomeController : Controller
     {
-        [Authorize]
+        private readonly IUserRepository repository;
+
+        public HomeController(IUserRepository repository)
+        {
+            this.repository = repository;
+        }
+
         public IActionResult Index()
         {
             return RedirectToAction("Index", "Admin");
         }
 
         [HttpGet("login")]
+        [AllowAnonymous]
         public IActionResult Login(string returnUrl)
         {
             if (User.Identity.IsAuthenticated)
@@ -29,6 +38,7 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> LoginExecute(LoginViewModel model, string returnUrl)
         {
             if (!ModelState.IsValid)
@@ -36,7 +46,9 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "入力に誤りがあります。";
                 return View("Login", model);
             }
-            if (model.Username != "admin" || model.Password != "P@ssw0rd")
+
+            var user = await repository.FindByUsernameAsync(model.Username);
+            if (user == null || user.Password != model.Password)
             {
                 model.ErrorMessage = "ユーザー名またはパスワードが違います。";
                 return View("Login", model);
@@ -44,13 +56,41 @@ namespace Trsys.Web.Controllers
 
             var principal = new ClaimsPrincipal();
             principal.AddIdentity(new ClaimsIdentity(new[] {
-                new Claim(ClaimTypes.NameIdentifier, "admin"),
-                new Claim(ClaimTypes.Name, "Administrator"),
-                new Claim(ClaimTypes.Role, "Administrator"),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role),
             }, CookieAuthenticationDefaults.AuthenticationScheme));
 
             await HttpContext.SignInAsync(principal);
             return Redirect(returnUrl ?? "/");
+        }
+
+        [HttpGet("changePassword")]
+        public IActionResult ChangePassword()
+        {
+            var model = new ChangePasswordViewModel();
+            return View(model);
+        }
+
+        [HttpPost("changePassword")]
+        public async Task<IActionResult> ChangePasswordExecute(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.ErrorMessage = "入力に誤りがあります。";
+                return View("ChangePassword", model);
+            }
+            if (model.Password != model.PasswordConfirm)
+            {
+                model.ErrorMessage = "確認用パスワードが違います。";
+                return View("ChangePassword", model);
+            }
+
+            var user = await repository.FindByUsernameAsync(User.Identity.Name);
+            user.Password = model.Password;
+            await repository.SaveAsync(user);
+
+            return Redirect("/");
         }
 
         [HttpPost("logout")]

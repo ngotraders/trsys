@@ -48,7 +48,7 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    VolumeCreditRate = 1,
+                    AccountBalanceLotsRate = 1,
                 }
             });
 
@@ -71,13 +71,13 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    VolumeCreditRate = 1.2m,
+                    AccountBalanceLotsRate = 1.2m,
                 },
                 new Order() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.SELL,
-                    VolumeCreditRate = 0,
+                    AccountBalanceLotsRate = 0,
                 }
             });
 
@@ -100,13 +100,13 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    VolumeCreditRate = 1,
+                    AccountBalanceLotsRate = 1,
                 },
                 new Order() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.SELL,
-                    VolumeCreditRate = 180,
+                    AccountBalanceLotsRate = 180,
                 }
             });
 

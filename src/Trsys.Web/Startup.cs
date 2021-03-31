@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Linq;
 using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
@@ -44,6 +45,7 @@ namespace Trsys.Web
             {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
@@ -57,6 +59,16 @@ namespace Trsys.Web
                 using (var db = scope.ServiceProvider.GetRequiredService<TrsysContext>())
                 {
                     db.Database.EnsureCreated();
+                    if (!db.Users.Any())
+                    {
+                        db.Users.Add(new User()
+                        {
+                            Username = "admin",
+                            Password = "P@ssw0rd",
+                            Role = "Administrator",
+                        });
+                        db.SaveChanges();
+                    }
                 }
             }
 

@@ -12,6 +12,6 @@
         public int TicketNo { get; set; }
         public string Symbol { get; set; }
         public OrderType OrderType { get; set; }
-        public decimal VolumeCreditRate { get; set; }
+        public decimal AccountBalanceLotsRate { get; set; }
     }
 }
