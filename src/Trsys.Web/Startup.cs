@@ -49,6 +49,7 @@ namespace Trsys.Web
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
+            services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,10 +62,11 @@ namespace Trsys.Web
                     db.Database.EnsureCreated();
                     if (!db.Users.Any())
                     {
+                        var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
                         db.Users.Add(new User()
                         {
                             Username = "admin",
-                            Password = "P@ssw0rd",
+                            Password = passwordHasher.Hash("P@ssw0rd"),
                             Role = "Administrator",
                         });
                         db.SaveChanges();

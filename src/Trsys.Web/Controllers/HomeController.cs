@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models;
 using Trsys.Web.ViewModels.Home;
 
@@ -14,10 +15,12 @@ namespace Trsys.Web.Controllers
     public class HomeController : Controller
     {
         private readonly IUserRepository repository;
+        private readonly PasswordHasher passwordHasher;
 
-        public HomeController(IUserRepository repository)
+        public HomeController(IUserRepository repository, PasswordHasher passwordHasher)
         {
             this.repository = repository;
+            this.passwordHasher = passwordHasher;
         }
 
         public IActionResult Index()
@@ -48,7 +51,7 @@ namespace Trsys.Web.Controllers
             }
 
             var user = await repository.FindByUsernameAsync(model.Username);
-            if (user == null || user.Password != model.Password)
+            if (user == null || user.Password != passwordHasher.Hash(model.Password))
             {
                 model.ErrorMessage = "ユーザー名またはパスワードが違います。";
                 return View("Login", model);
@@ -80,14 +83,14 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "入力に誤りがあります。";
                 return View("ChangePassword", model);
             }
-            if (model.Password != model.PasswordConfirm)
+            if (model.NewPassword != model.NewPasswordConfirm)
             {
                 model.ErrorMessage = "確認用パスワードが違います。";
                 return View("ChangePassword", model);
             }
 
             var user = await repository.FindByUsernameAsync(User.Identity.Name);
-            user.Password = model.Password;
+            user.Password = passwordHasher.Hash(model.NewPassword);
             await repository.SaveAsync(user);
 
             return Redirect("/");

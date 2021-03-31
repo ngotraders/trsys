@@ -7,8 +7,8 @@ namespace Trsys.Web.ViewModels.Home
         public string ErrorMessage { get; set; }
 
         [Required]
-        public string Password { get; set; }
+        public string NewPassword { get; set; }
         [Required]
-        public string PasswordConfirm { get; set; }
+        public string NewPasswordConfirm { get; set; }
     }
 }
