@@ -1,5 +1,5 @@
 #property strict
- 
+
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string TokenEndpoint = Endpoint + "/api/token";
 string OrderEndpoint = Endpoint + "/api/orders";
@@ -26,6 +26,9 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    EventKillTimer();
+   if (Token != NULL) {
+      PostTokenRelease(Token);
+   }
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -105,6 +108,33 @@ int PostSecretKey(string secretKey, string &token)
    }
 
    token = (CharArrayToString(result_data));
+   return res;
+}
+
+int PostTokenRelease(string token)
+{
+   int timeout = 5000;
+   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   char request_data[];
+   string result_headers;
+   char result_data[];
+
+   int res = WebRequest("POST", TokenEndpoint + "/" + token + "/release", request_headers, timeout, request_data, result_data, result_headers);
+   if(res==-1) {
+      int error_code = GetLastError();
+      LogWebRequestError("PostTokenRelease", error_code);
+      return -1;
+   }
+
+   if(res == 200) {
+      Print("PostTokenRelease: OK");
+   } else {
+      Print("PostTokenRelease: Not OK, StatusCode = ", res);
+   }
+
+   if(res != 200) {
+      return -1;
+   }
    return res;
 }
 
