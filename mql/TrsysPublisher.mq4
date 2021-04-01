@@ -69,19 +69,58 @@ string GenerateSecretKey() {
    return AccountCompany() + "/" + IntegerToString(AccountNumber()) + "/" + IntegerToString(IsDemo());
 }
 
+string TradingData()
+{
+   string PreTradingData = "";
+   string PositionSymbol = "";
+   
+   for(int i=0;i<OrdersTotal();i++)
+   {  
+      if (!OrderSelect(i,SELECT_BY_POS)) continue;
+ 
+      if( OrderType() == OP_BUY || OrderType() == OP_SELL) 
+      { 
+         if (PreTradingData != "") {
+            PreTradingData += "@";
+         }
+         //only forex
+         PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
+         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType())+":"+DoubleToString(AccountBalance()/OrderLots());
+      } 
+   }
+   return(PreTradingData);
+}
+
+int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
+   int timeout = 5000;
+   char request_data[];
+   char response_data[];
+   
+   if (request_data_string != NULL || request_data_string != "") {
+      StringToCharArray(request_data_string, request_data, 0, WHOLE_ARRAY, CP_UTF8);
+   }
+   
+   int res = WebRequest(method, url, request_headers, timeout, request_data, response_data, response_headers);
+   if (res == -1) {
+      error_code = GetLastError();
+   } else {
+      error_code = 0;
+   }
+
+   response_data_string = CharArrayToString(response_data, 0, WHOLE_ARRAY, CP_UTF8);
+   return res;
+}
+
 int PostSecretKey(string secretKey, string &token)
 {
-   int timeout = 5000;
    string request_headers = "Content-Type: text/plain; charset=UTF-8";
-   char request_data[];
-   string result_headers;
-   char result_data[];
+   string request_data = secretKey;
+   string response_headers;
+   string response_data;
+   int error_code;
 
-   StringToCharArray(secretKey, request_data, 0, WHOLE_ARRAY, CP_UTF8);
-   
-   int res = WebRequest("POST", TokenEndpoint, request_headers, timeout, request_data, result_data, result_headers);
+   int res = WebRequestWrapper("POST", TokenEndpoint, request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
          LogWebRequestError("PostSecretKey", error_code);
@@ -107,21 +146,20 @@ int PostSecretKey(string secretKey, string &token)
       return -1;
    }
 
-   token = (CharArrayToString(result_data));
+   token = response_data;
    return res;
 }
 
 int PostTokenRelease(string token)
 {
-   int timeout = 5000;
    string request_headers = "Content-Type: text/plain; charset=UTF-8";
-   char request_data[];
-   string result_headers;
-   char result_data[];
+   string request_data;
+   string response_headers;
+   string response_data;
+   int error_code;
 
-   int res = WebRequest("POST", TokenEndpoint + "/" + token + "/release", request_headers, timeout, request_data, result_data, result_headers);
+   int res = WebRequestWrapper("POST", TokenEndpoint + "/" + token + "/release", request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       LogWebRequestError("PostTokenRelease", error_code);
       return -1;
    }
@@ -138,41 +176,16 @@ int PostTokenRelease(string token)
    return res;
 }
 
-string TradingData()
-{
-   string PreTradingData = "";
-   string PositionSymbol = "";
-   
-   for(int i=0;i<OrdersTotal();i++)
-   {  
-      if (!OrderSelect(i,SELECT_BY_POS)) continue;
- 
-      if( OrderType() == OP_BUY || OrderType() == OP_SELL) 
-      { 
-         if (PreTradingData != "") {
-            PreTradingData += "@";
-         }
-         //only forex
-         PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
-         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType())+":"+DoubleToString(AccountBalance()/OrderLots());
-      } 
-   }
-   return(PreTradingData);
-}
-
 int PostOrders(string &token, string orders)
 {
-   int timeout = 5000;
    string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + token;
-   char request_data[];
-   string response_headers = NULL;
-   char response_data[];
- 
-   StringToCharArray(orders, request_data, 0, WHOLE_ARRAY, CP_UTF8);
-   
-   int res = WebRequest("POST", OrderEndpoint, request_headers, timeout, request_data, response_data, response_headers);
+   string request_data = orders;
+   string response_headers;
+   string response_data;
+   int error_code;
+
+   int res = WebRequestWrapper("POST", OrderEndpoint, request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
          LogWebRequestError("PostOrders", error_code);

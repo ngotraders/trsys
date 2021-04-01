@@ -195,19 +195,63 @@ string GenerateSecretKey() {
    return AccountCompany() + "/" + IntegerToString(AccountNumber()) + "/" + IntegerToString(IsDemo());
 }
 
+string FindSymbol(string SymbolStr) {
+   for (int i = 0; i < SymbolsTotal(false); i++) {
+      if (StringFind(SymbolName(i, false), SymbolStr) >= 0) {
+         return SymbolName(i, false);
+      }
+   }
+   Print("No symbol found: ", SymbolStr);
+   return NULL;
+}
+
+bool IsOrderExists(int MagicNo) {
+   int TotalNumberOfOrders = OrdersTotal();
+   for(int i = TotalNumberOfOrders - 1; i >= 0 ; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS)) continue;
+      
+      if(OrderMagicNumber() == MagicNo) {
+         return true;
+      }
+   } 
+   return false;
+}
+
+double CalculateVolume(double accountBalanceLotsRate) {
+   double volume = 1.0 / (accountBalanceLotsRate / AccountBalance());
+   return MathRound(volume*100)/100;
+}
+
+int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
+   int timeout = 5000;
+   char request_data[];
+   char response_data[];
+   
+   if (request_data_string != NULL || request_data_string != "") {
+      StringToCharArray(request_data_string, request_data, 0, WHOLE_ARRAY, CP_UTF8);
+   }
+   
+   int res = WebRequest(method, url, request_headers, timeout, request_data, response_data, response_headers);
+   if (res == -1) {
+      error_code = GetLastError();
+   } else {
+      error_code = 0;
+   }
+
+   response_data_string = CharArrayToString(response_data, 0, WHOLE_ARRAY, CP_UTF8);
+   return res;
+}
+
 int PostSecretKey(string secretKey, string &token)
 {
-   int timeout = 5000;
-   string request_headers = "Content-Type: text/plain; charset=UTF-8;";
-   char request_data[];
-   string result_headers;
-   char result_data[];
+   string request_headers = "Content-Type: text/plain; charset=UTF-8";
+   string request_data = secretKey;
+   string response_headers;
+   string response_data;
+   int error_code;
 
-   StringToCharArray(secretKey, request_data, 0, WHOLE_ARRAY, CP_UTF8);
-   
-   int res = WebRequest("POST", TokenEndpoint, request_headers, timeout, request_data, result_data, result_headers);
+   int res = WebRequestWrapper("POST", TokenEndpoint, request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
          LogWebRequestError("PostSecretKey", error_code);
@@ -233,21 +277,20 @@ int PostSecretKey(string secretKey, string &token)
       return -1;
    }
 
-   token = (CharArrayToString(result_data));
+   token = response_data;
    return res;
 }
 
 int PostTokenRelease(string token)
 {
-   int timeout = 5000;
    string request_headers = "Content-Type: text/plain; charset=UTF-8";
-   char request_data[];
-   string result_headers;
-   char result_data[];
+   string request_data;
+   string response_headers;
+   string response_data;
+   int error_code;
 
-   int res = WebRequest("POST", TokenEndpoint + "/" + token + "/release", request_headers, timeout, request_data, result_data, result_headers);
+   int res = WebRequestWrapper("POST", TokenEndpoint + "/" + token + "/release", request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       LogWebRequestError("PostTokenRelease", error_code);
       return -1;
    }
@@ -266,23 +309,18 @@ int PostTokenRelease(string token)
 
 int GetOrders(string &token, string &response)
 {
-   int timeout = 5000;
-   string request_headers = NULL;
-   char request_data[];
-   string result_headers;
-   char result_data[];
+   string request_headers = "Version: 20210331\r\nX-Secret-Token: " + token;
+   string request_data;
+   string response_headers;
+   string response_data;
+   int error_code;
  
    if (ETag != NULL) {
-      request_headers = "If-None-Match: " + ETag;
+      request_headers += "\r\nIf-None-Match: " + ETag;
    }
-   if (request_headers != NULL) {
-      request_headers += "\r\n";
-   }
-   request_headers += "Version: 20210331\r\nX-Secret-Token: " + token;
 
-   int res = WebRequest("GET", OrderEndpoint, request_headers, timeout, request_data, result_data, result_headers);
+   int res = WebRequestWrapper("GET", OrderEndpoint, request_headers, request_data, response_headers, response_data, error_code);
    if(res==-1) {
-      int error_code = GetLastError();
       if (LastErrorCode != error_code) {
          LastErrorCode = error_code;
          LogWebRequestError("GetOrders", error_code);
@@ -317,8 +355,7 @@ int GetOrders(string &token, string &response)
       return -1;
    }
 
-   string tmp_header = result_headers;
-   bool etag_set = false;
+   string tmp_header = response_headers;
    while (tmp_header != "") {
       string line;
       int eol_pos = StringFind(tmp_header, "\r\n");
@@ -331,15 +368,11 @@ int GetOrders(string &token, string &response)
       }
       if (StringCompare(StringSubstr(line, 0, 5), "ETag:", false) == 0) {
          ETag = StringTrimLeft(StringTrimRight(StringSubstr(line, 5)));
-         etag_set = true;
+         ETagResponse = response_data;
       }
    }
 
-   response = (CharArrayToString(result_data));
-   if (etag_set) {
-      ETagResponse = response;
-   }
-
+   response = response_data;
    return res;
 }
 
@@ -361,31 +394,4 @@ void LogWebRequestError(string name, int error_code) {
          Print(name, ": Unknown Error, Error = ", error_code);
          break;
    }
-}
-
-string FindSymbol(string SymbolStr) {
-   for (int i = 0; i < SymbolsTotal(false); i++) {
-      if (StringFind(SymbolName(i, false), SymbolStr) >= 0) {
-         return SymbolName(i, false);
-      }
-   }
-   Print("No symbol found: ", SymbolStr);
-   return NULL;
-}
-
-bool IsOrderExists(int MagicNo) {
-   int TotalNumberOfOrders = OrdersTotal();
-   for(int i = TotalNumberOfOrders - 1; i >= 0 ; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS)) continue;
-      
-      if(OrderMagicNumber() == MagicNo) {
-         return true;
-      }
-   } 
-   return false;
-}
-
-double CalculateVolume(double accountBalanceLotsRate) {
-   double volume = 1.0 / (accountBalanceLotsRate / AccountBalance());
-   return MathRound(volume*100)/100;
 }
