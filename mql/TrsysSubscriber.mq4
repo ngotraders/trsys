@@ -53,6 +53,10 @@ void OnTick()
 //| Expert timer function                                             |
 //+------------------------------------------------------------------+
 void OnTimer(){
+   if (!IsExpertEnabled()) {
+      Comment("TrsysSubscriber: 自動売買が無効です");
+      return;
+   }
    uint startTime = 0;
    if (PERFORMANCE) {
       // Timer
@@ -146,6 +150,9 @@ void OnTimer(){
          }
          if (Found) continue;
          
+         if (MarketInfo(OrderSymbol(), MODE_TRADEALLOWED) != 1) {
+            continue;
+         } 
          if (DEBUG) {
             Print("OrderClose executing: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
          }
@@ -167,7 +174,13 @@ void OnTimer(){
          if (Symbol_ == NULL) {
             continue;
          }
+         if (MarketInfo(Symbol_, MODE_TRADEALLOWED) != 1) {
+            continue;
+         } 
          double orderLots = CalculateVolume(Symbol_);
+         if (orderLots <= 0) {
+            continue;
+         }
          if (DEBUG) {
             Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
          }
@@ -188,6 +201,9 @@ void OnTimer(){
       }
       if (Success) {
          ProcessedData = RecievedData;
+         Comment("TrsysSubscriber: 正常");
+      } else {
+         Comment("TrsysSubscriber: エラー");
       }
    }
    if (PERFORMANCE) {
@@ -229,12 +245,7 @@ double CalculateVolume(string Symb) {
    double Step   =MarketInfo(Symb,MODE_LOTSTEP);        //Step in volume changing
    double Free   =AccountFreeMargin();                  // Free margin
    double Lots;
-   if (Percent==0) {                                    // If 0 is preset ..
-      Lots = Min_Lot;                                   // ..then the min. lot
-   } else {                                             // Desired amount of lots:
-      Lots = MathFloor(Free*Percent/100/One_Lot/Step)*Step;//Calc
-   }
-   return Lots;
+   return MathFloor(Free*Percent/100/One_Lot);
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
