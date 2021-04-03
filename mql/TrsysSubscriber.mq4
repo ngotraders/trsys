@@ -7,6 +7,7 @@ string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string TokenEndpoint = Endpoint + "/api/token";
 string OrderEndpoint = Endpoint + "/api/orders";
 string Token = NULL;
+double NextTokenFetchTime = -1;
 string ETag = NULL;
 string ETagResponse = NULL;
 
@@ -14,7 +15,10 @@ int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
 
+input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
+
+double Percent = MathMax(0, MathMin(100, PercentOfFreeMargin));
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -57,6 +61,10 @@ void OnTimer(){
    }
    
    if (Token == NULL) {
+      if (NextTokenFetchTime > GetTickCount()) {
+         return;
+      }
+      NextTokenFetchTime = GetTickCount() + 1000; // 1sec later
       string SecretKey = GenerateSecretKey();
       int skResult = PostSecretKey(SecretKey, Token);
       if (PERFORMANCE) {
@@ -93,7 +101,6 @@ void OnTimer(){
       int OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
-      double OrderData_ab_l_rate[100];
    
       while( Data != "" )
       {
@@ -121,7 +128,6 @@ void OnTimer(){
          OrderData_ticket[i] = (int) StringToInteger(splittedValues[0]);
          OrderData_symbol[i] = splittedValues[1];
          OrderData_type[i] = splittedValues[2];
-         OrderData_ab_l_rate[i] = StringToDouble(splittedValues[3]);
          OrderCount++;
       }
       
@@ -158,10 +164,10 @@ void OnTimer(){
             continue;
          }
          string Symbol_ = FindSymbol(OrderData_symbol[i]);
-         double orderLots = CalculateVolume(OrderData_ab_l_rate[i]);
          if (Symbol_ == NULL) {
             continue;
          }
+         double orderLots = CalculateVolume(Symbol_);
          if (DEBUG) {
             Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
          }
@@ -217,9 +223,18 @@ bool IsOrderExists(int MagicNo) {
    return false;
 }
 
-double CalculateVolume(double accountBalanceLotsRate) {
-   double volume = 1.0 / (accountBalanceLotsRate / AccountBalance());
-   return MathRound(volume*100)/100;
+double CalculateVolume(string Symb) {
+   double One_Lot=MarketInfo(Symb,MODE_MARGINREQUIRED); //!-lot cost
+   double Min_Lot=MarketInfo(Symb,MODE_MINLOT);         // Min. amount of lots
+   double Step   =MarketInfo(Symb,MODE_LOTSTEP);        //Step in volume changing
+   double Free   =AccountFreeMargin();                  // Free margin
+   double Lots;
+   if (Percent==0) {                                    // If 0 is preset ..
+      Lots = Min_Lot;                                   // ..then the min. lot
+   } else {                                             // Desired amount of lots:
+      Lots = MathFloor(Free*Percent/100/One_Lot/Step)*Step;//Calc
+   }
+   return Lots;
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {

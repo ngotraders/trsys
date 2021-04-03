@@ -9,6 +9,7 @@ int LastErrorCode = 0;
 int PreviousRes = -1;
 
 string Token = NULL;
+double NextTokenFetchTime = -1;
  
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -44,6 +45,10 @@ void OnTick()
 void OnTimer(){
    
    if (Token == NULL) {
+      if (NextTokenFetchTime > GetTickCount()) {
+         return;
+      }
+      NextTokenFetchTime = GetTickCount() + 1000; // 1sec later
       string SecretKey = GenerateSecretKey();
       int skResult = PostSecretKey(SecretKey, Token);
       if (skResult == -1) {
