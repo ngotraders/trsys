@@ -90,7 +90,7 @@ string TradingData()
          }
          //only forex
          PositionSymbol=StringSubstr(OrderSymbol(),0,6); 
-         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType())+":"+DoubleToString(AccountBalance()/OrderLots());
+         PreTradingData += IntegerToString(OrderTicket())+":"+PositionSymbol+":"+IntegerToString(OrderType())+":"+DoubleToString(OrderOpenPrice())+":"+DoubleToString(OrderLots())+":"+StringFormat("%i",OrderOpenTime());
       } 
    }
    return(PreTradingData);
