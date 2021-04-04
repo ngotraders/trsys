@@ -1,7 +1,6 @@
 ﻿using NBomber;
 using NBomber.Contracts;
 using NBomber.CSharp;
-using NBomber.Plugins.Http.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,66 +13,32 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 100;
-        const int LENGTH_OF_TEST_MINUTES = 3;
+        const int COUNT_OF_CLIENTS = 50;
+        const double LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
-        static readonly string[] ORDER_DATA = new[] {
-            "1:USDJPY:0:1.0:1:1616746000",
-            "1:USDJPY:0:1.0:1:1616746000@2:EURUSD:1:0.5:2:1616746100",
-            "2:EURUSD:1:0.5:2:1616746100",
-            "2:EURUSD:1:0.5:2:1616746100@3:CNYUSD:1:0.05:3:1616746200",
-            "3:CNYUSD:1:0.05:3:1616746200",
-            "3:CNYUSD:1:0.05:3:1616746200@4:GBPUSD:0:10.05:4:1616746300",
-            "4:GBPUSD:0:10.05:4:1616746300"
-        };
 
         static void Main(string[] _)
         {
             using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
-            var secretTokens = GenerateSecretTokens(COUNT_OF_CLIENTS).Result;
-            var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretTokens).ShuffleData());
+            var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
+            var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
+            var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
+            var publisher = new Publisher(ENDPOINT_URL, secretKeys.First(), orderProvider);
+            var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First(), orderProvider)).ToList();
             var random = new Random();
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(ENDPOINT_URL);
-            client.DefaultRequestHeaders.Add("Version", "20210331");
-            client.DefaultRequestHeaders.Add("X-Secret-Token", secretTokens.FirstOrDefault());
-            SetPublisherData(client, ORDER_DATA[0]).Wait();
-            var started = DateTime.Now;
-            var span = TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES) / ORDER_DATA.Length;
+            Task.Run(async () =>
+            {
+                var tasks = new List<Task>();
+                tasks.Add(publisher.InitAsync());
+                tasks.AddRange(subscribers.Select(subscriber => subscriber.InitAsync()));
+                await Task.WhenAll(tasks.ToArray());
+            }).Wait();
+            publisher.ExecuteAsync().Wait();
+            orderProvider.SetStart();
 
-            var step1 = Step.Create("publisher", feeds,
-                async context =>
-                {
-                    if (random.Next(COUNT_OF_CLIENTS * 100) == 0)
-                    {
-                        var diff = DateTime.Now - started;
-                        var orders = ORDER_DATA[(int)(diff / span)];
-                        context.Logger.Debug($"Setting order {orders}");
-                        await SetPublisherData(client, orders);
-                    }
-                    return Response.Ok();
-                });
-            var step2 = HttpStep.Create("subscriber", feeds,
-                context =>
-                {
-                    return Http.CreateRequest("GET", ENDPOINT_URL + "/api/orders")
-                        .WithHeader("Version", "20210331")
-                        .WithHeader("X-Secret-Token", context.FeedItem)
-                        .WithCheck(async res =>
-                        {
-                            if (!res.IsSuccessStatusCode)
-                            {
-                                return Response.Fail($"Not successful status code: {res.StatusCode}");
-                            }
-                            var responseText = await res.Content.ReadAsStringAsync();
-                            if (Array.IndexOf(ORDER_DATA, responseText) == -1)
-                            {
-                                return Response.Fail($"Invalid response: {responseText}");
-                            }
-                            return Response.Ok();
-                        });
-                });
+            var step1 = Step.Create("publisher", feeds, context => context.CorrelationId.CopyNumber == 0 ? publisher.ExecuteAsync() : Task.FromResult(Response.Ok()));
+            var step2 = Step.Create("subscriber", feeds, context => subscribers[context.CorrelationId.CopyNumber % COUNT_OF_CLIENTS].ExecuteAsync());
 
             var scenario = ScenarioBuilder
                 .CreateScenario("pubsub", step1, step2)
@@ -85,7 +50,7 @@ namespace LoadTesting
                 .Run();
         }
 
-        private static async Task<IEnumerable<string>> GenerateSecretTokens(int count)
+        private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)
         {
             var client = new HttpClient();
             client.BaseAddress = new Uri(ENDPOINT_URL);
@@ -111,23 +76,11 @@ namespace LoadTesting
             }
 
             secretKeys = await GetSecretKeysAsync(client);
-
-            var secretTokens = new List<string>();
             foreach (var secretKey in secretKeys)
             {
                 await client.PostAsync($"/admin/keys/{secretKey}/approve", new StringContent("", Encoding.UTF8, "text/plain"));
-                var res = await client.PostAsync("/api/token", new StringContent(secretKey, Encoding.UTF8, "text/plain"));
-                res.EnsureSuccessStatusCode();
-                secretTokens.Add(await res.Content.ReadAsStringAsync());
             }
-
-            return secretTokens;
-        }
-
-        private static async Task SetPublisherData(HttpClient client, string data)
-        {
-            var res = await client.PostAsync("/api/orders", new StringContent(data, Encoding.UTF8, "text/plain"));
-            res.EnsureSuccessStatusCode();
+            return secretKeys;
         }
 
         private static async Task<IEnumerable<string>> GetSecretKeysAsync(HttpClient client)
