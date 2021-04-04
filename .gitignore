@@ -362,3 +362,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 db.sqlite3
+reports/

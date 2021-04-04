@@ -15,12 +15,10 @@ namespace LoadTesting
     {
         const int COUNT_OF_CLIENTS = 50;
         const double LENGTH_OF_TEST_MINUTES = 3;
-        const string ENDPOINT_URL = "https://localhost:5001";
+        const string ENDPOINT_URL = "http://nginx";
 
         static void Main(string[] _)
         {
-            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
-
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
             var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
