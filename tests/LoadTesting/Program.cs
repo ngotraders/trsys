@@ -14,17 +14,17 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 50;
+        const int COUNT_OF_CLIENTS = 100;
         const int LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
         static readonly string[] ORDER_DATA = new[] {
-            "1:USDJPY:0:1",
-            "1:USDJPY:0:1@2:EURUSD:1:0.5",
-            "2:EURUSD:1:0.5",
-            "2:EURUSD:1:0.5@3:CNYUSD:1:0.05",
-            "3:CNYUSD:1:0.05",
-            "3:CNYUSD:1:0.05@4:GBPUSD:0:10.05",
-            "4:GBPUSD:0:10.05"
+            "1:USDJPY:0:1.0:1:1616746000",
+            "1:USDJPY:0:1.0:1:1616746000@2:EURUSD:1:0.5:2:1616746100",
+            "2:EURUSD:1:0.5:2:1616746100",
+            "2:EURUSD:1:0.5:2:1616746100@3:CNYUSD:1:0.05:3:1616746200",
+            "3:CNYUSD:1:0.05:3:1616746200",
+            "3:CNYUSD:1:0.05:3:1616746200@4:GBPUSD:0:10.05:4:1616746300",
+            "4:GBPUSD:0:10.05:4:1616746300"
         };
 
         static void Main(string[] _)
@@ -39,13 +39,16 @@ namespace LoadTesting
             client.DefaultRequestHeaders.Add("Version", "20210331");
             client.DefaultRequestHeaders.Add("X-Secret-Token", secretTokens.FirstOrDefault());
             SetPublisherData(client, ORDER_DATA[0]).Wait();
+            var started = DateTime.Now;
+            var span = TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES) / ORDER_DATA.Length;
 
             var step1 = Step.Create("publisher", feeds,
                 async context =>
                 {
                     if (random.Next(COUNT_OF_CLIENTS * 100) == 0)
                     {
-                        var orders = ORDER_DATA[random.Next(0, ORDER_DATA.Length)];
+                        var diff = DateTime.Now - started;
+                        var orders = ORDER_DATA[(int)(diff / span)];
                         context.Logger.Debug($"Setting order {orders}");
                         await SetPublisherData(client, orders);
                     }

@@ -48,13 +48,15 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    AccountBalanceLotsRate = 1,
+                    Price = 1,
+                    Lots = 2,
+                    Time = DateTimeOffset.Parse("2021-04-01T10:11:23.000Z"),
                 }
             });
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1:2:1617271883", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -71,19 +73,23 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    AccountBalanceLotsRate = 1.2m,
+                    Price = 1.2m,
+                    Lots = 2.2m,
+                    Time = DateTimeOffset.Parse("2021-04-01T10:11:23.000Z"),
                 },
                 new Order() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.SELL,
-                    AccountBalanceLotsRate = 0,
+                    Price = 0,
+                    Lots = 0,
+                    Time = DateTimeOffset.Parse("2021-04-01T10:11:24.000Z"),
                 }
             });
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1.2@2:EURUSD:1:0", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1.2:2.2:1617271883@2:EURUSD:1:0:0:1617271884", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -100,24 +106,28 @@ namespace Trsys.Web.Tests
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.BUY,
-                    AccountBalanceLotsRate = 1,
+                    Price = 1,
+                    Lots = 2,
+                    Time = DateTimeOffset.Parse("2021-04-01T10:11:12.000Z")
                 },
                 new Order() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.SELL,
-                    AccountBalanceLotsRate = 180,
+                    Price = 180,
+                    Lots = 20,
+                    Time = DateTimeOffset.Parse("2021-04-01T10:11:13.000Z")
                 }
             });
 
             var res1 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1@2:EURUSD:1:180", await res1.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1:2:1617271872@2:EURUSD:1:180:20:1617271873", await res1.Content.ReadAsStringAsync());
 
             client.DefaultRequestHeaders.Add("If-None-Match", "\"INVALID_TAG\"");
             var res2 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1@2:EURUSD:1:180", await res2.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1:2:1617271872@2:EURUSD:1:180:20:1617271873", await res2.Content.ReadAsStringAsync());
             Assert.AreEqual(res1.Headers.ETag, res2.Headers.ETag);
 
             client.DefaultRequestHeaders.Add("If-None-Match", res2.Headers.ETag.Tag);
@@ -170,12 +180,19 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
             var orders = await repository.All.ToListAsync();
+
             Assert.AreEqual(1, orders.Count);
+            Assert.AreEqual(1, orders[0].TicketNo);
+            Assert.AreEqual("USDJPY", orders[0].Symbol);
+            Assert.AreEqual(OrderType.BUY, orders[0].OrderType);
+            Assert.AreEqual(1, orders[0].Price);
+            Assert.AreEqual(2, orders[0].Lots);
+            Assert.AreEqual(3, orders[0].Time.ToUnixTimeSeconds());
         }
 
         [TestMethod]
@@ -186,7 +203,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1@2:EURUSD:1:1.2", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1:1.2:1@2:EURUSD:1:1.2:2.00:100", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();

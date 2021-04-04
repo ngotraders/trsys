@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -63,7 +64,7 @@ namespace Trsys.Web.Controllers
             {
                 foreach (var item in text.Split("@"))
                 {
-                    if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?"))
+                    if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+"))
                     {
                         return BadRequest();
                     }
@@ -71,13 +72,17 @@ namespace Trsys.Web.Controllers
                     var ticketNo = splitted[0];
                     var symbol = splitted[1];
                     var orderType = (OrderType)int.Parse(splitted[2]);
-                    var volumeCreditRate = splitted[3];
+                    var price = splitted[3];
+                    var lots = splitted[4];
+                    var time = splitted[5];
                     orders.Add(new Order()
                     {
                         TicketNo = int.Parse(ticketNo),
                         Symbol = symbol,
                         OrderType = orderType,
-                        AccountBalanceLotsRate = decimal.Parse(volumeCreditRate).Normalize(),
+                        Price = decimal.Parse(price).Normalize(),
+                        Lots = decimal.Parse(lots).Normalize(),
+                        Time = DateTimeOffset.FromUnixTimeSeconds(int.Parse(time)).ToUniversalTime(),
                     });
                 }
             }
