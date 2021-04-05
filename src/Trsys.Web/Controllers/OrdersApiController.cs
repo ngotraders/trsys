@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,7 @@ namespace Trsys.Web.Controllers
         [HttpPost]
         [Consumes("text/plain")]
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Publisher")]
-        public async Task<IActionResult> PostOrder([FromBody] string text)
+        public async Task<IActionResult> PostOrder([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             var orders = new List<Order>();
             if (!string.IsNullOrEmpty(text))
