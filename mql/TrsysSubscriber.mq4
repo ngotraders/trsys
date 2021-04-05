@@ -123,7 +123,7 @@ void OnTimer(){
          int splittedCount;
          string splittedValues[];
          splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
-         if (splittedCount != 4) {
+         if (splittedCount < 3) {
             Print("Invalid Data: ", RecievedData);
             return;
          }
