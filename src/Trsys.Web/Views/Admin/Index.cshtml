@@ -134,7 +134,14 @@
                                     else
                                     {
                                         <div class="flex-grow-1 pr-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve">有効化</button>
+                                            @if (key.KeyType.HasValue)
+                                            {
+                                                <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve">有効化</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve" disabled>有効化</button>
+                                            }
                                         </div>
                                         <div class="flex-grow-1 pl-1">
                                             <button class="d-block w-full" formaction="/admin/keys/@escapedKey/delete">削除</button>
