@@ -31,7 +31,11 @@ namespace Trsys.Web
             services.AddControllersWithViews(options =>
             {
                 options.InputFormatters.Add(new TextPlainInputFormatter());
-            }).AddRazorRuntimeCompilation();
+            })
+                .AddRazorRuntimeCompilation()
+                .AddSessionStateTempDataProvider();
+
+            services.AddSession();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
@@ -82,6 +86,7 @@ namespace Trsys.Web
             }
 
             app.UseHttpsRedirection();
+            app.UseSession();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
