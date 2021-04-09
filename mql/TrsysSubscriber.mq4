@@ -205,6 +205,8 @@ void OnTimer(){
       } else {
          Comment("TrsysSubscriber: エラー");
       }
+   } else {
+      Comment("TrsysSubscriber: 正常");
    }
    if (PERFORMANCE) {
       // Timer
@@ -242,10 +244,10 @@ bool IsOrderExists(int MagicNo) {
 double CalculateVolume(string Symb) {
    double One_Lot=MarketInfo(Symb,MODE_MARGINREQUIRED); //!-lot cost
    double Min_Lot=MarketInfo(Symb,MODE_MINLOT);         // Min. amount of lots
-   double Step   =MarketInfo(Symb,MODE_LOTSTEP);        //Step in volume changing
+   double Max_Lot=MarketInfo(Symb,MODE_MAXLOT);         // Max amount of lots
+   double Step   =MarketInfo(Symb,MODE_LOTSTEP);        // Step in volume changing
    double Free   =AccountFreeMargin();                  // Free margin
-   double Lots;
-   return MathFloor(Free*Percent/100/One_Lot);
+   return MathMin(Max_Lot, MathFloor(Free*Percent/100/One_Lot/Step)*Step);
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
