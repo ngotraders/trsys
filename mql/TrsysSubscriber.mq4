@@ -149,10 +149,7 @@ void OnTimer(){
             }
          }
          if (Found) continue;
-         
-         if (MarketInfo(OrderSymbol(), MODE_TRADEALLOWED) != 1) {
-            continue;
-         } 
+
          if (DEBUG) {
             Print("OrderClose executing: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
          }
@@ -172,13 +169,12 @@ void OnTimer(){
          }
          string Symbol_ = FindSymbol(OrderData_symbol[i]);
          if (Symbol_ == NULL) {
+            Print("OrderSend fail: Symbol not found, Symbol = ", OrderData_symbol[i]);
             continue;
          }
-         if (MarketInfo(Symbol_, MODE_TRADEALLOWED) != 1) {
-            continue;
-         } 
          double orderLots = CalculateVolume(Symbol_);
          if (orderLots <= 0) {
+            Print("OrderSend fail: Not enough margin, Symbol = ", OrderData_symbol[i], ", Calculated lots = ", orderLots);
             continue;
          }
          if (DEBUG) {
