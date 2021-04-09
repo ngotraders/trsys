@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Trsys.Web.Models
+﻿namespace Trsys.Web.Models
 {
     public enum OrderType
     {
@@ -16,6 +14,6 @@ namespace Trsys.Web.Models
         public OrderType OrderType { get; set; }
         public decimal Price { get; set; }
         public decimal Lots { get; set; }
-        public DateTimeOffset Time { get; set; }
+        public long Time { get; set; }
     }
 }

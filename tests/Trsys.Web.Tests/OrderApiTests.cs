@@ -50,7 +50,7 @@ namespace Trsys.Web.Tests
                     OrderType = OrderType.BUY,
                     Price = 1,
                     Lots = 2,
-                    Time = DateTimeOffset.Parse("2021-04-01T10:11:23.000Z"),
+                    Time = 1617271883,
                 }
             });
 
@@ -75,7 +75,7 @@ namespace Trsys.Web.Tests
                     OrderType = OrderType.BUY,
                     Price = 1.2m,
                     Lots = 2.2m,
-                    Time = DateTimeOffset.Parse("2021-04-01T10:11:23.000Z"),
+                    Time = 1617271883,
                 },
                 new Order() {
                     TicketNo = 2,
@@ -83,7 +83,7 @@ namespace Trsys.Web.Tests
                     OrderType = OrderType.SELL,
                     Price = 0,
                     Lots = 0,
-                    Time = DateTimeOffset.Parse("2021-04-01T10:11:24.000Z"),
+                    Time = 1617271884,
                 }
             });
 
@@ -108,7 +108,7 @@ namespace Trsys.Web.Tests
                     OrderType = OrderType.BUY,
                     Price = 1,
                     Lots = 2,
-                    Time = DateTimeOffset.Parse("2021-04-01T10:11:12.000Z")
+                    Time = 1617271872,
                 },
                 new Order() {
                     TicketNo = 2,
@@ -116,7 +116,7 @@ namespace Trsys.Web.Tests
                     OrderType = OrderType.SELL,
                     Price = 180,
                     Lots = 20,
-                    Time = DateTimeOffset.Parse("2021-04-01T10:11:13.000Z")
+                    Time = 1617271873,
                 }
             });
 
@@ -192,7 +192,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(OrderType.BUY, orders[0].OrderType);
             Assert.AreEqual(1, orders[0].Price);
             Assert.AreEqual(2, orders[0].Lots);
-            Assert.AreEqual(3, orders[0].Time.ToUnixTimeSeconds());
+            Assert.AreEqual(3, orders[0].Time);
         }
 
         [TestMethod]

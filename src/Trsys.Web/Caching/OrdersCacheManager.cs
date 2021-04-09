@@ -23,7 +23,7 @@ namespace Trsys.Web.Caching
 
         public OrdersCache UpdateOrdersCache(List<Order> orders)
         {
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Price}:{o.Lots}:{o.Time.ToUnixTimeSeconds()}"));
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Price}:{o.Lots}:{o.Time}"));
             var ordersCache = new OrdersCache
             {
                 Hash = CalculateHash(responseText),

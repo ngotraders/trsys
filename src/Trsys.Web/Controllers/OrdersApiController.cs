@@ -83,7 +83,7 @@ namespace Trsys.Web.Controllers
                         OrderType = orderType,
                         Price = decimal.Parse(price).Normalize(),
                         Lots = decimal.Parse(lots).Normalize(),
-                        Time = DateTimeOffset.FromUnixTimeSeconds(int.Parse(time)).ToUniversalTime(),
+                        Time = long.Parse(time),
                     });
                 }
             }
