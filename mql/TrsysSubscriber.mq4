@@ -247,7 +247,12 @@ double CalculateVolume(string Symb) {
    double Max_Lot=MarketInfo(Symb,MODE_MAXLOT);         // Max amount of lots
    double Step   =MarketInfo(Symb,MODE_LOTSTEP);        // Step in volume changing
    double Free   =AccountFreeMargin();                  // Free margin
-   return MathMin(Max_Lot, MathFloor(Free*Percent/100/One_Lot/Step)*Step);
+   double Lots   =MathMin(Max_Lot, MathFloor(Free*Percent/100/One_Lot/Step)*Step);
+   if (Lots < Min_Lot) {
+      return 0;
+   } else {
+      return Lots;
+   }
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
