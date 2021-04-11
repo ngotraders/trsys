@@ -173,26 +173,41 @@ void OnTimer(){
             continue;
          }
          double orderLots = CalculateVolume(Symbol_);
-         if (orderLots <= 0) {
+         double Min_Lot=MarketInfo(Symbol_,MODE_MINLOT);         // Min. amount of lots
+         double Max_Lot=MarketInfo(Symbol_,MODE_MAXLOT);         // Max amount of lotsr
+         if (orderLots <= Min_Lot) {
             Print("OrderSend fail: Not enough margin, Symbol = ", OrderData_symbol[i], ", Calculated lots = ", orderLots);
             continue;
          }
          if (DEBUG) {
             Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
          }
-         int OrderResult;
-         if (OrderData_type[i] == "0") {
-            OrderResult = OrderSend(Symbol_, OP_BUY, orderLots, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
-         } else if (OrderData_type[i] == "1") {
-            OrderResult = OrderSend(Symbol_, OP_SELL, orderLots, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
-         } else {
-            continue;
-         }
-         if (OrderResult < 0) {
-            Success = false;
-            Print("OrderSend failed.", OrderData_ticket[i], " Error = ", GetLastError());
-         } else if (DEBUG) {
-            Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", OrderResult);
+         while (orderLots > 0) {
+            double lots;
+            if (orderLots >= Max_Lot) {
+               lots = Max_Lot;
+               orderLots -= Max_Lot;
+            } else {
+               lots  = orderLots;
+               orderLots -= orderLots;
+            }
+            
+            int OrderResult;
+            if (OrderData_type[i] == "0") {
+               OrderResult = OrderSend(Symbol_, OP_BUY, lots, SymbolInfoDouble(Symbol_, SYMBOL_ASK), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            } else if (OrderData_type[i] == "1") {
+               OrderResult = OrderSend(Symbol_, OP_SELL, lots, SymbolInfoDouble(Symbol_, SYMBOL_BID), Slippage, 0, 0, NULL, OrderData_ticket[i]);
+            } else {
+               continue;
+            }
+
+            if (OrderResult < 0) {
+               Success = false;
+               Print("OrderSend failed.", OrderData_ticket[i], " Error = ", GetLastError());
+            } else if (DEBUG) {
+               Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", OrderResult);
+            }
+
          }
       }
       if (Success) {
@@ -239,16 +254,10 @@ bool IsOrderExists(int MagicNo) {
 
 double CalculateVolume(string Symb) {
    double One_Lot=MarketInfo(Symb,MODE_MARGINREQUIRED); //!-lot cost
-   double Min_Lot=MarketInfo(Symb,MODE_MINLOT);         // Min. amount of lots
-   double Max_Lot=MarketInfo(Symb,MODE_MAXLOT);         // Max amount of lots
    double Step   =MarketInfo(Symb,MODE_LOTSTEP);        // Step in volume changing
    double Free   =AccountFreeMargin();                  // Free margin
-   double Lots   =MathMin(Max_Lot, MathFloor(Free*Percent/100/One_Lot/Step)*Step);
-   if (Lots < Min_Lot) {
-      return 0;
-   } else {
-      return Lots;
-   }
+   double Lots   =MathFloor(Free*Percent/100/One_Lot/Step)*Step;
+   return Lots;
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
