@@ -143,7 +143,7 @@ void OnTimer(){
 
          bool Found = false;
          for (int j = 0; j < OrderCount; j++) {
-            if (OrderMagicNumber() == OrderData_ticket[i]) {
+            if (OrderMagicNumber() == OrderData_ticket[j]) {
                Found = true;
                break;
             }
