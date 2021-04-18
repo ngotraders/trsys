@@ -1,0 +1,20 @@
+[requires]
+python_version = "3.7"
+
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+locust = "*"
+
+[dev-packages]
+autopep8 = "*"
+flake8 = "*"
+
+[scripts]
+start = "locust"
+test = "python -m unittest discover -v"
+format = "autopep8 -ivr ."
+lint = "flake8 --show-source ."
