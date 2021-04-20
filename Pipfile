@@ -14,7 +14,7 @@ autopep8 = "*"
 flake8 = "*"
 
 [scripts]
-start = "locust"
+start = "locust --headless -u 2 -r 1 --run-time 1m --stop-timeout 99 --host https://localhost:5001"
 test = "python -m unittest discover -v"
 format = "autopep8 -ivr ."
 lint = "flake8 --show-source ."
