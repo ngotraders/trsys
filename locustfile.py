@@ -1,4 +1,7 @@
 from locust import HttpUser, task, constant_pacing
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
+urllib3.disable_warnings(InsecureRequestWarning)
 
 class Publisher(HttpUser):
     secretKey = "d94b64d6-62d5-4063-bdb7-adc30f9abbc7"
