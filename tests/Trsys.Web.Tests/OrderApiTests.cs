@@ -168,7 +168,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.All.ToListAsync();
+            var orders = await repository.SearchAllAsync();
             Assert.AreEqual(0, orders.Count);
         }
 
@@ -184,7 +184,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.All.ToListAsync();
+            var orders = await repository.SearchAllAsync();
 
             Assert.AreEqual(1, orders.Count);
             Assert.AreEqual(1, orders[0].TicketNo);
@@ -207,7 +207,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.All.ToListAsync();
+            var orders = await repository.SearchAllAsync();
             Assert.AreEqual(2, orders.Count);
         }
 

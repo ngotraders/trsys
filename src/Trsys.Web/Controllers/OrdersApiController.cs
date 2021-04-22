@@ -48,7 +48,7 @@ namespace Trsys.Web.Controllers
             }
             else
             {
-                var orders = await repository.All.ToListAsync();
+                var orders = await repository.SearchAllAsync();
                 cacheEntry = cache.UpdateOrdersCache(orders);
             }
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";

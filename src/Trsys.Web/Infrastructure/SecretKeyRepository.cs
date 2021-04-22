@@ -1,22 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Infrastructure
 {
     public class SecretKeyRepository : ISecretKeyRepository
     {
-        private readonly TrsysContext db;
+        private readonly TrsysContextProcessor processor;
 
-        public SecretKeyRepository(TrsysContext db)
+        public SecretKeyRepository(TrsysContextProcessor processor)
         {
-            this.db = db;
+            this.processor = processor;
         }
 
-        public IQueryable<SecretKey> All => db.SecretKeys;
+        public Task<List<SecretKey>> SearchAllAsync()
+        {
+            return processor.Enqueue(db => db.SecretKeys.ToListAsync());
+        }
 
         public Task<SecretKey> CreateNewSecretKeyAsync(SecretKeyType keyType)
         {
@@ -31,26 +33,32 @@ namespace Trsys.Web.Infrastructure
 
         public Task<SecretKey> FindBySecretKeyAsync(string secretKey)
         {
-            return db.SecretKeys.FirstOrDefaultAsync(e => e.Key == secretKey);
+            return processor.Enqueue(db => db.SecretKeys.FirstOrDefaultAsync(e => e.Key == secretKey));
         }
 
         public Task SaveAsync(SecretKey entity)
         {
-            if (entity.Id > 0)
+            return processor.Enqueue(db =>
             {
-                db.SecretKeys.Update(entity);
-            }
-            else
-            {
-                db.SecretKeys.Add(entity);
-            }
-            return db.SaveChangesAsync();
+                if (entity.Id > 0)
+                {
+                    db.SecretKeys.Update(entity);
+                }
+                else
+                {
+                    db.SecretKeys.Add(entity);
+                }
+                return db.SaveChangesAsync();
+            });
         }
 
         public Task RemoveAsync(SecretKey entity)
         {
-            db.SecretKeys.Remove(entity);
-            return db.SaveChangesAsync();
+            return processor.Enqueue(db =>
+            {
+                db.SecretKeys.Remove(entity);
+                return db.SaveChangesAsync();
+            });
         }
     }
 }

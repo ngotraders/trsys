@@ -50,6 +50,7 @@ namespace Trsys.Web
             {
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
+            services.AddSingleton<TrsysContextProcessor>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();

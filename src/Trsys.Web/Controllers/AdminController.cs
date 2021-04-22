@@ -46,12 +46,11 @@ namespace Trsys.Web.Controllers
             {
                 model.CacheOrderText = cacheEntry.Text;
             }
-            model.SecretKeys = await secretKeyRepository
-                .All
+            model.SecretKeys = (await secretKeyRepository.SearchAllAsync())
                 .OrderBy(e => e.IsValid)
                 .ThenBy(e => e.KeyType)
                 .ThenBy(e => e.Id)
-                .ToListAsync();
+                .ToList();
             return View(model);
         }
 

@@ -1,27 +1,32 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Infrastructure
 {
     public class OrderRepository : IOrderRepository
     {
-        private readonly TrsysContext db;
+        private readonly TrsysContextProcessor processor;
 
-        public OrderRepository(TrsysContext db)
+        public OrderRepository(TrsysContextProcessor processor)
         {
-            this.db = db;
+            this.processor = processor;
         }
-
-        public IQueryable<Order> All => db.Orders;
 
         public Task SaveOrdersAsync(IEnumerable<Order> orders)
         {
-            db.Orders.RemoveRange(db.Orders);
-            db.Orders.AddRange(orders);
-            return db.SaveChangesAsync();
+            return processor.Enqueue(db =>
+            {
+                db.Orders.RemoveRange(db.Orders);
+                db.Orders.AddRange(orders);
+                return db.SaveChangesAsync();
+            });
+        }
+
+        public Task<List<Order>> SearchAllAsync()
+        {
+            return processor.Enqueue(db => db.Orders.ToListAsync());
         }
     }
 }
