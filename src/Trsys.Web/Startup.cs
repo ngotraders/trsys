@@ -11,7 +11,7 @@ using Trsys.Web.Caching;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
-using Trsys.Web.Services;
+using Trsys.Web.Infrastructure;
 
 namespace Trsys.Web
 {

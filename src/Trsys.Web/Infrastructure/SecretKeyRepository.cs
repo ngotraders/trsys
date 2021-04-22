@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Models;
 
-namespace Trsys.Web.Services
+namespace Trsys.Web.Infrastructure
 {
     public class SecretKeyRepository : ISecretKeyRepository
     {
