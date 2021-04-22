@@ -22,6 +22,8 @@ namespace LoadTesting
             step = duration / ORDER_DATA.Length;
         }
 
+        public static int PreparedOrdersCount => ORDER_DATA.Length;
+
         public void SetStart()
         {
             start = DateTime.Now;

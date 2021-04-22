@@ -13,7 +13,7 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 80;
+        const int COUNT_OF_CLIENTS = 65;
         const double LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
 
@@ -37,16 +37,21 @@ namespace LoadTesting
             publisher.ExecuteAsync().Wait();
             orderProvider.SetStart();
 
-            var step1 = Step.Create("publisher", feeds, context => context.CorrelationId.CopyNumber == 0 ? publisher.ExecuteAsync() : Task.FromResult(Response.Ok()));
+            var step1 = Step.Create("publisher", feeds, context => publisher.ExecuteAsync());
             var step2 = Step.Create("subscriber", feeds, context => subscribers[context.CorrelationId.CopyNumber % COUNT_OF_CLIENTS].ExecuteAsync());
 
-            var scenario = ScenarioBuilder
-                .CreateScenario("pubsub", step1, step2)
+            var scenario1 = ScenarioBuilder
+                .CreateScenario("pub", step1)
+                .WithWarmUpDuration(TimeSpan.FromSeconds(5))
+                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
+
+            var scenario2 = ScenarioBuilder
+                .CreateScenario("sub", step2)
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
 
             NBomberRunner
-                .RegisterScenarios(scenario)
+                .RegisterScenarios(scenario1, scenario2)
                 .Run();
         }
 
