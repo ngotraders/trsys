@@ -1,4 +1,5 @@
 ﻿using NBomber.Contracts;
+using Serilog;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,7 +22,11 @@ namespace LoadTesting
             if (sentOrder != orderText)
             {
                 var res = await Client.PostAsync("/api/orders", new StringContent(orderText, Encoding.UTF8, "text/plain"));
-                res.EnsureSuccessStatusCode();
+                if (!res.IsSuccessStatusCode)
+                {
+                    Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
+                }
+                Log.Logger.Information("Order changed: {0}", orderText);
                 sentOrder = orderText;
                 return Response.Ok(payload: "Order posted" + sentOrder);
             }

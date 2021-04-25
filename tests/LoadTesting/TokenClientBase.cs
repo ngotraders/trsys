@@ -1,4 +1,5 @@
 ﻿using NBomber.Contracts;
+using Serilog;
 using System;
 using System.Net.Http;
 using System.Text;

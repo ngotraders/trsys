@@ -1,6 +1,7 @@
 ﻿using NBomber;
 using NBomber.Contracts;
 using NBomber.CSharp;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,17 +25,8 @@ namespace LoadTesting
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
             var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
+            var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First())).ToList();
             var publisher = new Publisher(ENDPOINT_URL, secretKeys.First(), orderProvider);
-            var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First(), orderProvider)).ToList();
-            var random = new Random();
-            Task.Run(async () =>
-            {
-                var tasks = new List<Task>();
-                tasks.Add(publisher.InitAsync());
-                tasks.AddRange(subscribers.Select(subscriber => subscriber.InitAsync()));
-                await Task.WhenAll(tasks.ToArray());
-            }).Wait();
-            publisher.ExecuteAsync().Wait();
             orderProvider.SetStart();
 
             var step1 = Step.Create("publisher", feeds, context => publisher.ExecuteAsync());
@@ -42,11 +34,17 @@ namespace LoadTesting
 
             var scenario1 = ScenarioBuilder
                 .CreateScenario("pub", step1)
+                .WithInit(async context =>
+                {
+                    await publisher.InitAsync();
+                    await publisher.ExecuteAsync();
+                })
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
 
             var scenario2 = ScenarioBuilder
                 .CreateScenario("sub", step2)
+                .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitAsync())))
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
 
