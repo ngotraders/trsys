@@ -177,22 +177,27 @@ void OnTimer(){
             continue;
          }
          ENUM_ORDER_TYPE orderType;
+         double orderPrice;
+         MqlTick tick;
+         SymbolInfoTick(Symbol_, tick);
          if (OrderData_type[i] == "0") {
             orderType = ORDER_TYPE_BUY;
+            orderPrice = tick.ask;
          } else if (OrderData_type[i] == "1") {
-            orderType = ORDER_TYPE_BUY;
+            orderType = ORDER_TYPE_SELL;
+            orderPrice = tick.bid;
          } else {
             continue;
          }
          double orderLots = CalculateVolume(Symbol_, orderType);
-         double Min_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MAX);         // Min. amount of lots
-         double Max_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MIN);         // Max amount of lotsr
+         double Min_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MIN);         // Min. amount of lots
+         double Max_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MAX);         // Max amount of lotsr
          if (orderLots <= Min_Lot) {
             Print("OrderSend fail: Not enough margin, Symbol = ", OrderData_symbol[i], ", Calculated lots = ", orderLots);
             continue;
          }
          if (DEBUG) {
-            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
+            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", orderType, "/", orderLots, "/", orderPrice);
          }
          while (orderLots > 0) {
             double lots;
@@ -207,22 +212,29 @@ void OnTimer(){
             //--- リクエストを準備する
             MqlTradeRequest request={0};
             request.action=TRADE_ACTION_PENDING;        // 未決注文を設定する
-            request.type_filling = ORDER_FILLING_FOK;   // 指定ボリュームでエントリーできない場合オーダーをキャンセル
             request.magic=OrderData_ticket[i];          // ORDER_MAGIC
             request.symbol=Symbol_;                     // シンボル
-            request.volume=orderLots;                   // ロットのボリューム
-            request.sl=Slippage;                        // 決済逆指
+            request.volume=lots;                        // ロットのボリューム
+            request.sl=0;                               // 決済逆指
             request.tp=0;                               // 決済指値の指定なし    
             //--- 注文の種類を形成する
             request.type=orderType;                     // 注文の種類
             //--- 未決注文の価格を形成する
-            request.price=OrderData_price[i];           // 始値
+            request.price=orderPrice;                   // 始値
             //--- 取引リクエストを送る
+            MqlTradeCheckResult checkResult={0};
+            if (!OrderCheck(request, checkResult)) {
+               Success = false;
+               Print(__FUNCTION__,":",checkResult.comment);
+               Print("OrderCheck failed.", OrderData_ticket[i], " Error = ", GetLastError());
+               break;
+            }
             MqlTradeResult result={0};
-            if (OrderSend(request, result)) {
+            if (!OrderSend(request, result)) {
                Success = false;
                Print(__FUNCTION__,":",result.comment);
                Print("OrderSend failed.", OrderData_ticket[i], " Error = ", GetLastError());
+               break;
             } else if (DEBUG) {
                Print(__FUNCTION__,":",result.comment);
                Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", result.request_id);
@@ -257,12 +269,15 @@ int ClosePosition(ulong ticketNo) {
    request.position = ticketNo;                // 指定ポジションの決済
    request.sl=Slippage;                        // 決済逆指
    //--- 取引リクエストを送る
-   MqlTradeResult result={0};
-   if (OrderSend(request, result)) {
-      return 0;
-   } else {
+   MqlTradeCheckResult checkResult={0};
+   if (!OrderCheck(request, checkResult)) {
       return -1;
    }
+   MqlTradeResult result={0};
+   if (!OrderSend(request, result)) {
+      return -1;
+   }
+   return 0;
 }
 
 string FindSymbol(string SymbolStr) {
