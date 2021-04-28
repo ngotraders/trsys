@@ -10,8 +10,8 @@ using Trsys.Web.Authentication;
 using Trsys.Web.Caching;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
-using Trsys.Web.Models;
 using Trsys.Web.Infrastructure;
+using Trsys.Web.Models;
 
 namespace Trsys.Web
 {
@@ -46,10 +46,9 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddMemoryCache();
-            services.AddDbContext<TrsysContext>(options =>
-            {
-                options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
-            });
+            services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
+                .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
+                .Options));
             services.AddSingleton<TrsysContextProcessor>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
@@ -64,7 +63,7 @@ namespace Trsys.Web
         {
             using (var scope = app.ApplicationServices.CreateScope())
             {
-                using (var db = scope.ServiceProvider.GetRequiredService<TrsysContext>())
+                var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
                 {
                     db.Database.EnsureCreated();
                     if (!db.Users.Any())
