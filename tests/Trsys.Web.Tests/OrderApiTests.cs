@@ -13,6 +13,7 @@ using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Tests
 {
@@ -43,8 +44,8 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            await repository.SaveOrdersAsync(new[] {
+            var service = server.Services.GetRequiredService<OrderService>();
+            await service.UpdateOrdersAsync(new[] {
                 new Order() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
@@ -68,8 +69,8 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            await repository.SaveOrdersAsync(new[] {
+            var service = server.Services.GetRequiredService<OrderService>();
+            await service.UpdateOrdersAsync(new[] {
                 new Order() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
@@ -101,8 +102,8 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            await repository.SaveOrdersAsync(new[] {
+            var service = server.Services.GetRequiredService<OrderService>();
+            await service.UpdateOrdersAsync(new[] {
                 new Order() {
                     TicketNo = 1,
                     Symbol = "USDJPY",

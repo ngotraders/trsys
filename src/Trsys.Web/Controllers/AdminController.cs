@@ -9,6 +9,7 @@ using Trsys.Web.Caching;
 using Trsys.Web.Models;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Admin;
 
 namespace Trsys.Web.Controllers
@@ -17,18 +18,18 @@ namespace Trsys.Web.Controllers
     [Authorize(Roles = "Administrator")]
     public class AdminController : Controller
     {
-        private readonly IOrderRepository orderRepository;
+        private readonly OrderService orderService;
         private readonly OrdersCacheManager cacheManager;
         private readonly ISecretKeyRepository secretKeyRepository;
         private readonly ISecretTokenStore tokenStore;
 
         public AdminController(
-            IOrderRepository orderRepository,
+            OrderService orderService,
             OrdersCacheManager cacheManager,
             ISecretKeyRepository secretKeyRepository, 
             ISecretTokenStore tokenStore)
         {
-            this.orderRepository = orderRepository;
+            this.orderService = orderService;
             this.cacheManager = cacheManager;
             this.secretKeyRepository = secretKeyRepository;
             this.tokenStore = tokenStore;
@@ -58,9 +59,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("orders/clear")]
         public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
         {
-            var orders = new List<Order>();
-            await orderRepository.SaveOrdersAsync(orders);
-            cacheManager.UpdateOrdersCache(orders);
+            await orderService.ClearOrdersAsync();
             return SaveModelAndRedirectToIndex(model);
         }
 

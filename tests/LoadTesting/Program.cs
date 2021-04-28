@@ -1,7 +1,6 @@
 ﻿using NBomber;
 using NBomber.Contracts;
 using NBomber.CSharp;
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;

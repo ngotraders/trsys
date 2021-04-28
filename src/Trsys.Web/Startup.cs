@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -14,6 +15,7 @@ using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Models.Users;
+using Trsys.Web.Services;
 
 namespace Trsys.Web
 {
@@ -48,16 +50,18 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddMemoryCache();
+            services.AddMediatR(options => options.AsSingleton(), typeof(Startup));
             services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
                 .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
                 .Options));
             services.AddSingleton<TrsysContextProcessor>();
+            services.AddSingleton<OrdersCacheManager>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            services.AddTransient<OrdersCacheManager>();
+            services.AddTransient<OrderService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,6 +83,9 @@ namespace Trsys.Web
                         });
                         db.SaveChanges();
                     }
+
+                    var cacheManager = scope.ServiceProvider.GetRequiredService<OrdersCacheManager>();
+                    cacheManager.UpdateOrdersCache(db.Orders.ToList());
                 }
             }
 

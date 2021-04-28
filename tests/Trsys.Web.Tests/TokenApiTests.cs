@@ -154,9 +154,9 @@ namespace Trsys.Web.Tests
             return new TestServer(new WebHostBuilder()
                             .UseConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.json").Build())
                             .UseStartup<Startup>()
-                            .ConfigureServices(services =>
+                            .ConfigureTestServices(services =>
                             {
-                                services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
+                                services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseInMemoryDatabase(databaseName).Options));
                             }));
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Trsys.Web.Caching;
 using Trsys.Web.Filters;
 using Trsys.Web.Models.Orders;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
@@ -16,38 +18,34 @@ namespace Trsys.Web.Controllers
     [EaVersion("20210331")]
     public class OrdersApiController : ControllerBase
     {
-        private readonly IOrderRepository repository;
+        private readonly OrderService service;
         private readonly OrdersCacheManager cache;
 
-        public OrdersApiController(IOrderRepository repository, OrdersCacheManager cache)
+        public OrdersApiController(OrderService service, OrdersCacheManager cache)
         {
-            this.repository = repository;
+            this.service = service;
             this.cache = cache;
         }
 
         [HttpGet]
         [Produces("text/plain")]
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
-        public async Task<IActionResult> GetOrders()
+        public IActionResult GetOrders()
         {
-            if (cache.TryGetCache(out var cacheEntry))
+            if (!cache.TryGetCache(out var cacheEntry))
             {
-                var etags = HttpContext.Request.Headers["If-None-Match"];
-                if (etags.Any())
+                throw new InvalidOperationException("Cache entry not found.");
+            }
+            var etags = HttpContext.Request.Headers["If-None-Match"];
+            if (etags.Any())
+            {
+                foreach (var etag in etags)
                 {
-                    foreach (var etag in etags)
+                    if (etag == $"\"{cacheEntry.Hash}\"")
                     {
-                        if (etag == $"\"{cacheEntry.Hash}\"")
-                        {
-                            return StatusCode(304);
-                        }
+                        return StatusCode(304);
                     }
                 }
-            }
-            else
-            {
-                var orders = await repository.SearchAllAsync();
-                cacheEntry = cache.UpdateOrdersCache(orders);
             }
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
@@ -86,8 +84,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await repository.SaveOrdersAsync(orders);
-            cache.UpdateOrdersCache(orders);
+            await service.UpdateOrdersAsync(orders);
             return Ok();
         }
     }
