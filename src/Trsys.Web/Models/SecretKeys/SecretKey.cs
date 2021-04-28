@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trsys.Web.Models
+namespace Trsys.Web.Models.SecretKeys
 {
     [Flags]
     public enum SecretKeyType

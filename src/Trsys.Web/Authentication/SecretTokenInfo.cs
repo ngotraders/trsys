@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using Trsys.Web.Models;
+using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Authentication
 {

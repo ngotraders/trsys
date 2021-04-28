@@ -1,4 +1,4 @@
-﻿namespace Trsys.Web.Models
+﻿namespace Trsys.Web.Models.Users
 {
     public class User
     {

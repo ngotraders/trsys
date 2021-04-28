@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
+using Trsys.Web.Models.Users;
 
 namespace Trsys.Web.Infrastructure
 {

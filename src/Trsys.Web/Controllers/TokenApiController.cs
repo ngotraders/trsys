@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
-using Trsys.Web.Models;
+using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Controllers
 {

@@ -11,7 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 using Trsys.Web.Data;
-using Trsys.Web.Models;
+using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Tests
 {
@@ -239,12 +240,9 @@ namespace Trsys.Web.Tests
             return new TestServer(new WebHostBuilder()
                             .UseConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.json").Build())
                             .UseStartup<Startup>()
-                            .ConfigureServices(services =>
-                            {
-                                services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
-                            })
                             .ConfigureTestServices(services =>
                             {
+                                services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseInMemoryDatabase(databaseName).Options));
                                 services.AddSingleton<ISecretTokenStore>(new MockTokenStore());
                             }));
 

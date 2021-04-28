@@ -11,7 +11,9 @@ using Trsys.Web.Caching;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Models;
+using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models.Users;
 
 namespace Trsys.Web
 {

@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 using Trsys.Web.Caching;
 using Trsys.Web.Models;
+using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.ViewModels.Admin;
 
 namespace Trsys.Web.Controllers

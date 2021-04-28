@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Trsys.Web.Models;
+using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.ViewModels.Admin
 {

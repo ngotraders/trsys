@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Trsys.Web.Models;
+using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models.Users;
 
 namespace Trsys.Web.Data
 {

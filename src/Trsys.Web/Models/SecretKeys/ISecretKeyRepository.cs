@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Trsys.Web.Models
+namespace Trsys.Web.Models.SecretKeys
 {
     public interface ISecretKeyRepository
     {

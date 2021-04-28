@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Trsys.Web.Models
+namespace Trsys.Web.Models.Users
 {
     public interface IUserRepository
     {

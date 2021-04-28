@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using Trsys.Web.Models;
+using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Authentication
 {

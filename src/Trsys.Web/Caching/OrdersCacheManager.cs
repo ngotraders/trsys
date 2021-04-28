@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Trsys.Web.Models;
+using Trsys.Web.Models.Orders;
 
 namespace Trsys.Web.Caching
 {

@@ -1,4 +1,4 @@
-﻿namespace Trsys.Web.Models
+﻿namespace Trsys.Web.Models.Orders
 {
     public enum OrderType
     {
