@@ -1,31 +1,37 @@
-﻿using MediatR;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Trsys.Web.Caching;
 using Trsys.Web.Models.Orders;
-using Trsys.Web.Services.Events;
 
 namespace Trsys.Web.Services
 {
     public class OrderService
     {
-        private readonly IMediator mediator;
+        private readonly OrdersCacheManager cache;
         private readonly IOrderRepository repository;
 
-        public OrderService(IOrderRepository repository, IMediator mediator)
+        public OrderService(IOrderRepository repository, OrdersCacheManager cache)
         {
             this.repository = repository;
-            this.mediator = mediator;
+            this.cache = cache;
         }
 
         public async Task UpdateOrdersAsync(IEnumerable<Order> orders)
         {
             await repository.SaveOrdersAsync(orders);
-            await mediator.Publish(new OrderUpdated(orders));
+            cache.UpdateOrdersCache(orders.ToList());
         }
 
         public Task ClearOrdersAsync()
         {
             return UpdateOrdersAsync(new List<Order>());
+        }
+
+        public OrdersCache GetOrderTextEntry()
+        {
+            cache.TryGetCache(out var cacheEntry);
+            return cacheEntry;
         }
     }
 }

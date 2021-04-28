@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -50,7 +49,6 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddMemoryCache();
-            services.AddMediatR(options => options.AsSingleton(), typeof(Startup));
             services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
                 .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
                 .Options));

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Trsys.Web.Caching;
 using Trsys.Web.Filters;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Services;
@@ -19,12 +18,10 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly OrderService service;
-        private readonly OrdersCacheManager cache;
 
-        public OrdersApiController(OrderService service, OrdersCacheManager cache)
+        public OrdersApiController(OrderService service)
         {
             this.service = service;
-            this.cache = cache;
         }
 
         [HttpGet]
@@ -32,7 +29,8 @@ namespace Trsys.Web.Controllers
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
         public IActionResult GetOrders()
         {
-            if (!cache.TryGetCache(out var cacheEntry))
+            var cacheEntry = service.GetOrderTextEntry();
+            if (cacheEntry == null)
             {
                 throw new InvalidOperationException("Cache entry not found.");
             }

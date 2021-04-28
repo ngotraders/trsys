@@ -19,18 +19,15 @@ namespace Trsys.Web.Controllers
     public class AdminController : Controller
     {
         private readonly OrderService orderService;
-        private readonly OrdersCacheManager cacheManager;
         private readonly ISecretKeyRepository secretKeyRepository;
         private readonly ISecretTokenStore tokenStore;
 
         public AdminController(
             OrderService orderService,
-            OrdersCacheManager cacheManager,
             ISecretKeyRepository secretKeyRepository, 
             ISecretTokenStore tokenStore)
         {
             this.orderService = orderService;
-            this.cacheManager = cacheManager;
             this.secretKeyRepository = secretKeyRepository;
             this.tokenStore = tokenStore;
         }
@@ -44,10 +41,9 @@ namespace Trsys.Web.Controllers
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
             }
 
-            if (cacheManager.TryGetCache(out OrdersCache cacheEntry))
-            {
-                model.CacheOrderText = cacheEntry.Text;
-            }
+            var order = orderService.GetOrderTextEntry();
+            model.CacheOrderText = order?.Text;
+
             model.SecretKeys = (await secretKeyRepository.SearchAllAsync())
                 .OrderBy(e => e.IsValid)
                 .ThenBy(e => e.KeyType)
