@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Trsys.Web.Authentication;
-using Trsys.Web.Caching;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
@@ -53,12 +52,12 @@ namespace Trsys.Web
                 .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
                 .Options));
             services.AddSingleton<TrsysContextProcessor>();
-            services.AddSingleton<OrdersCacheManager>();
+            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
-            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
+            services.AddTransient<IOrdersTextStore, OrdersCacheManager>();
             services.AddTransient<OrderService>();
         }
 
@@ -82,8 +81,8 @@ namespace Trsys.Web
                         db.SaveChanges();
                     }
 
-                    var cacheManager = scope.ServiceProvider.GetRequiredService<OrdersCacheManager>();
-                    cacheManager.UpdateOrdersCache(db.Orders.ToList());
+                    var orderTextStore = scope.ServiceProvider.GetRequiredService<IOrdersTextStore>();
+                    orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(db.Orders.ToList()));
                 }
             }
 

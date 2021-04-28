@@ -1,26 +1,25 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Caching;
 using Trsys.Web.Models.Orders;
 
 namespace Trsys.Web.Services
 {
     public class OrderService
     {
-        private readonly OrdersCacheManager cache;
+        private readonly IOrdersTextStore orderTextStore;
         private readonly IOrderRepository repository;
 
-        public OrderService(IOrderRepository repository, OrdersCacheManager cache)
+        public OrderService(IOrderRepository repository, IOrdersTextStore orderTextStore)
         {
             this.repository = repository;
-            this.cache = cache;
+            this.orderTextStore = orderTextStore;
         }
 
         public async Task UpdateOrdersAsync(IEnumerable<Order> orders)
         {
             await repository.SaveOrdersAsync(orders);
-            cache.UpdateOrdersCache(orders.ToList());
+            orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(orders.ToList()));
         }
 
         public Task ClearOrdersAsync()
@@ -28,9 +27,9 @@ namespace Trsys.Web.Services
             return UpdateOrdersAsync(new List<Order>());
         }
 
-        public OrdersCache GetOrderTextEntry()
+        public OrdersTextEntry GetOrderTextEntry()
         {
-            cache.TryGetCache(out var cacheEntry);
+            orderTextStore.TryGetOrdersText(out var cacheEntry);
             return cacheEntry;
         }
     }

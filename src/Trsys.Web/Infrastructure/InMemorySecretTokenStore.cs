@@ -2,9 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models.SecretKeys;
 
-namespace Trsys.Web.Authentication
+namespace Trsys.Web.Infrastructure
 {
     public class InMemorySecretTokenStore : ISecretTokenStore
     {
