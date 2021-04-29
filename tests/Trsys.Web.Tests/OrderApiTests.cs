@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 using Trsys.Web.Data;
+using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
@@ -251,35 +252,12 @@ namespace Trsys.Web.Tests
 
         }
 
-        private class MockAuthenticationTicketStore : IAuthenticationTicketStore
+        private class MockAuthenticationTicketStore : InMemoryAuthenticationTicketStore
         {
-            private static AuthenticationTicket Create(string key, SecretKeyType keyType)
+            public MockAuthenticationTicketStore()
             {
-                return new AuthenticationTicket(PrincipalGenerator.Generate(key, keyType), "SecretToken");
-            }
-
-            public AuthenticationTicket Find(string token)
-            {
-                var ticket = null as AuthenticationTicket;
-                if (token == VALID_PUBLISHER_TOKEN)
-                {
-                    ticket = Create("SECRETKEY", SecretKeyType.Publisher);
-                }
-                else if (token == VALID_SUBSCRIBER_TOKEN)
-                {
-                    ticket = Create("SECRETKEY", SecretKeyType.Subscriber);
-                }
-                return ticket;
-            }
-
-            public AuthenticationTicket Remove(string token)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void Add(string token, ClaimsPrincipal principal)
-            {
-                throw new NotImplementedException();
+                AddAsync(VALID_PUBLISHER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Publisher));
+                AddAsync(VALID_SUBSCRIBER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Subscriber));
             }
         }
     }

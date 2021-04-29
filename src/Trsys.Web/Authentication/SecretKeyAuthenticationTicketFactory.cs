@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authentication;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -6,14 +7,14 @@ using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Authentication
 {
-    public static class PrincipalGenerator
+    public static class SecretKeyAuthenticationTicketFactory
     {
         private static readonly Tuple<string, SecretKeyType>[] secretKeyTypes = Enum.GetValues(typeof(SecretKeyType))
             .OfType<SecretKeyType>()
             .Select(key => Tuple.Create(Enum.GetName(typeof(SecretKeyType), key), key))
             .ToArray();
 
-        public static ClaimsPrincipal Generate(string key, SecretKeyType keyType)
+        public static AuthenticationTicket Create(string key, SecretKeyType keyType)
         {
             var principal = new ClaimsPrincipal();
             var claims = new List<Claim>() { new Claim(ClaimsIdentity.DefaultNameClaimType, key) };
@@ -25,7 +26,7 @@ namespace Trsys.Web.Authentication
                 }
             }
             principal.AddIdentity(new ClaimsIdentity(claims, "SecretToken", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType));
-            return principal;
+            return new AuthenticationTicket(principal, "SecretToken");
         }
     }
 }

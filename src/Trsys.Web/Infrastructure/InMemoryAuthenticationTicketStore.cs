@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using System.Collections.Concurrent;
-using System.Security.Claims;
+using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 
 namespace Trsys.Web.Infrastructure
@@ -9,22 +9,22 @@ namespace Trsys.Web.Infrastructure
     {
         private readonly ConcurrentDictionary<string, AuthenticationTicket> store = new ConcurrentDictionary<string, AuthenticationTicket>();
 
-        public void Add(string token, ClaimsPrincipal principal)
+        public Task AddAsync(string token, AuthenticationTicket ticket)
         {
-            var ticket = new AuthenticationTicket(principal, "SecretKey");
             store.TryAdd(token, ticket);
+            return Task.CompletedTask;
         }
 
-        public AuthenticationTicket Find(string token)
+        public Task<AuthenticationTicket> FindAsync(string token)
         {
             store.TryGetValue(token, out var value);
-            return value;
+            return Task.FromResult(value);
         }
 
-        public AuthenticationTicket Remove(string token)
+        public Task<AuthenticationTicket> RemoveAsync(string token)
         {
             store.TryRemove(token, out var value);
-            return value;
+            return Task.FromResult(value);
         }
     }
 }

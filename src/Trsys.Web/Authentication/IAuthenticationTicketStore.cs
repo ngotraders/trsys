@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace Trsys.Web.Authentication
 {
     public interface IAuthenticationTicketStore
     {
-        void Add(string token, ClaimsPrincipal principal);
-        AuthenticationTicket Find(string token);
-        AuthenticationTicket Remove(string token);
+        Task AddAsync(string token, AuthenticationTicket ticket);
+        Task<AuthenticationTicket> FindAsync(string token);
+        Task<AuthenticationTicket> RemoveAsync(string token);
     }
 }

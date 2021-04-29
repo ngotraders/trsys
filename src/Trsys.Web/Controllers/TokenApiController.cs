@@ -40,8 +40,8 @@ namespace Trsys.Web.Controllers
                     return BadRequest("InvalidSecretKey");
                 }
             }
-            var principal = PrincipalGenerator.Generate(result.Key, result.KeyType);
-            ticketStore.Add(result.Token, principal);
+            var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
+            await ticketStore.AddAsync(result.Token, principal);
             return Ok(result.Token);
         }
 
@@ -49,7 +49,7 @@ namespace Trsys.Web.Controllers
         [Consumes("text/plain")]
         public async Task<IActionResult> PostTokenRelease(string token)
         {
-            var ticket = ticketStore.Remove(token);
+            var ticket = await ticketStore.RemoveAsync(token);
             if (ticket == null)
             {
                 return BadRequest("InvalidToken");

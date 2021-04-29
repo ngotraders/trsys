@@ -99,12 +99,12 @@ namespace Trsys.Web.Tests
             await service.TouchSecretTokenAsync(key);
 
             var store = server.Services.GetRequiredService<IAuthenticationTicketStore>();
-            store.Add(token, PrincipalGenerator.Generate(key, SecretKeyType.Publisher));
+            await store.AddAsync(token, SecretKeyAuthenticationTicketFactory.Create(key, SecretKeyType.Publisher));
 
             var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
-            Assert.IsNull(store.Find(token));
+            Assert.IsNull(await store.FindAsync(token));
             var secretKey = await service.FindBySecretKeyAsync(key);
             Assert.IsFalse(secretKey.HasToken);
         }
@@ -117,12 +117,12 @@ namespace Trsys.Web.Tests
 
             var token = Guid.NewGuid().ToString();
             var store = server.Services.GetRequiredService<IAuthenticationTicketStore>();
-            store.Add(token, PrincipalGenerator.Generate("AnyKey", SecretKeyType.Publisher));
+            await store.AddAsync(token, SecretKeyAuthenticationTicketFactory.Create("AnyKey", SecretKeyType.Publisher));
 
             var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
-            Assert.IsNull(store.Find(token));
+            Assert.IsNull(await store.FindAsync(token));
         }
 
         [TestMethod]
