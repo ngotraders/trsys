@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class InMemoryAuthenticationTicketStore : IAuthenticationTicketStore
     {

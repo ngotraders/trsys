@@ -10,8 +10,6 @@ using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Models.Orders;
-using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Models.Users;
 using Trsys.Web.Services;
 
@@ -48,16 +46,9 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
-                .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
-                .Options));
-            services.AddSingleton<TrsysContextProcessor>();
-            services.AddSingleton<IAuthenticationTicketStore, InMemoryAuthenticationTicketStore>();
-            services.AddSingleton<ISecretKeyUsageStore, InMemorySecretKeyUsageStore>();
-            services.AddSingleton<IOrdersTextStore, InMemoryOrdersTextStore>();
-            services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<IOrderRepository, OrderRepository>();
-            services.AddTransient<ISecretKeyRepository, SecretKeyRepository>();
+            services.AddDbContext<TrsysContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddInMemoryStores();
+            services.AddSQLiteRepositories();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
             services.AddTransient<UserService>();
@@ -67,25 +58,23 @@ namespace Trsys.Web
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             using (var scope = app.ApplicationServices.CreateScope())
+            using (var db = scope.ServiceProvider.GetRequiredService<TrsysContext>())
             {
-                var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
+                db.Database.EnsureCreated();
+                if (!db.Users.Any())
                 {
-                    db.Database.EnsureCreated();
-                    if (!db.Users.Any())
+                    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+                    db.Users.Add(new User()
                     {
-                        var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-                        db.Users.Add(new User()
-                        {
-                            Username = "admin",
-                            Password = passwordHasher.Hash("P@ssw0rd"),
-                            Role = "Administrator",
-                        });
-                        db.SaveChanges();
-                    }
-
-                    var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
-                    orderService.RefreshOrderTextAsync().Wait();
+                        Username = "admin",
+                        Password = passwordHasher.Hash("P@ssw0rd"),
+                        Role = "Administrator",
+                    });
+                    db.SaveChanges();
                 }
+
+                var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
+                orderService.RefreshOrderTextAsync().Wait();
             }
 
             if (env.IsDevelopment())

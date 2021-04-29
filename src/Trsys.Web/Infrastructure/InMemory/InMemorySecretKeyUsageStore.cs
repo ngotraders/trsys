@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Trsys.Web.Models.SecretKeys;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class InMemorySecretKeyUsageStore : ISecretKeyUsageStore
     {

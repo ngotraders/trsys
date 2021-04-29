@@ -1,21 +1,25 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.SQLite
 {
-    public class TrsysContextProcessor
+    public class TrsysContextProcessor : IDisposable
     {
         private readonly BlockingCollection<Func<TrsysContext, Task>> _queue = new();
+        private readonly IServiceScope scope;
         private readonly TrsysContext db;
         private readonly Task task;
+        private bool disposedValue;
 
-        public TrsysContextProcessor(TrsysContext db, IHostApplicationLifetime applicationLifetime)
+        public TrsysContextProcessor(IServiceScopeFactory serviceScopeFactory, IHostApplicationLifetime applicationLifetime)
         {
-            this.db = db;
+            scope = serviceScopeFactory.CreateScope();
+            db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
             this.task = Task.Run(async () => await Process(applicationLifetime.ApplicationStopping));
         }
 
@@ -45,6 +49,25 @@ namespace Trsys.Web.Infrastructure
 
             });
             return tcs.Task;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    db.Dispose();
+                    scope.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

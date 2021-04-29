@@ -2,13 +2,13 @@
 using System.Threading.Tasks;
 using Trsys.Web.Models.Users;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.SQLite
 {
-    public class UserRepository : IUserRepository
+    public class SQLiteUserRepository : IUserRepository
     {
         private readonly TrsysContextProcessor processor;
 
-        public UserRepository(TrsysContextProcessor processor)
+        public SQLiteUserRepository(TrsysContextProcessor processor)
         {
             this.processor = processor;
         }

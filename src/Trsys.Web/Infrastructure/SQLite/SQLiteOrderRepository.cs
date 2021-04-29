@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Orders;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.SQLite
 {
-    public class OrderRepository : IOrderRepository
+    public class SQLiteOrderRepository : IOrderRepository
     {
         private readonly TrsysContextProcessor processor;
 
-        public OrderRepository(TrsysContextProcessor processor)
+        public SQLiteOrderRepository(TrsysContextProcessor processor)
         {
             this.processor = processor;
         }

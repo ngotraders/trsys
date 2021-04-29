@@ -1,6 +1,6 @@
 ﻿using Trsys.Web.Services;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class InMemoryOrdersTextStore : IOrdersTextStore
     {
