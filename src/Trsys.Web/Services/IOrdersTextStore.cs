@@ -1,8 +1,10 @@
-﻿namespace Trsys.Web.Services
+﻿using System.Threading.Tasks;
+
+namespace Trsys.Web.Services
 {
     public interface IOrdersTextStore
     {
-        void UpdateOrdersText(OrdersTextEntry textEntry);
-        bool TryGetOrdersText(out OrdersTextEntry textEntry);
+        Task UpdateOrdersTextAsync(OrdersTextEntry textEntry);
+        Task<OrdersTextEntry> GetOrdersTextAsync();
     }
 }

@@ -26,7 +26,7 @@ namespace Trsys.Web.Authentication
             {
                 return AuthenticateResult.Fail("unknown token.");
             }
-            Options.SecretKeyUsage.Touch(ticket.Principal.Identity.Name);
+            await Options.SecretKeyUsage.TouchAsync(ticket.Principal.Identity.Name);
             return AuthenticateResult.Success(ticket);
         }
     }

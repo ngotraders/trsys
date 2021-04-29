@@ -86,7 +86,7 @@ namespace Trsys.Web.Services
                 return GenerateSecretTokenResult.InvalidSecretKey();
             }
 
-            var usage = usageStore.Find(key);
+            var usage = await usageStore.FindAsync(key);
             if (usage != null)
             {
                 if (usage.IsInUse())
@@ -97,7 +97,7 @@ namespace Trsys.Web.Services
             }
             else
             {
-                usageStore.Add(key);
+                await usageStore.AddAsync(key);
             }
 
             var token = secretKey.GenerateToken();
@@ -107,7 +107,7 @@ namespace Trsys.Web.Services
 
         public Task TouchSecretTokenAsync(string key)
         {
-            usageStore.Touch(key);
+            usageStore.TouchAsync(key);
             return Task.CompletedTask;
         }
 
@@ -144,7 +144,7 @@ namespace Trsys.Web.Services
 
             secretKey.Revoke();
             await repository.SaveAsync(secretKey);
-            usageStore.Remove(key);
+            await usageStore.RemoveAsync(key);
             return OperationResult.Ok();
         }
 

@@ -1,4 +1,5 @@
-﻿using Trsys.Web.Services;
+﻿using System.Threading.Tasks;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
@@ -10,15 +11,15 @@ namespace Trsys.Web.Infrastructure.InMemory
         {
         }
 
-        public bool TryGetOrdersText(out OrdersTextEntry textEntry)
+        public Task<OrdersTextEntry> GetOrdersTextAsync()
         {
-            textEntry = _entry;
-            return textEntry == null;
+            return Task.FromResult(_entry);
         }
 
-        public void UpdateOrdersText(OrdersTextEntry textEntry)
+        public Task UpdateOrdersTextAsync(OrdersTextEntry textEntry)
         {
             _entry = textEntry;
+            return Task.CompletedTask;
         }
     }
 }

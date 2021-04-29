@@ -27,9 +27,9 @@ namespace Trsys.Web.Controllers
         [HttpGet]
         [Produces("text/plain")]
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
-        public IActionResult GetOrders()
+        public async Task<IActionResult> GetOrders()
         {
-            var cacheEntry = service.GetOrderTextEntry();
+            var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
                 throw new InvalidOperationException("Cache entry not found.");

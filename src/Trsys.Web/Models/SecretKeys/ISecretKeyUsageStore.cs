@@ -1,10 +1,12 @@
-﻿namespace Trsys.Web.Models.SecretKeys
+﻿using System.Threading.Tasks;
+
+namespace Trsys.Web.Models.SecretKeys
 {
     public interface ISecretKeyUsageStore
     {
-        void Add(string key);
-        SecretKeyUsage Find(string key);
-        void Touch(string key);
-        void Remove(string key);
+        Task AddAsync(string key);
+        Task<SecretKeyUsage> FindAsync(string key);
+        Task TouchAsync(string key);
+        Task RemoveAsync(string key);
     }
 }

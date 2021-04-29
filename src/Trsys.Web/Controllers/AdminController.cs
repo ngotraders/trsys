@@ -33,7 +33,7 @@ namespace Trsys.Web.Controllers
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
             }
 
-            var order = orderService.GetOrderTextEntry();
+            var order = await orderService.GetOrderTextEntryAsync();
             model.CacheOrderText = order?.Text;
 
             model.SecretKeys = (await secretKeyService.SearchAllAsync())

@@ -19,13 +19,13 @@ namespace Trsys.Web.Services
         public async Task RefreshOrderTextAsync()
         {
             var orders = await repository.SearchAllAsync();
-            orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(orders));
+            await orderTextStore.UpdateOrdersTextAsync(OrdersTextEntry.Create(orders));
         }
 
         public async Task UpdateOrdersAsync(IEnumerable<Order> orders)
         {
             await repository.SaveOrdersAsync(orders);
-            orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(orders.ToList()));
+            await orderTextStore.UpdateOrdersTextAsync(OrdersTextEntry.Create(orders.ToList()));
         }
 
         public Task ClearOrdersAsync()
@@ -33,10 +33,9 @@ namespace Trsys.Web.Services
             return UpdateOrdersAsync(new List<Order>());
         }
 
-        public OrdersTextEntry GetOrderTextEntry()
+        public Task<OrdersTextEntry> GetOrderTextEntryAsync()
         {
-            orderTextStore.TryGetOrdersText(out var cacheEntry);
-            return cacheEntry;
+            return orderTextStore.GetOrdersTextAsync();
         }
     }
 }
