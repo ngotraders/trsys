@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,10 +52,12 @@ namespace Trsys.Web
             if (string.IsNullOrEmpty(sqlServerConnection))
             {
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+                services.AddSQLiteRepositories();
             }
             else
             {
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlServerConnection));
+                services.AddRepositories();
             }
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
             if (string.IsNullOrEmpty(redisConnection))
@@ -75,7 +76,6 @@ namespace Trsys.Web
                     options.InstanceName = "Trsys.Web";
                 });
             }
-            services.AddSQLiteRepositories();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
             services.AddTransient<UserService>();
