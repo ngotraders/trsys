@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using StackExchange.Redis;
 using System.Linq;
 using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
@@ -62,6 +65,10 @@ namespace Trsys.Web
             }
             else
             {
+                var redis = ConnectionMultiplexer.Connect(redisConnection);
+                services.AddDataProtection()
+                    .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
+                    .SetApplicationName("Trsys.Web");
                 services.AddRedisStores(options =>
                 {
                     options.Configuration = redisConnection;
