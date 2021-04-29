@@ -16,6 +16,12 @@ namespace Trsys.Web.Services
             this.orderTextStore = orderTextStore;
         }
 
+        public async Task RefreshOrderTextAsync()
+        {
+            var orders = await repository.SearchAllAsync();
+            orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(orders));
+        }
+
         public async Task UpdateOrdersAsync(IEnumerable<Order> orders)
         {
             await repository.SaveOrdersAsync(orders);

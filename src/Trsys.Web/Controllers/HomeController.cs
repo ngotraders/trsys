@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
-using Trsys.Web.Models.Users;
+using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers
@@ -14,12 +14,12 @@ namespace Trsys.Web.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly IUserRepository repository;
+        private readonly UserService userService;
         private readonly PasswordHasher passwordHasher;
 
-        public HomeController(IUserRepository repository, PasswordHasher passwordHasher)
+        public HomeController(UserService userService, PasswordHasher passwordHasher)
         {
-            this.repository = repository;
+            this.userService = userService;
             this.passwordHasher = passwordHasher;
         }
 
@@ -50,7 +50,7 @@ namespace Trsys.Web.Controllers
                 return View("Login", model);
             }
 
-            var user = await repository.FindByUsernameAsync(model.Username);
+            var user = await userService.FindByUsernameAsync(model.Username);
             if (user == null || user.Password != passwordHasher.Hash(model.Password))
             {
                 model.ErrorMessage = "ユーザー名またはパスワードが違います。";
@@ -83,16 +83,14 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "入力に誤りがあります。";
                 return View("ChangePassword", model);
             }
+
             if (model.NewPassword != model.NewPasswordConfirm)
             {
                 model.ErrorMessage = "確認用パスワードが違います。";
                 return View("ChangePassword", model);
             }
 
-            var user = await repository.FindByUsernameAsync(User.Identity.Name);
-            user.Password = passwordHasher.Hash(model.NewPassword);
-            await repository.SaveAsync(user);
-
+            await userService.ChangePasswordAsync(User.Identity.Name, passwordHasher.Hash(model.NewPassword));
             return Redirect("/");
         }
 

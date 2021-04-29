@@ -61,6 +61,7 @@ namespace Trsys.Web
             services.AddTransient<IOrdersTextStore, OrdersCacheManager>();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
+            services.AddTransient<UserService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -83,8 +84,8 @@ namespace Trsys.Web
                         db.SaveChanges();
                     }
 
-                    var orderTextStore = scope.ServiceProvider.GetRequiredService<IOrdersTextStore>();
-                    orderTextStore.UpdateOrdersText(OrdersTextEntry.Create(db.Orders.ToList()));
+                    var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
+                    orderService.RefreshOrderTextAsync().Wait();
                 }
             }
 
