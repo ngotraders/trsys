@@ -52,13 +52,15 @@ namespace Trsys.Web
                 .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
                 .Options));
             services.AddSingleton<TrsysContextProcessor>();
-            services.AddSingleton<ISecretTokenStore, InMemorySecretTokenStore>();
+            services.AddSingleton<IAuthenticationTicketStore, InMemoryAuthenticationTicketStore>();
+            services.AddSingleton<ISecretKeyUsageStore, InMemorySecretKeyUsageStore>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             services.AddTransient<IOrdersTextStore, OrdersCacheManager>();
             services.AddTransient<OrderService>();
+            services.AddTransient<SecretKeyService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

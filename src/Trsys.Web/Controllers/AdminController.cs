@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Admin;
@@ -15,17 +14,14 @@ namespace Trsys.Web.Controllers
     public class AdminController : Controller
     {
         private readonly OrderService orderService;
-        private readonly ISecretKeyRepository secretKeyRepository;
-        private readonly ISecretTokenStore tokenStore;
+        private readonly SecretKeyService secretKeyService;
 
         public AdminController(
             OrderService orderService,
-            ISecretKeyRepository secretKeyRepository, 
-            ISecretTokenStore tokenStore)
+            SecretKeyService secretKeyService)
         {
             this.orderService = orderService;
-            this.secretKeyRepository = secretKeyRepository;
-            this.tokenStore = tokenStore;
+            this.secretKeyService = secretKeyService;
         }
 
         [HttpGet]
@@ -40,7 +36,7 @@ namespace Trsys.Web.Controllers
             var order = orderService.GetOrderTextEntry();
             model.CacheOrderText = order?.Text;
 
-            model.SecretKeys = (await secretKeyRepository.SearchAllAsync())
+            model.SecretKeys = (await secretKeyService.SearchAllAsync())
                 .OrderBy(e => e.IsValid)
                 .ThenBy(e => e.KeyType)
                 .ThenBy(e => e.Id)
@@ -64,28 +60,13 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            SecretKey newSecretKey;
-            if (string.IsNullOrEmpty(model.Key))
+            var result = await secretKeyService.RegisterSecretKeyAsync(model.Key, model.KeyType.Value, model.Description);
+            if (!result.Success)
             {
-                newSecretKey = await secretKeyRepository.CreateNewSecretKeyAsync(model.KeyType.Value);
+                model.ErrorMessage = result.ErrorMessage;
+                return SaveModelAndRedirectToIndex(model);
             }
-            else
-            {
-                newSecretKey = await secretKeyRepository.FindBySecretKeyAsync(model.Key);
-                if (newSecretKey != null)
-                {
-                    model.ErrorMessage = "既に存在するキーです。";
-                    return SaveModelAndRedirectToIndex(model);
-                }
-                newSecretKey = new SecretKey()
-                {
-                    Key = model.Key,
-                    KeyType = model.KeyType,
-                    Description = model.Description,
-                };
-            }
-            await secretKeyRepository.SaveAsync(newSecretKey);
-            model.SuccessMessage = $"シークレットキー: {newSecretKey.Key} を作成しました。";
+            model.SuccessMessage = $"シークレットキー: {result.Key} を作成しました。";
             model.KeyType = null;
             model.Key = null;
             model.Description = null;
@@ -96,14 +77,6 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostKeyUpdate(string id, IndexViewModel model)
         {
             id = System.Uri.UnescapeDataString(id);
-            var secretKey = await secretKeyRepository
-                .FindBySecretKeyAsync(id);
-            if (secretKey == null)
-            {
-                model.ErrorMessage = $"シークレットキー: {id} を編集できません。";
-                return SaveModelAndRedirectToIndex(model);
-            }
-
             var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Key == id);
             if (updateRequest == null || !updateRequest.KeyType.HasValue)
             {
@@ -111,18 +84,14 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            if (secretKey.IsValid && updateRequest.KeyType.Value != secretKey.KeyType.Value)
+            var result = await secretKeyService.UpdateSecretKey(id, updateRequest.KeyType.Value, updateRequest.Description);
+            if (!result.Success)
             {
-                model.ErrorMessage = $"シークレットキー: {id} を編集できません。";
+                model.ErrorMessage = result.ErrorMessage;
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            secretKey.KeyType = updateRequest.KeyType;
-            secretKey.Description = updateRequest.Description;
-
-            await secretKeyRepository.SaveAsync(secretKey);
-
-            model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
+            model.SuccessMessage = $"シークレットキー: {id} を変更しました。";
             return SaveModelAndRedirectToIndex(model);
         }
 
@@ -130,18 +99,14 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostKeyApprove(string id, IndexViewModel model)
         {
             id = System.Uri.UnescapeDataString(id);
-            var secretKey = await secretKeyRepository
-                .FindBySecretKeyAsync(id);
-            if (secretKey == null || secretKey.IsValid)
+            var result = await secretKeyService.ApproveSecretKeyAsync(id);
+            if (!result.Success)
             {
-                model.ErrorMessage = $"シークレットキー: {id} を有効化できません。";
+                model.ErrorMessage = result.ErrorMessage;
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            secretKey.Approve();
-            await secretKeyRepository.SaveAsync(secretKey);
-
-            model.SuccessMessage = $"シークレットキー: {secretKey.Key} を有効化しました。";
+            model.SuccessMessage = $"シークレットキー: {id} を有効化しました。";
             return SaveModelAndRedirectToIndex(model);
         }
 
@@ -149,25 +114,14 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostKeyRevoke(string id, IndexViewModel model)
         {
             id = System.Uri.UnescapeDataString(id);
-            var secretKey = await secretKeyRepository
-                .FindBySecretKeyAsync(id);
-            if (secretKey == null || !secretKey.IsValid)
+            var result = await secretKeyService.RevokeSecretKeyAsync(id);
+            if (!result.Success)
             {
-                model.ErrorMessage = $"シークレットキー: {id} を無効化できません。";
+                model.ErrorMessage = result.ErrorMessage;
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            var validToken = secretKey.ValidToken;
-            secretKey.Revoke();
-            await secretKeyRepository.SaveAsync(secretKey);
-
-            // DBを更新した後にトークンを無効化する
-            if (!string.IsNullOrEmpty(validToken))
-            {
-                await tokenStore.UnregisterAsync(validToken);
-            }
-
-            model.SuccessMessage = $"シークレットキー: {secretKey.Key} を無効化しました。";
+            model.SuccessMessage = $"シークレットキー: {id} を無効化しました。";
             return SaveModelAndRedirectToIndex(model);
         }
 
@@ -175,15 +129,12 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostKeyDelete(string id, IndexViewModel model)
         {
             id = System.Uri.UnescapeDataString(id);
-            var secretKey = await secretKeyRepository
-                .FindBySecretKeyAsync(id);
-            if (secretKey == null || secretKey.IsValid)
+            var result = await secretKeyService.DeleteSecretKeyAsync(id);
+            if (!result.Success)
             {
-                TempData["ErrorMessage"] = $"シークレットキー: {id} を削除できません。";
+                model.ErrorMessage = result.ErrorMessage;
                 return SaveModelAndRedirectToIndex(model);
             }
-
-            await secretKeyRepository.RemoveAsync(secretKey);
 
             model.SuccessMessage = $"シークレットキー: {id} を削除しました。";
             return SaveModelAndRedirectToIndex(model);
@@ -197,7 +148,7 @@ namespace Trsys.Web.Controllers
                 return JsonConvert.DeserializeObject<IndexViewModel>(modelStr);
             }
             return null;
-        }
+        } 
 
         private IActionResult SaveModelAndRedirectToIndex(IndexViewModel model)
         {

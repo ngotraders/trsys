@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
@@ -9,13 +9,14 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class TokenApiController : ControllerBase
     {
-        private readonly ISecretKeyRepository repository;
-        private readonly ISecretTokenStore tokenStore;
 
-        public TokenApiController(ISecretKeyRepository repository, ISecretTokenStore tokenStore)
+        private readonly SecretKeyService service;
+        private readonly IAuthenticationTicketStore ticketStore;
+
+        public TokenApiController(SecretKeyService service, IAuthenticationTicketStore tokenStore)
         {
-            this.repository = repository;
-            this.tokenStore = tokenStore;
+            this.service = service;
+            this.ticketStore = tokenStore;
         }
 
         [HttpPost]
@@ -27,56 +28,33 @@ namespace Trsys.Web.Controllers
                 return BadRequest("InvalidSecretKey");
             }
 
-            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
-            if (secretKeyEntity == null || !secretKeyEntity.IsValid || !secretKeyEntity.KeyType.HasValue)
+            var result = await service.GenerateSecretTokenAsync(secretKey);
+            if (!result.Success)
             {
-                if (secretKeyEntity == null)
+                if (result.InUse)
                 {
-                    secretKeyEntity = new SecretKey()
-                    {
-                        Key = secretKey,
-                    };
-                    await repository.SaveAsync(secretKeyEntity);
+                    return BadRequest("SecretKeyInUse");
                 }
-                return BadRequest("InvalidSecretKey");
-            }
-
-            if (!string.IsNullOrEmpty(secretKeyEntity.ValidToken))
-            {
-                var tokenInfo = await tokenStore.FindInfoAsync(secretKeyEntity.ValidToken);
-                if (tokenInfo != null)
+                else
                 {
-                    if (tokenInfo.IsInUse())
-                    {
-                        return BadRequest("SecretKeyInUse");
-                    }
-                    await tokenStore.UnregisterAsync(secretKeyEntity.ValidToken);
+                    return BadRequest("InvalidSecretKey");
                 }
             }
-
-            var token = await tokenStore.RegisterTokenAsync(secretKeyEntity.Key, secretKeyEntity.KeyType.Value);
-            secretKeyEntity.UpdateToken(token);
-            await repository.SaveAsync(secretKeyEntity);
-            return Ok(token);
+            var principal = PrincipalGenerator.Generate(result.Key, result.KeyType);
+            ticketStore.Add(result.Token, principal);
+            return Ok(result.Token);
         }
 
         [HttpPost("{token}/release")]
         [Consumes("text/plain")]
         public async Task<IActionResult> PostTokenRelease(string token)
         {
-            var tokenInfo = await tokenStore.FindInfoAsync(token);
-            if (tokenInfo == null)
+            var ticket = ticketStore.Remove(token);
+            if (ticket == null)
             {
                 return BadRequest("InvalidToken");
             }
-
-            await tokenStore.UnregisterAsync(token);
-            var secretKey = await repository.FindBySecretKeyAsync(tokenInfo.SecretKey);
-            if (secretKey != null)
-            {
-                secretKey.ReleaseToken();
-                await repository.SaveAsync(secretKey);
-            }
+            await service.ReleaseSecretTokenAsync(ticket.Principal.Identity.Name);
             return Ok(token);
         }
     }

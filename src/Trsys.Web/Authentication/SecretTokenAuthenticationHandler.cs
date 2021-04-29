@@ -21,12 +21,13 @@ namespace Trsys.Web.Authentication
             }
 
             var store = Options.Store;
-            var tokenInfo = await store.FindInfoUpdatingAccessTimeAsync(token);
-            if (tokenInfo == null)
+            var ticket = store.Find(token);
+            if (ticket == null)
             {
                 return AuthenticateResult.Fail("unknown token.");
             }
-            return AuthenticateResult.Success(tokenInfo.Ticket);
+            await Options.Service.TouchSecretTokenAsync(ticket.Principal.Identity.Name);
+            return AuthenticateResult.Success(ticket);
         }
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
@@ -244,38 +246,38 @@ namespace Trsys.Web.Tests
                             .ConfigureTestServices(services =>
                             {
                                 services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseInMemoryDatabase(databaseName).Options));
-                                services.AddSingleton<ISecretTokenStore>(new MockTokenStore());
+                                services.AddSingleton<IAuthenticationTicketStore>(new MockAuthenticationTicketStore());
                             }));
 
         }
 
-        private class MockTokenStore : ISecretTokenStore
+        private class MockAuthenticationTicketStore : IAuthenticationTicketStore
         {
-            public Task<SecretTokenInfo> FindInfoUpdatingAccessTimeAsync(string token)
+            private static AuthenticationTicket Create(string key, SecretKeyType keyType)
             {
-                var tokenInfo = null as SecretTokenInfo;
+                return new AuthenticationTicket(PrincipalGenerator.Generate(key, keyType), "SecretToken");
+            }
+
+            public AuthenticationTicket Find(string token)
+            {
+                var ticket = null as AuthenticationTicket;
                 if (token == VALID_PUBLISHER_TOKEN)
                 {
-                    tokenInfo = new SecretTokenInfo("SECRETKEY", SecretKeyType.Publisher, VALID_PUBLISHER_TOKEN);
+                    ticket = Create("SECRETKEY", SecretKeyType.Publisher);
                 }
                 else if (token == VALID_SUBSCRIBER_TOKEN)
                 {
-                    tokenInfo = new SecretTokenInfo("SECRETKEY", SecretKeyType.Subscriber, VALID_SUBSCRIBER_TOKEN);
+                    ticket = Create("SECRETKEY", SecretKeyType.Subscriber);
                 }
-                return Task.FromResult(tokenInfo);
+                return ticket;
             }
 
-            public Task<SecretTokenInfo> FindInfoAsync(string token)
+            public AuthenticationTicket Remove(string token)
             {
                 throw new NotImplementedException();
             }
 
-            public Task<string> RegisterTokenAsync(string secretKey, SecretKeyType keyType)
-            {
-                throw new NotImplementedException();
-            }
-
-            public Task UnregisterAsync(string token)
+            public void Add(string token, ClaimsPrincipal principal)
             {
                 throw new NotImplementedException();
             }

@@ -21,6 +21,8 @@ namespace Trsys.Web.Models.SecretKeys
 
         public string ValidToken { get; set; }
 
+        public bool HasToken => !string.IsNullOrEmpty(ValidToken);
+
         public void Approve()
         {
             IsValid = true;
@@ -34,14 +36,15 @@ namespace Trsys.Web.Models.SecretKeys
             ValidToken = null;
         }
 
-        public void UpdateToken(string token)
-        {
-            ValidToken = token;
-        }
-
         public void ReleaseToken()
         {
             ValidToken = null;
+        }
+
+        public string GenerateToken()
+        {
+            ValidToken = Guid.NewGuid().ToString();
+            return ValidToken;
         }
     }
 }
