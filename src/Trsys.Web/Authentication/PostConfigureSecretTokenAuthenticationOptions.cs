@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Authentication
@@ -6,17 +7,17 @@ namespace Trsys.Web.Authentication
     public class PostConfigureSecretTokenAuthenticationOptions : IPostConfigureOptions<SecretTokenAuthenticationSchemeOptions>
     {
         private readonly IAuthenticationTicketStore store;
-        private readonly SecretKeyService service;
+        private readonly ISecretKeyUsageStore usageStore;
 
-        public PostConfigureSecretTokenAuthenticationOptions(IAuthenticationTicketStore store, SecretKeyService service)
+        public PostConfigureSecretTokenAuthenticationOptions(IAuthenticationTicketStore store, ISecretKeyUsageStore usageStore)
         {
             this.store = store;
-            this.service = service;
+            this.usageStore = usageStore;
         }
         public void PostConfigure(string name, SecretTokenAuthenticationSchemeOptions options)
         {
             options.Store = store;
-            options.Service = service;
+            options.SecretKeyUsage = usageStore;
         }
     }
 }

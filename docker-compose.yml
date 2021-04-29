@@ -1,0 +1,12 @@
+version: '3.5'
+
+services: 
+    app:
+        image: mcr.microsoft.com/dotnet/sdk:5.0
+        working_dir: /app
+        command: dotnet run --project src/Trsys.Web/Trsys.Web.csproj
+        volumes:
+            - .:/app
+        ports:
+            - 5001:5001
+            - 5000:5000

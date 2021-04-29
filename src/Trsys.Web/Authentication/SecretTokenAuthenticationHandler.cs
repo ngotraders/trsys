@@ -12,22 +12,22 @@ namespace Trsys.Web.Authentication
         {
         }
 
-        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var token = Context.Request.Headers["X-Secret-Token"];
             if (string.IsNullOrEmpty(token))
             {
-                return AuthenticateResult.Fail($"X-Secret-Token header is missing.");
+                return Task.FromResult(AuthenticateResult.Fail($"X-Secret-Token header is missing."));
             }
 
             var store = Options.Store;
             var ticket = store.Find(token);
             if (ticket == null)
             {
-                return AuthenticateResult.Fail("unknown token.");
+                return Task.FromResult(AuthenticateResult.Fail("unknown token."));
             }
-            await Options.Service.TouchSecretTokenAsync(ticket.Principal.Identity.Name);
-            return AuthenticateResult.Success(ticket);
+            Options.SecretKeyUsage.Touch(ticket.Principal.Identity.Name);
+            return Task.FromResult(AuthenticateResult.Success(ticket));
         }
     }
 }

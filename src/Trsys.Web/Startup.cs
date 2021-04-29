@@ -48,16 +48,16 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddMemoryCache();
+            services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             services.AddSingleton(new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
                 .UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
                 .Options));
             services.AddSingleton<TrsysContextProcessor>();
             services.AddSingleton<IAuthenticationTicketStore, InMemoryAuthenticationTicketStore>();
             services.AddSingleton<ISecretKeyUsageStore, InMemorySecretKeyUsageStore>();
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IOrderRepository, OrderRepository>();
-            services.AddScoped<ISecretKeyRepository, SecretKeyRepository>();
-            services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IOrderRepository, OrderRepository>();
+            services.AddTransient<ISecretKeyRepository, SecretKeyRepository>();
             services.AddTransient<IOrdersTextStore, OrdersCacheManager>();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
