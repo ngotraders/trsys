@@ -1,21 +1,26 @@
-version: '3.5'
+version: "3.5"
 
 services:
-    app:
-        image: mcr.microsoft.com/dotnet/sdk:5.0
-        working_dir: /app
-        command: dotnet run --project src/Trsys.Web/Trsys.Web.csproj
-        volumes:
-            - .:/app
-        ports:
-            - 5001:5001
-            - 5000:5000
-    db:
-        image: mcr.microsoft.com/mssql/server:2019-latest
-        environment: 
-            - ACCEPT_EULA=Y
-            - SA_PASSWORD=P@ssw0rd
-        ports:
-            - 1433:1433
-    redis:
-        image: redis
+  app:
+    image: mcr.microsoft.com/dotnet/sdk:5.0
+    working_dir: /app
+    command: dotnet run --project src/Trsys.Web/Trsys.Web.csproj
+    volumes:
+      - .:/app
+    ports:
+      - 5001:5001
+      - 5000:5000
+    environment:
+      - ConnectionStrings:SqlServerConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
+      - ConnectionStrings:RedisConnection=redis
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=P@ssw0rd
+    ports:
+      - 1433:1433
+  redis:
+    image: redis
+    ports:
+      - 6379:6379

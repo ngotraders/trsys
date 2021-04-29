@@ -1,7 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using Trsys.Web.Authentication;
 using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Infrastructure.InMemory;
+using Trsys.Web.Infrastructure.Redis;
 using Trsys.Web.Infrastructure.SQLite;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
@@ -17,6 +20,15 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IAuthenticationTicketStore, InMemoryAuthenticationTicketStore>();
             services.AddSingleton<ISecretKeyUsageStore, InMemorySecretKeyUsageStore>();
             services.AddSingleton<IOrdersTextStore, InMemoryOrdersTextStore>();
+            return services;
+        }
+
+        public static IServiceCollection AddRedisStores(this IServiceCollection services, Action<RedisCacheOptions> setupAction)
+        {
+            services.AddStackExchangeRedisCache(setupAction);
+            services.AddSingleton<IAuthenticationTicketStore, RedisAuthenticationTicketStore>();
+            services.AddSingleton<ISecretKeyUsageStore, RedisSecretKeyUsageStore>();
+            services.AddSingleton<IOrdersTextStore, RedisOrdersTextStore>();
             return services;
         }
 

@@ -13,7 +13,7 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 80;
+        const int COUNT_OF_CLIENTS = 65;
         const double LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
 

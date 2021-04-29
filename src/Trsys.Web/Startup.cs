@@ -46,8 +46,28 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            services.AddDbContext<TrsysContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddInMemoryStores();
+            var sqlServerConnection = Configuration.GetConnectionString("SqlServerConnection");
+            if (string.IsNullOrEmpty(sqlServerConnection))
+            {
+                services.AddDbContext<TrsysContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            }
+            else
+            {
+                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlServerConnection));
+            }
+            var redisConnection = Configuration.GetConnectionString("RedisConnection");
+            if (string.IsNullOrEmpty(redisConnection))
+            {
+                services.AddInMemoryStores();
+            }
+            else
+            {
+                services.AddRedisStores(options =>
+                {
+                    options.Configuration = redisConnection;
+                    options.InstanceName = "Trsys.Web";
+                });
+            }
             services.AddSQLiteRepositories();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
