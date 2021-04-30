@@ -28,7 +28,22 @@
             "properties": {
                 "administratorLogin": "[parameters('dbAdminName')]",
                 "administratorLoginPassword": "[parameters('dbAdminPassword')]"
-            }
+            },
+            "resources": [
+                {
+                    "type": "firewallRules",
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Sql/servers', 'trsys-database')]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "startIpAddress": "0.0.0.0",
+                        "endIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Sql/servers/databases",
@@ -105,7 +120,7 @@
                         },
                         {
                             "name": "ConnectionStrings:RedisConnection",
-                            "value": "[reference('trsys-redis').hostName]"
+                            "value": "[concat(reference('trsys-redis').hostName,':',reference('trsys-redis').sslPort,',password=',reference('trsys-redis').accessKeys.primaryKey,',ssl=True,abortConnect=False')]"
                         }
                     ]
                 }
