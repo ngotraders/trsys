@@ -1,0 +1,132 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dbAdminName": {
+            "type": "string",
+            "metadata": {
+                "description": "Login of Azure SQL Database"
+            }
+        },
+        "dbAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Login password of Azure SQL Database"
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Sql/servers",
+            "name": "trsys-database",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "trsys-database"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('dbAdminName')]",
+                "administratorLoginPassword": "[parameters('dbAdminPassword')]"
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/databases",
+            "name": "trsys-database/TrsysDatabase",
+            "apiVersion": "2014-04-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "TrsysDatabase"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers', 'trsys-database')]"
+            ],
+            "properties": {
+                "collation": "SQL_Latin1_General_CP1_CI_AS",
+                "edition": "Basic",
+                "maxSizeBytes": "1073741824",
+                "requestedServiceObjectiveName": "Basic"
+            }
+        },
+        {
+            "type": "Microsoft.Cache/Redis",
+            "name": "trsys-redis",
+            "apiVersion": "2019-07-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "trsys-redis"
+            },
+            "properties": {
+                "sku": {
+                    "name": "Basic",
+                    "family": "C",
+                    "capacity": 0
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "name": "trsys-server",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "F1",
+                "capacity": 1
+            },
+            "tags": {
+                "displayName": "trsys-server"
+            },
+            "properties": {
+                "name": "trsys-server"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "name": "trsys-server",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/trsys-server')]": "Resource",
+                "displayName": "trsys-server"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', 'trsys-server')]",
+                "[resourceId('Microsoft.Sql/servers', 'trsys-database')]",
+                "[resourceId('Microsoft.Cache/Redis', 'trsys-redis')]"
+            ],
+            "properties": {
+                "name": "trsys-server",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'trsys-server')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "ConnectionStrings:SqlServerConnection",
+                            "value": "[concat('Server=tcp:',reference('trsys-database').fullyQualifiedDomainName,',1433;Initial Catalog=TrsysDatabase;Persist Security Info=False;User ID=',parameters('dbAdminName'),';Password=',parameters('dbAdminPassword'),';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+                        },
+                        {
+                            "name": "ConnectionStrings:RedisConnection",
+                            "value": "[reference('trsys-redis').hostName]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "sourcecontrols",
+                    "apiVersion": "2018-11-01",
+                    "name": "web",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', 'trsys-server')]"
+                    ],
+                    "properties": {
+                        "repoUrl": "https://github.com/chameleonhead/trsys.git",
+                        "branch": "dev/csharp",
+                        "isManualIntegration": true
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}
