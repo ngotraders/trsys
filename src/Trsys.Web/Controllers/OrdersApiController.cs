@@ -32,6 +32,7 @@ namespace Trsys.Web.Controllers
             var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
+                await service.RefreshOrderTextAsync();
                 throw new InvalidOperationException("Cache entry not found.");
             }
             var etags = HttpContext.Request.Headers["If-None-Match"];
