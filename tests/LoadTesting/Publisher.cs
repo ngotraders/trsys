@@ -26,7 +26,7 @@ namespace LoadTesting
                 {
                     Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
                 }
-                Log.Logger.Information("Order changed: {0}", orderText);
+                Log.Logger.Information($"Publisher:{SecretKey}:OrderUpdated:{orderText}");
                 sentOrder = orderText;
                 return Response.Ok(payload: "Order posted" + sentOrder);
             }

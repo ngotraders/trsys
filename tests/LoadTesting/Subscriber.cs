@@ -2,6 +2,7 @@
 using Serilog;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace LoadTesting
@@ -34,8 +35,8 @@ namespace LoadTesting
 
             orderHash = res.Headers.ETag.Tag;
             orderText = await res.Content.ReadAsStringAsync();
-            Log.Logger.Information("Order changed: {0}", orderText);
-
+            Log.Logger.Information($"Subscriber:{SecretKey}:OrderChanged:{orderText}");
+            await Client.PostAsync("/api/logs", new StringContent($"OrderChanged:{orderText}", Encoding.UTF8, "text/plain"));
             return Response.Ok();
         }
     }
