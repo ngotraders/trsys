@@ -6,15 +6,17 @@ namespace Trsys.Web.Services
     {
         public bool Success { get; set; }
         public bool InUse { get; set; }
+        public bool NewlyCreated { get; set; }
         public string Token { get; set; }
         public string Key { get; set; }
         public SecretKeyType KeyType { get; set; }
 
-        public static GenerateSecretTokenResult InvalidSecretKey()
+        public static GenerateSecretTokenResult InvalidSecretKey(bool newlyCreated)
         {
             return new GenerateSecretTokenResult()
             {
-                Success = false
+                Success = false,
+                NewlyCreated = newlyCreated,
             };
         }
 

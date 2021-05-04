@@ -8,11 +8,13 @@ namespace Trsys.Web.Services
     {
         private readonly ISecretKeyRepository repository;
         private readonly ISecretKeyUsageStore usageStore;
+        private readonly EventService eventService;
 
-        public SecretKeyService(ISecretKeyRepository repository, ISecretKeyUsageStore usageStore)
+        public SecretKeyService(ISecretKeyRepository repository, ISecretKeyUsageStore usageStore, EventService eventService)
         {
             this.repository = repository;
             this.usageStore = usageStore;
+            this.eventService = eventService;
         }
 
         public Task<List<SecretKey>> SearchAllAsync()
@@ -75,15 +77,17 @@ namespace Trsys.Web.Services
             var secretKey = await repository.FindBySecretKeyAsync(key);
             if (secretKey == null || !secretKey.IsValid || !secretKey.KeyType.HasValue)
             {
-                if (secretKey == null)
+                if (secretKey != null)
                 {
-                    secretKey = new SecretKey()
-                    {
-                        Key = key,
-                    };
-                    await repository.SaveAsync(secretKey);
+                    return GenerateSecretTokenResult.InvalidSecretKey(false);
                 }
-                return GenerateSecretTokenResult.InvalidSecretKey();
+
+                secretKey = new SecretKey()
+                {
+                    Key = key,
+                };
+                await repository.SaveAsync(secretKey);
+                return GenerateSecretTokenResult.InvalidSecretKey(true);
             }
 
             var usage = await usageStore.FindAsync(key);

@@ -76,9 +76,11 @@ namespace Trsys.Web
                     options.InstanceName = "Trsys.Web";
                 });
             }
+            services.AddEventProcessor();
             services.AddTransient<OrderService>();
             services.AddTransient<SecretKeyService>();
             services.AddTransient<UserService>();
+            services.AddTransient<EventService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

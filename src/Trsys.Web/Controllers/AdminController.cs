@@ -15,13 +15,16 @@ namespace Trsys.Web.Controllers
     {
         private readonly OrderService orderService;
         private readonly SecretKeyService secretKeyService;
+        private readonly EventService eventService;
 
         public AdminController(
             OrderService orderService,
-            SecretKeyService secretKeyService)
+            SecretKeyService secretKeyService,
+            EventService eventService)
         {
             this.orderService = orderService;
             this.secretKeyService = secretKeyService;
+            this.eventService = eventService;
         }
 
         [HttpGet]
@@ -48,6 +51,7 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
         {
             await orderService.ClearOrdersAsync();
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "OrderCleared");
             return SaveModelAndRedirectToIndex(model);
         }
 
@@ -66,6 +70,8 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = result.ErrorMessage;
                 return SaveModelAndRedirectToIndex(model);
             }
+
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { SecretKey = result.Key, model.KeyType, model.Description });
             model.SuccessMessage = $"シークレットキー: {result.Key} を作成しました。";
             model.KeyType = null;
             model.Key = null;
@@ -91,6 +97,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyUpdated", new { SecretKey = id, updateRequest.KeyType, updateRequest.Description });
             model.SuccessMessage = $"シークレットキー: {id} を変更しました。";
             return SaveModelAndRedirectToIndex(model);
         }
@@ -106,6 +113,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyApproved", new { SecretKey = id });
             model.SuccessMessage = $"シークレットキー: {id} を有効化しました。";
             return SaveModelAndRedirectToIndex(model);
         }
@@ -121,6 +129,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = id });
             model.SuccessMessage = $"シークレットキー: {id} を無効化しました。";
             return SaveModelAndRedirectToIndex(model);
         }
@@ -136,6 +145,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = id });
             model.SuccessMessage = $"シークレットキー: {id} を削除しました。";
             return SaveModelAndRedirectToIndex(model);
         }
@@ -148,7 +158,7 @@ namespace Trsys.Web.Controllers
                 return JsonConvert.DeserializeObject<IndexViewModel>(modelStr);
             }
             return null;
-        } 
+        }
 
         private IActionResult SaveModelAndRedirectToIndex(IndexViewModel model)
         {

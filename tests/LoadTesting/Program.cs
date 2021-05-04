@@ -35,17 +35,19 @@ namespace LoadTesting
                 .CreateScenario("pub", step1)
                 .WithInit(async context =>
                 {
-                    await publisher.InitAsync();
+                    await publisher.InitializeAsync();
                     await publisher.ExecuteAsync();
                 })
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
+                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
+                .WithClean(context => Task.WhenAll(publisher.FinalizeAsync()));
 
             var scenario2 = ScenarioBuilder
                 .CreateScenario("sub", step2)
-                .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitAsync())))
+                .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitializeAsync())))
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)));
+                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
+                .WithClean(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.FinalizeAsync())));
 
             NBomberRunner
                 .RegisterScenarios(scenario1, scenario2)

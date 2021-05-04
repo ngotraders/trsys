@@ -18,10 +18,12 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly OrderService service;
+        private readonly EventService eventService;
 
-        public OrdersApiController(OrderService service)
+        public OrdersApiController(OrderService service, EventService eventService)
         {
             this.service = service;
+            this.eventService = eventService;
         }
 
         [HttpGet]
@@ -32,6 +34,7 @@ namespace Trsys.Web.Controllers
             var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
+                await eventService.RegisterSystemEventAsync("CacheNotFound");
                 await service.RefreshOrderTextAsync();
                 throw new InvalidOperationException("Cache entry not found.");
             }
@@ -46,6 +49,8 @@ namespace Trsys.Web.Controllers
                     }
                 }
             }
+
+            await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderFetched", cacheEntry.Text);
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -62,6 +67,7 @@ namespace Trsys.Web.Controllers
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+"))
                     {
+                        await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderUpdateFailed", text);
                         return BadRequest();
                     }
                     var splitted = item.Split(":");
@@ -84,6 +90,7 @@ namespace Trsys.Web.Controllers
             }
 
             await service.UpdateOrdersAsync(orders);
+            await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderUpdated", text);
             return Ok();
         }
     }

@@ -26,7 +26,7 @@ namespace LoadTesting
             };
         }
 
-        public async Task InitAsync()
+        public async Task InitializeAsync()
         {
             var res = await Client.PostAsync("/api/token", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
             res.EnsureSuccessStatusCode();
@@ -36,6 +36,15 @@ namespace LoadTesting
             Client.DefaultRequestHeaders.Add("Version", "20210331");
             Client.DefaultRequestHeaders.Add("X-Secret-Token", secretToken);
             isInit = true;
+        }
+
+        public async Task FinalizeAsync()
+        {
+            var res = await Client.PostAsync("/api/token" + secretToken + "release", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
+            res.EnsureSuccessStatusCode();
+            secretToken = null;
+            Client.DefaultRequestHeaders.Clear();
+            isInit = false;
         }
 
         public async Task<Response> ExecuteAsync()

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Models.Users;
@@ -14,5 +15,6 @@ namespace Trsys.Web.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<SecretKey> SecretKeys { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Event> Events { get; set; }
     }
 }

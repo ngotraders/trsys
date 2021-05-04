@@ -12,11 +12,13 @@ namespace Trsys.Web.Controllers
 
         private readonly SecretKeyService service;
         private readonly IAuthenticationTicketStore ticketStore;
+        private readonly EventService eventService;
 
-        public TokenApiController(SecretKeyService service, IAuthenticationTicketStore tokenStore)
+        public TokenApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
         {
             this.service = service;
-            this.ticketStore = tokenStore;
+            this.ticketStore = ticketStore;
+            this.eventService = eventService;
         }
 
         [HttpPost]
@@ -37,9 +39,15 @@ namespace Trsys.Web.Controllers
                 }
                 else
                 {
+                    if (result.NewlyCreated)
+                    {
+                        await eventService.RegisterSystemEventAsync("NewEaAccessed", new { SecretKey = secretKey });
+                    }
                     return BadRequest("InvalidSecretKey");
                 }
             }
+
+            await eventService.RegisterEaEventAsync(secretKey, "TokenGenerated", new { SecretToken = result.Token });
             var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
             await ticketStore.AddAsync(result.Token, principal);
             return Ok(result.Token);
@@ -54,7 +62,10 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest("InvalidToken");
             }
-            await service.ReleaseSecretTokenAsync(ticket.Principal.Identity.Name);
+
+            var secretKey = ticket.Principal.Identity.Name;
+            await service.ReleaseSecretTokenAsync(secretKey);
+            await eventService.RegisterEaEventAsync(secretKey, "TokenReleased", new { SecretToken = token });
             return Ok(token);
         }
     }
