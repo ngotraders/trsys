@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Models.SecretKeys;
@@ -22,13 +21,7 @@ namespace Trsys.Web.Infrastructure.SQLite
 
         public Task<SecretKey> CreateNewSecretKeyAsync(SecretKeyType keyType)
         {
-            var entity = new SecretKey()
-            {
-                KeyType = keyType,
-                Key = Guid.NewGuid().ToString(),
-                IsValid = false,
-            };
-            return Task.FromResult(entity);
+            return Task.FromResult(SecretKey.Create(keyType));
         }
 
         public Task<SecretKey> FindBySecretKeyAsync(string secretKey)

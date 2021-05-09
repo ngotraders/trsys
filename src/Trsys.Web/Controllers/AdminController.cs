@@ -90,7 +90,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            var result = await secretKeyService.UpdateSecretKey(id, updateRequest.KeyType.Value, updateRequest.Description);
+            var result = await secretKeyService.UpdateSecretKeyAsync(id, updateRequest.KeyType.Value, updateRequest.Description);
             if (!result.Success)
             {
                 model.ErrorMessage = result.ErrorMessage;

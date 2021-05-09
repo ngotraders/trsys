@@ -38,6 +38,7 @@ namespace Trsys.Web.Tests
             var res = await client.PostAsync("/api/logs", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
+            await Task.Delay(1);
             var repository = server.Services.GetRequiredService<IEventRepository>();
             var events = await repository.SearchAllAsync();
             Assert.AreEqual(1, events.Count);

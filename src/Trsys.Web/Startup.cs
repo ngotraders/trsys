@@ -44,6 +44,7 @@ namespace Trsys.Web
                 {
                     options.LoginPath = "/login";
                     options.LogoutPath = "/logout";
+                    options.ReturnUrlParameter = "returnUrl";
                 })
                 .AddSecretTokenAuthentication();
 

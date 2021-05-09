@@ -28,8 +28,8 @@ namespace Trsys.Web.Infrastructure.EventProcessing
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     var ev = await queue.DequeueAsync(stoppingToken);
-                    logger.LogInformation(ev.EventType + "::" + ev.Data);
                     await repository.SaveAsync(ev);
+                    logger.LogInformation(ev.EventType + "::" + ev.Data);
                 }
             }
             catch (TaskCanceledException)

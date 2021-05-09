@@ -11,6 +11,10 @@ namespace Trsys.Web.Models.SecretKeys
 
     public class SecretKey
     {
+        private SecretKey()
+        {
+
+        }
         public int Id { get; set; }
         public SecretKeyType? KeyType { get; set; }
         public string Key { get; set; }
@@ -45,6 +49,22 @@ namespace Trsys.Web.Models.SecretKeys
         {
             ValidToken = Guid.NewGuid().ToString();
             return ValidToken;
+        }
+
+        public static SecretKey Create(SecretKeyType keyType)
+        {
+            return Create(Guid.NewGuid().ToString(), keyType, null);
+        }
+
+        public static SecretKey Create(string key, SecretKeyType? keyType, string description)
+        {
+            return new SecretKey()
+            {
+                Key = key,
+                KeyType = keyType,
+                Description = description,
+                IsValid = false,
+            };
         }
     }
 }

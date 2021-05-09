@@ -41,18 +41,13 @@ namespace Trsys.Web.Services
                 {
                     return RegisterSecretKeyResult.Fail("既に存在するキーです。");
                 }
-                newSecretKey = new SecretKey()
-                {
-                    Key = key,
-                    KeyType = keyType,
-                    Description = description,
-                };
+                newSecretKey = SecretKey.Create(key, keyType, description);
             }
             await repository.SaveAsync(newSecretKey);
             return RegisterSecretKeyResult.Ok(newSecretKey.Key);
         }
 
-        public async Task<OperationResult> UpdateSecretKey(string secretKey, SecretKeyType keyType, string description)
+        public async Task<OperationResult> UpdateSecretKeyAsync(string secretKey, SecretKeyType keyType, string description)
         {
             var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
             if (secretKeyEntity == null)
@@ -82,11 +77,7 @@ namespace Trsys.Web.Services
                     return GenerateSecretTokenResult.InvalidSecretKey(false);
                 }
 
-                secretKey = new SecretKey()
-                {
-                    Key = key,
-                };
-                await repository.SaveAsync(secretKey);
+                secretKey = SecretKey.Create(key, null, null);
                 return GenerateSecretTokenResult.InvalidSecretKey(true);
             }
 

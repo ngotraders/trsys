@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
@@ -23,7 +22,7 @@ namespace Trsys.Web.Infrastructure.Generic
 
         public Task SaveAsync(Event ev)
         {
-            db.Add(ev);
+            db.Events.Add(ev);
             return db.SaveChangesAsync();
         }
     }
