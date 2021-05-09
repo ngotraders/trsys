@@ -78,6 +78,7 @@ namespace Trsys.Web.Services
                 }
 
                 secretKey = SecretKey.Create(key, null, null);
+                await repository.SaveAsync(secretKey);
                 return GenerateSecretTokenResult.InvalidSecretKey(true);
             }
 

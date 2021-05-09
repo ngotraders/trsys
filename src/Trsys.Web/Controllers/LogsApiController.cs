@@ -1,13 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System;
 using System.Threading.Tasks;
+using Trsys.Web.Filters;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/logs")]
     [ApiController]
+    [EaVersion("20210331")]
+    [Authorize(AuthenticationSchemes = "SecretToken")]
     public class LogsApiController : Controller
     {
         private readonly EventService service;
@@ -19,10 +23,17 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
-        [Authorize(AuthenticationSchemes = "SecretToken")]
         public async Task<IActionResult> PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
-            await service.RegisterEaEventAsync(User.Identity.Name, "Log", text);
+            if (string.IsNullOrEmpty(text))
+            {
+                return Accepted();
+            }
+
+            foreach (var line in text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                await service.RegisterEaEventAsync(User.Identity.Name, "Log", line);
+            }
             return Accepted();
         }
     }

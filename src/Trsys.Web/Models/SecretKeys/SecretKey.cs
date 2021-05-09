@@ -11,10 +11,6 @@ namespace Trsys.Web.Models.SecretKeys
 
     public class SecretKey
     {
-        private SecretKey()
-        {
-
-        }
         public int Id { get; set; }
         public SecretKeyType? KeyType { get; set; }
         public string Key { get; set; }
