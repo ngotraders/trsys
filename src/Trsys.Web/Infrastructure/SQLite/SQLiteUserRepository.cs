@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Models.Users;
 
 namespace Trsys.Web.Infrastructure.SQLite
@@ -15,23 +15,12 @@ namespace Trsys.Web.Infrastructure.SQLite
 
         public Task<User> FindByUsernameAsync(string username)
         {
-            return processor.Enqueue(db => db.Users.FirstOrDefaultAsync(e => e.Username == username));
+            return processor.Enqueue(db => new UserRepository(db).FindByUsernameAsync(username));
         }
 
         public Task SaveAsync(User entity)
         {
-            return processor.Enqueue(db =>
-            {
-                if (entity.Id > 0)
-                {
-                    db.Users.Update(entity);
-                }
-                else
-                {
-                    db.Users.Add(entity);
-                }
-                return db.SaveChangesAsync();
-            });
+            return processor.Enqueue(db => new UserRepository(db).SaveAsync(entity));
         }
     }
 }

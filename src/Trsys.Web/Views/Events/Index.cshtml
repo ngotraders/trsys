@@ -1,0 +1,56 @@
+﻿@using Trsys.Web.Models.SecretKeys
+@using System.Linq
+@model Trsys.Web.ViewModels.Events.IndexViewModel
+
+@{
+    ViewBag.Title = "イベント一覧";
+}
+
+<div>
+    <h1 class="mb-3">イベント</h1>
+    <div class="mb-3">
+        @if (Model.Page > 1)
+        {
+            <a href="@Url.Action("Index", new { key = Model.Key })">最初のページ</a>
+            <a href="@Url.Action("Index", new { key = Model.Key, page = Model.Page - 1, perPage = Model.PerPage })">前のページ</a>
+        }
+        else
+        {
+            <span>最初のページ</span>
+            <span>前のページ</span>
+        }
+        <a href="@Url.Action("Index", new { key = Model.Key, page = Model.Page + 1, perPage = Model.PerPage })">次のページ</a>
+    </div>
+    <table class="table table-bordered mb-3">
+        <thead>
+            <tr>
+                <th>時刻</th>
+                <th>イベントタイプ</th>
+                <th>イベントデータ</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Events)
+            {
+                <tr>
+                    <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fffzzz}", e.Timestamp.ToOffset(TimeSpan.FromHours(9)))</td>
+                    <td>@e.EventType</td>
+                    <td>@e.Data</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div>
+        @if (Model.Page > 1)
+        {
+            <a href="@Url.Action("Index", new { key = Model.Key })">最初のページ</a>
+            <a href="@Url.Action("Index", new { key = Model.Key, page = Model.Page - 1, perPage = Model.PerPage })">前のページ</a>
+        }
+        else
+        {
+            <span>最初のページ</span>
+            <span>前のページ</span>
+        }
+        <a href="@Url.Action("Index", new { key = Model.Key, page = Model.Page + 1, perPage = Model.PerPage })">次のページ</a>
+    </div>
+</div>

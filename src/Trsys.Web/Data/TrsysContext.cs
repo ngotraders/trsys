@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
@@ -26,6 +27,9 @@ namespace Trsys.Web.Data
                 .IsRequired();
             modelBuilder.Entity<SecretKey>()
                 .HasIndex(s => s.Key);
+            modelBuilder.Entity<Event>()
+                .Property(e => e.Timestamp)
+                .HasConversion(e => e.UtcDateTime, e => new DateTimeOffset(e, TimeSpan.Zero));
             modelBuilder.Entity<Event>()
                 .HasIndex(e => e.Timestamp);
         }

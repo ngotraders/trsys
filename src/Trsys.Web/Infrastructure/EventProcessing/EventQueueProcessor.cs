@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Events;
@@ -10,16 +9,12 @@ namespace Trsys.Web.Infrastructure.EventProcessing
     public class EventQueueProcessor : BackgroundService
     {
         private readonly EventQueue queue;
-        private readonly IServiceScope scope;
-        private readonly IEventRepository repository;
-        private readonly ILogger<EventQueueProcessor> logger;
+        private readonly IServiceScopeFactory serviceScopeFactory;
 
         public EventQueueProcessor(EventQueue queue, IServiceScopeFactory serviceScopeFactory)
         {
             this.queue = queue;
-            this.scope = serviceScopeFactory.CreateScope();
-            this.repository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
-            this.logger = scope.ServiceProvider.GetRequiredService<ILogger<EventQueueProcessor>>();
+            this.serviceScopeFactory = serviceScopeFactory;
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -28,19 +23,16 @@ namespace Trsys.Web.Infrastructure.EventProcessing
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     var ev = await queue.DequeueAsync(stoppingToken);
-                    await repository.SaveAsync(ev);
-                    logger.LogInformation(ev.EventType + "::" + ev.Data);
+                    using (var scope = serviceScopeFactory.CreateScope())
+                    {
+                        var repository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+                        await repository.SaveAsync(ev);
+                    }
                 }
             }
             catch (TaskCanceledException)
             {
             }
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
-            scope.Dispose();
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Models.SecretKeys;
 
 namespace Trsys.Web.Infrastructure.SQLite
@@ -16,42 +16,27 @@ namespace Trsys.Web.Infrastructure.SQLite
 
         public Task<List<SecretKey>> SearchAllAsync()
         {
-            return processor.Enqueue(db => db.SecretKeys.ToListAsync());
+            return processor.Enqueue(db => new SecretKeyRepository(db).SearchAllAsync());
         }
 
         public Task<SecretKey> CreateNewSecretKeyAsync(SecretKeyType keyType)
         {
-            return Task.FromResult(SecretKey.Create(keyType));
+            return processor.Enqueue(db => new SecretKeyRepository(db).CreateNewSecretKeyAsync(keyType));
         }
 
         public Task<SecretKey> FindBySecretKeyAsync(string secretKey)
         {
-            return processor.Enqueue(db => db.SecretKeys.FirstOrDefaultAsync(e => e.Key == secretKey));
+            return processor.Enqueue(db => new SecretKeyRepository(db).FindBySecretKeyAsync(secretKey));
         }
 
         public Task SaveAsync(SecretKey entity)
         {
-            return processor.Enqueue(db =>
-            {
-                if (entity.Id > 0)
-                {
-                    db.SecretKeys.Update(entity);
-                }
-                else
-                {
-                    db.SecretKeys.Add(entity);
-                }
-                return db.SaveChangesAsync();
-            });
+            return processor.Enqueue(db => new SecretKeyRepository(db).SaveAsync(entity));
         }
 
         public Task RemoveAsync(SecretKey entity)
         {
-            return processor.Enqueue(db =>
-            {
-                db.SecretKeys.Remove(entity);
-                return db.SaveChangesAsync();
-            });
+            return processor.Enqueue(db => new SecretKeyRepository(db).RemoveAsync(entity));
         }
     }
 }

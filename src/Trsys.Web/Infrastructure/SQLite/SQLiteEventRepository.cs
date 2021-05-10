@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Models.Events;
 
 namespace Trsys.Web.Infrastructure.SQLite
@@ -16,16 +16,17 @@ namespace Trsys.Web.Infrastructure.SQLite
 
         public Task<List<Event>> SearchAllAsync()
         {
-            return processor.Enqueue(db => db.Events.ToListAsync());
+            return processor.Enqueue(db => new EventRepository(db).SearchAllAsync());
+        }
+
+        public Task<List<Event>> SearchAsync(string key, int page, int perPage)
+        {
+            return processor.Enqueue(db => new EventRepository(db).SearchAsync(key, page, perPage));
         }
 
         public Task SaveAsync(Event ev)
         {
-            return processor.Enqueue(db =>
-            {
-                db.Add(ev);
-                return db.SaveChangesAsync();
-            });
+            return processor.Enqueue(db => new EventRepository(db).SaveAsync(ev));
         }
     }
 }

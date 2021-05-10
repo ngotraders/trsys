@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Events;
 
@@ -7,10 +9,17 @@ namespace Trsys.Web.Services
     public class EventService
     {
         private readonly IEventSubmitter submitter;
+        private readonly IEventRepository repository;
 
-        public EventService(IEventSubmitter submitter)
+        public EventService(IEventSubmitter submitter, IEventRepository repository)
         {
             this.submitter = submitter;
+            this.repository = repository;
+        }
+
+        public Task<List<Event>> SearchAsync(string key, int page, int perPage)
+        {
+            return repository.SearchAsync(key, page, perPage);
         }
 
         public Task RegisterSystemEventAsync(string eventType, object data = null)

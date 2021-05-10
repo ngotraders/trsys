@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
+using Trsys.Web.Models.Users;
 
 namespace Trsys.Web.Infrastructure.SQLite
 {
@@ -14,6 +15,12 @@ namespace Trsys.Web.Infrastructure.SQLite
         private readonly IServiceScope scope;
         private readonly TrsysContext db;
         private readonly Task task;
+
+        internal Task<User> Enqueue(Func<TrsysContext, Task> p1, object p2)
+        {
+            throw new NotImplementedException();
+        }
+
         private bool disposedValue;
 
         public TrsysContextProcessor(IServiceScopeFactory serviceScopeFactory, IHostApplicationLifetime applicationLifetime)
@@ -30,6 +37,24 @@ namespace Trsys.Web.Infrastructure.SQLite
                 var process = _queue.Take(token);
                 await process.Invoke(db);
             }
+        }
+
+        public Task Enqueue(Func<TrsysContext, Task> process)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            _queue.Add(async db =>
+            {
+                try
+                {
+                    await process(db);
+                    tcs.SetResult(null);
+                }
+                catch (Exception e)
+                {
+                    tcs.SetException(e);
+                }
+            });
+            return tcs.Task;
         }
 
         public Task<T> Enqueue<T>(Func<TrsysContext, Task<T>> process)

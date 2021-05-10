@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Models.Orders;
 
 namespace Trsys.Web.Infrastructure.SQLite
@@ -14,19 +14,14 @@ namespace Trsys.Web.Infrastructure.SQLite
             this.processor = processor;
         }
 
-        public Task SaveOrdersAsync(IEnumerable<Order> orders)
-        {
-            return processor.Enqueue(db =>
-            {
-                db.Orders.RemoveRange(db.Orders);
-                db.Orders.AddRange(orders);
-                return db.SaveChangesAsync();
-            });
-        }
-
         public Task<List<Order>> SearchAllAsync()
         {
-            return processor.Enqueue(db => db.Orders.ToListAsync());
+            return processor.Enqueue(db => new OrderRepository(db).SearchAllAsync());
+        }
+
+        public Task SaveOrdersAsync(IEnumerable<Order> orders)
+        {
+            return processor.Enqueue(db => new OrderRepository(db).SaveOrdersAsync(orders));
         }
     }
 }
