@@ -6,6 +6,7 @@ bool PERFORMANCE = false;
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string TokenEndpoint = Endpoint + "/api/token";
 string OrderEndpoint = Endpoint + "/api/orders";
+string LogEndpoint = Endpoint + "/api/logs";
 string Token = NULL;
 double NextTokenFetchTime = -1;
 string ETag = NULL;
@@ -14,6 +15,10 @@ string ETagResponse = NULL;
 int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
+
+string Log[1000] = {};
+int LogCount = 0;
+int SentCount = 0;
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -79,10 +84,7 @@ void OnTimer(){
          return;
       }
       PreviousRes = -1;
-      if (DEBUG) {
-         // Timer
-         Print("Successfully Obtained Token: ", Token);
-      }
+      WriteLog("DEBUG", "Successfully Obtained Token: " + Token);
    }
 
    string RecievedData;
@@ -96,16 +98,13 @@ void OnTimer(){
      return;
    }
    if (RecievedData != ProcessedData) {
-      if (DEBUG) {
-         Print("Processing:", RecievedData);
-      }
+      WriteLog("DEBUG", "Processing: " + RecievedData);
       string Data = RecievedData;
       bool Success = true;
       int OrderCount = 0;
       int OrderData_ticket[100];
       string OrderData_symbol[100];
       string OrderData_type[100];
-      double OrderData_price[100];
    
       while( Data != "" )
       {
@@ -125,7 +124,7 @@ void OnTimer(){
          string splittedValues[];
          splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
          if (splittedCount < 3) {
-            Print("Invalid Data: ", RecievedData);
+            WriteLog("DEBUG", "Invalid Data: " + RecievedData);
             return;
          }
          int i = OrderCount;
@@ -133,14 +132,13 @@ void OnTimer(){
          OrderData_ticket[i] = (int) StringToInteger(splittedValues[0]);
          OrderData_symbol[i] = splittedValues[1];
          OrderData_type[i] = splittedValues[2];
-         OrderData_price[i] = StringToDouble(splittedValues[3]);
          OrderCount++;
       }
       
       // Search for closed orders and close order.
       int TotalNumberOfPositions = PositionsTotal();
       for(int i = TotalNumberOfPositions - 1; i >= 0 ; i--) {
-         ulong positionTicket = PositionGetTicket(i);
+         int positionTicket = (int)PositionGetTicket(i);
          if (positionTicket == 0) continue;
          long positionMagic = PositionGetInteger(POSITION_MAGIC);
          if (positionMagic == 0) continue;
@@ -154,15 +152,14 @@ void OnTimer(){
          }
          if (Found) continue;
 
-         if (DEBUG) {
-            Print("OrderClose executing: ", positionMagic, ", OrderTicket = ", positionTicket);
-         }
+         WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(positionMagic) + ", OrderTicket = " + IntegerToString(positionTicket));
          int OrderCloseResult = ClosePosition(positionTicket);
          if (OrderCloseResult < 0) {
             Success = false;
-            Print("OrderClose failed.", positionMagic, ", OrderTicket = ", positionTicket, ", Error = ", GetLastError());
-         } else if (DEBUG) {
-            Print("OrderClose success: ", positionMagic, ", OrderTicket = ", positionTicket);
+            WriteLog("ERROR", "OrderClose failed." + IntegerToString(positionMagic) + ", OrderTicket = " + IntegerToString(positionTicket) + ", Error = " + IntegerToString(GetLastError()));
+         } else {
+            WriteLog("DEBUG", "OrderClose success: " + IntegerToString(positionMagic) + ", OrderTicket = " + IntegerToString(positionTicket));
+            WriteOrderCloseSuccessLog(positionMagic, positionTicket);
          }
       } 
       
@@ -173,7 +170,7 @@ void OnTimer(){
          }
          string Symbol_ = FindSymbol(OrderData_symbol[i]);
          if (Symbol_ == NULL) {
-            Print("OrderSend fail: Symbol not found, Symbol = ", OrderData_symbol[i]);
+            WriteLog("ERROR", "OrderSend fail: Symbol not found. " + IntegerToString(OrderData_ticket[i]) + ", Symbol = " + OrderData_symbol[i]);
             continue;
          }
          ENUM_ORDER_TYPE orderType;
@@ -195,12 +192,10 @@ void OnTimer(){
          double Min_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MIN);         // Min. amount of lots
          double Max_Lot=SymbolInfoDouble(Symbol_,SYMBOL_VOLUME_MAX);         // Max amount of lotsr
          if (orderLots <= Min_Lot) {
-            Print("OrderSend fail: Not enough margin, Symbol = ", OrderData_symbol[i], ", Calculated lots = ", orderLots);
+            WriteLog("WARN", "OrderSend fail: Not enough margin. " + IntegerToString(OrderData_ticket[i]) + ", Symbol = " + OrderData_symbol[i] + ", Calculated lots = " + DoubleToString(orderLots));
             continue;
          }
-         if (DEBUG) {
-            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", orderType, "/", orderLots, "/", orderPrice);
-         }
+         WriteLog("DEBUG", "OrderSend executing: " + IntegerToString(OrderData_ticket[i]) + "/" + Symbol_ + "/" + OrderData_type[i] + "/" + DoubleToString(orderLots));
          while (orderLots > 0) {
             double lots;
             if (orderLots >= Max_Lot) {
@@ -213,10 +208,11 @@ void OnTimer(){
             int OrderOpenResult = OpenPosition(Symbol_, orderType, orderPrice, lots, OrderData_ticket[i]);
             if (OrderOpenResult < 0) {
                Success = false;
-               Print("OrderCheck failed.", OrderData_ticket[i], " Error = ", GetLastError());
+               WriteLog("ERROR", "OrderSend failed." + IntegerToString(OrderData_ticket[i]) + ", Error = " + IntegerToString(GetLastError()));
                break;
-            } else if (DEBUG) {
-               Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", OrderOpenResult);
+            } else {
+               WriteLog("INFO", "OrderSend success: " + IntegerToString(OrderData_ticket[i]) + ", OrderTicket = " + IntegerToString(OrderOpenResult));
+               WriteOrderOpenSuccessLog(OrderData_ticket[i], OrderData_symbol[i], OrderData_type[i], OrderOpenResult);
             }
          }
       }
@@ -229,6 +225,17 @@ void OnTimer(){
    } else {
       Comment("TrsysSubscriber: 正常");
    }
+
+   if (PERFORMANCE) {
+      // Timer
+      Print("OnTimer: sending log in ", GetTickCount() - startTime, "ms");
+   }
+
+   while (LogCount > 0) {
+      int res = SendLog(Token);
+      if (res < 0) break;
+   }
+
    if (PERFORMANCE) {
       // Timer
       Print("OnTimer: finish in ", GetTickCount() - startTime, "ms");
@@ -261,7 +268,7 @@ int OpenPosition(string orderSymbol, ENUM_ORDER_TYPE orderType, double orderPric
       Print(__FUNCTION__,":", result.retcode, "/", result.comment);
       return -1;
    }
-   return 0;
+   return (int) result.order;
 }
 
 int ClosePosition(ulong position_ticket) {
@@ -298,7 +305,7 @@ int ClosePosition(ulong position_ticket) {
       Print(__FUNCTION__,",OrderSend:", result.retcode, "/", result.comment);
       return -1;
    }
-   return result.request_id;
+   return (int) result.order;
 }
 
 string FindSymbol(string SymbolStr) {
@@ -307,7 +314,6 @@ string FindSymbol(string SymbolStr) {
          return SymbolName(i, false);
       }
    }
-   Print("No symbol found: ", SymbolStr);
    return NULL;
 }
 
@@ -332,6 +338,68 @@ double CalculateVolume(string symbol, ENUM_ORDER_TYPE orderType, double price) {
    double Free   =AccountInfoDouble(ACCOUNT_FREEMARGIN);// Free margin
    double Lots   =MathFloor(Free*Percent/100/One_Lot/Step)*Step;
    return Lots;
+}
+
+void WriteLog(string logType, string message) {
+   string text = IntegerToString(GetTickCount()) + ":" + logType + ":" + message;
+   if (DEBUG && logType == "DEBUG") {
+      Print(message);
+   }
+   if (LogCount < 1000) {
+      Log[LogCount] = text;
+      LogCount++;
+   }
+}
+
+void WriteOrderOpenSuccessLog(long serverTicketNo, string serverSymbol, string serverOrderType, int ticketNo) {
+   int waitCount = 0;
+   bool found = false;
+   while (waitCount < 5) {
+      found = PositionSelectByTicket(ticketNo);
+      if (found) {
+         break;
+      }
+      Sleep(10);
+   }
+   string text = IntegerToString(serverTicketNo) + ":" + serverSymbol + ":" + serverOrderType + ":" + IntegerToString(ticketNo) + ":";
+   if (found) {
+      text = text + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ":" + PositionGetString(POSITION_SYMBOL) + ":" + IntegerToString(PositionGetInteger(POSITION_TYPE)) + ":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN)) + ":" + DoubleToString(PositionGetDouble(POSITION_VOLUME)) + ":" + IntegerToString(PositionGetInteger(POSITION_TIME));
+   } else {
+      text = text + "NA:NA:NA:NA:NA:NA";
+   }
+   WriteLog("OPEN", text);
+}  
+
+void WriteOrderCloseSuccessLog(long serverTicketNo, int ticketNo) {
+   int waitCount = 0;
+   bool found = false;
+   while (waitCount < 5) {
+      found = HistorySelectByPosition(ticketNo);
+      if (found) {
+         break;
+      }
+      Sleep(10);
+   }
+   if (found) {
+      PositionSelectByTicket(ticketNo);
+      int position_type = PositionGetInteger(POSITION_TYPE);
+      //--- リスト中の約定の数の合計
+      int deals=HistoryDealsTotal();
+      //--- 取引をひとつづつ処理する
+      for(int i=0;i<deals;i++) {
+         int deal_ticket = HistoryDealGetTicket(i);
+         if (HistoryDealGetInteger(deal_ticket,DEAL_TYPE) == position_type) {
+            continue;
+         }
+         string text = IntegerToString(serverTicketNo) + ":" + IntegerToString(ticketNo) + ":";
+         text = text + IntegerToString(deal_ticket) + ":" + HistoryDealGetString(deal_ticket, DEAL_SYMBOL) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TYPE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket, DEAL_PRICE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_VOLUME)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_PROFIT)) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TIME));
+         WriteLog("CLOSE", text);
+       }
+   } else {
+      string text = IntegerToString(serverTicketNo) + ":" + IntegerToString(ticketNo) + ":";
+      text = text + "NA:NA:NA:NA:NA:NA:NA";
+      WriteLog("CLOSE", text);
+   }
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
@@ -488,6 +556,37 @@ int GetOrders(string &token, string &response)
 
    response = response_data;
    return res;
+}
+
+int SendLog(string token)
+{
+   string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + token;
+   string request_data = "";
+   string response_headers;
+   string response_data;
+   int error_code;
+   
+   int loopCount = SentCount + MathMin(LogCount, 10);
+   int sendCount = 0;
+   for (int i = SentCount; i < loopCount; i++) {
+      request_data = request_data + Log[i] + "\r\n";
+      sendCount++;
+   }
+
+   int res = WebRequestWrapper("POST", LogEndpoint, request_headers, request_data, response_headers, response_data, error_code);
+   if(res==-1) {
+      return -1;
+   }
+   if(res != 202) {
+      return -1;
+   }
+   if (SentCount + sendCount >= LogCount) {
+      LogCount = 0;
+      SentCount = 0;
+   } else {
+      SentCount += sendCount;
+   }
+   return 0;
 }
 
 void LogWebRequestError(string name, int error_code) {

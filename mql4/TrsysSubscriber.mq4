@@ -6,6 +6,7 @@ bool PERFORMANCE = false;
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string TokenEndpoint = Endpoint + "/api/token";
 string OrderEndpoint = Endpoint + "/api/orders";
+string LogEndpoint = Endpoint + "/api/logs";
 string Token = NULL;
 double NextTokenFetchTime = -1;
 string ETag = NULL;
@@ -14,6 +15,10 @@ string ETagResponse = NULL;
 int LastErrorCode = 0;
 int PreviousRes = -1;
 string ProcessedData = NULL;
+
+string Log[1000] = {};
+int LogCount = 0;
+int SentCount = 0;
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -79,10 +84,7 @@ void OnTimer(){
          return;
       }
       PreviousRes = -1;
-      if (DEBUG) {
-         // Timer
-         Print("Successfully Obtained Token: ", Token);
-      }
+      WriteLog("DEBUG", "Successfully Obtained Token: " + Token);
    }
 
    string RecievedData;
@@ -96,9 +98,7 @@ void OnTimer(){
      return;
    }
    if (RecievedData != ProcessedData) {
-      if (DEBUG) {
-         Print("Processing:", RecievedData);
-      }
+      WriteLog("DEBUG", "Processing: " + RecievedData);
       string Data = RecievedData;
       bool Success = True;
       int OrderCount = 0;
@@ -124,7 +124,7 @@ void OnTimer(){
          string splittedValues[];
          splittedCount = StringSplit(OrderData, StringGetCharacter(":", 0), splittedValues);
          if (splittedCount < 3) {
-            Print("Invalid Data: ", RecievedData);
+            WriteLog("DEBUG", "Invalid Data: " + RecievedData);
             return;
          }
          int i = OrderCount;
@@ -150,15 +150,14 @@ void OnTimer(){
          }
          if (Found) continue;
 
-         if (DEBUG) {
-            Print("OrderClose executing: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
-         }
+         WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(OrderMagicNumber()) + ", OrderTicket = " + IntegerToString(OrderTicket()));
          int OrderCloseResult = OrderClose(OrderTicket(), OrderLots(), OrderClosePrice(), Slippage);
          if (OrderCloseResult < 0) {
             Success = false;
-            Print("OrderClose failed.", OrderData_ticket[i], ", OrderTicket = ", OrderTicket(), ", Error = ", GetLastError());
-         } else if (DEBUG) {
-            Print("OrderClose success: ", OrderMagicNumber(), ", OrderTicket = ", OrderTicket());
+            WriteLog("ERROR", "OrderClose failed." + IntegerToString(OrderMagicNumber()) + ", OrderTicket = " + IntegerToString(OrderTicket()) + " Error = " + IntegerToString(GetLastError()));
+         } else {
+            WriteLog("DEBUG", "OrderClose success: " + IntegerToString(OrderMagicNumber()) + ", OrderTicket = " + IntegerToString(OrderTicket()));
+            WriteOrderCloseSuccessLog(OrderMagicNumber(), OrderTicket());
          }
       } 
       
@@ -169,19 +168,17 @@ void OnTimer(){
          }
          string Symbol_ = FindSymbol(OrderData_symbol[i]);
          if (Symbol_ == NULL) {
-            Print("OrderSend fail: Symbol not found, Symbol = ", OrderData_symbol[i]);
+            WriteLog("ERROR", "OrderSend fail: Symbol not found. " + IntegerToString(OrderData_ticket[i]) + ", Symbol = " + OrderData_symbol[i]);
             continue;
          }
          double orderLots = CalculateVolume(Symbol_);
          double Min_Lot=MarketInfo(Symbol_,MODE_MINLOT);         // Min. amount of lots
          double Max_Lot=MarketInfo(Symbol_,MODE_MAXLOT);         // Max amount of lotsr
          if (orderLots <= Min_Lot) {
-            Print("OrderSend fail: Not enough margin, Symbol = ", OrderData_symbol[i], ", Calculated lots = ", orderLots);
+            WriteLog("WARN", "OrderSend fail: Not enough margin. " + IntegerToString(OrderData_ticket[i]) + ", Symbol = " + OrderData_symbol[i] + ", Calculated lots = " + DoubleToString(orderLots));
             continue;
          }
-         if (DEBUG) {
-            Print("OrderSend executing: ", OrderData_ticket[i], "/", Symbol_, "/", OrderData_type[i], "/", orderLots);
-         }
+         WriteLog("DEBUG", "OrderSend executing: " + IntegerToString(OrderData_ticket[i]) + "/" + Symbol_ + "/" + OrderData_type[i] + "/" + DoubleToString(orderLots));
          while (orderLots > 0) {
             double lots;
             if (orderLots >= Max_Lot) {
@@ -203,11 +200,11 @@ void OnTimer(){
 
             if (OrderResult < 0) {
                Success = false;
-               Print("OrderSend failed.", OrderData_ticket[i], " Error = ", GetLastError());
-            } else if (DEBUG) {
-               Print("OrderSend success: ", OrderData_ticket[i], ", OrderTicket = ", OrderResult);
+               WriteLog("ERROR", "OrderSend failed." + IntegerToString(OrderData_ticket[i]) + ", Error = " + IntegerToString(GetLastError()));
+            } else {
+               WriteLog("INFO", "OrderSend success: " + IntegerToString(OrderData_ticket[i]) + ", OrderTicket = " + IntegerToString(OrderResult));
+               WriteOrderOpenSuccessLog(OrderData_ticket[i], OrderData_symbol[i], OrderData_type[i], OrderResult);
             }
-
          }
       }
       if (Success) {
@@ -219,6 +216,17 @@ void OnTimer(){
    } else {
       Comment("TrsysSubscriber: 正常");
    }
+
+   if (PERFORMANCE) {
+      // Timer
+      Print("OnTimer: sending log in ", GetTickCount() - startTime, "ms");
+   }
+
+   while (LogCount > 0) {
+      int res = SendLog(Token);
+      if (res < 0) break;
+   }
+
    if (PERFORMANCE) {
       // Timer
       Print("OnTimer: finish in ", GetTickCount() - startTime, "ms");
@@ -236,7 +244,6 @@ string FindSymbol(string SymbolStr) {
          return SymbolName(i, false);
       }
    }
-   Print("No symbol found: ", SymbolStr);
    return NULL;
 }
 
@@ -258,6 +265,39 @@ double CalculateVolume(string Symb) {
    double Free   =AccountFreeMargin();                  // Free margin
    double Lots   =MathFloor(Free*Percent/100/One_Lot/Step)*Step;
    return Lots;
+}
+
+void WriteLog(string logType, string message) {
+   string text = IntegerToString(GetTickCount()) + ":" + logType + ":" + message;
+   if (DEBUG && logType == "DEBUG") {
+      Print(message);
+   }
+   if (LogCount < 1000) {
+      Log[LogCount] = text;
+      LogCount++;
+   }
+}
+
+void WriteOrderOpenSuccessLog(long serverTicketNo, string serverSymbol, string serverOrderType, int ticketNo) {
+   bool select = OrderSelect(ticketNo, SELECT_BY_TICKET);
+   string text = IntegerToString(serverTicketNo) + ":" + serverSymbol + ":" + serverOrderType + ":" + IntegerToString(ticketNo) + ":";
+   if (select) {
+      text = text + IntegerToString(OrderTicket()) + ":" + OrderSymbol() + ":" + IntegerToString(OrderType()) + ":" + DoubleToString(OrderOpenPrice()) + ":" + DoubleToString(OrderLots()) + ":" + IntegerToString(OrderOpenTime());
+   } else {
+      text = text + "NA:NA:NA:NA:NA:NA";
+   }
+   WriteLog("OPEN", text);
+}  
+
+void WriteOrderCloseSuccessLog(long serverTicketNo, int ticketNo) {
+   bool select = OrderSelect(ticketNo, SELECT_BY_TICKET);
+   string text = IntegerToString(serverTicketNo) + ":" + IntegerToString(ticketNo) + ":";
+   if (select) {
+      text = text + IntegerToString(OrderTicket()) + ":" + OrderSymbol() + ":" + IntegerToString(OrderType()) + ":" + DoubleToString(OrderClosePrice()) + ":" + DoubleToString(OrderLots()) + ":" + DoubleToString(OrderProfit()) + ":" + IntegerToString(OrderCloseTime());
+   } else {
+      text = text + "NA:NA:NA:NA:NA:NA:NA";
+   }
+   WriteLog("CLOSE", text);
 }
 
 int WebRequestWrapper(string method, string url, string request_headers, string request_data_string, string &response_headers, string &response_data_string, int &error_code) {
@@ -412,6 +452,37 @@ int GetOrders(string &token, string &response)
 
    response = response_data;
    return res;
+}
+
+int SendLog(string token)
+{
+   string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + token;
+   string request_data = "";
+   string response_headers;
+   string response_data;
+   int error_code;
+   
+   int loopCount = SentCount + MathMin(LogCount, 10);
+   int sendCount = 0;
+   for (int i = SentCount; i < loopCount; i++) {
+      request_data = request_data + Log[i] + "\r\n";
+      sendCount++;
+   }
+
+   int res = WebRequestWrapper("POST", LogEndpoint, request_headers, request_data, response_headers, response_data, error_code);
+   if(res==-1) {
+      return -1;
+   }
+   if(res != 202) {
+      return -1;
+   }
+   if (SentCount + sendCount >= LogCount) {
+      LogCount = 0;
+      SentCount = 0;
+   } else {
+      SentCount += sendCount;
+   }
+   return 0;
 }
 
 void LogWebRequestError(string name, int error_code) {
