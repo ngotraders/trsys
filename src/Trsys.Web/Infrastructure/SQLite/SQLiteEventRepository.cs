@@ -19,9 +19,9 @@ namespace Trsys.Web.Infrastructure.SQLite
             return processor.Enqueue(db => new EventRepository(db).SearchAllAsync());
         }
 
-        public Task<List<Event>> SearchAsync(string key, int page, int perPage)
+        public Task<List<Event>> SearchAsync(string source, int page, int perPage)
         {
-            return processor.Enqueue(db => new EventRepository(db).SearchAsync(key, page, perPage));
+            return processor.Enqueue(db => new EventRepository(db).SearchAsync(source, page, perPage));
         }
 
         public Task SaveAsync(Event ev)

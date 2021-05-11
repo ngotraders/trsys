@@ -20,16 +20,17 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index([FromQuery] string secretKey, int? page, int? perPage)
+        public async Task<IActionResult> Index([FromQuery] string source, int? page, int? perPage)
         {
             var model = new IndexViewModel()
             {
                 Page = page ?? 1,
                 PerPage = perPage ?? 100,
-                Key = secretKey,
+                Source = source,
                 SecretKeys = await secretKeyService.SearchAllAsync(),
             };
-            model.Events = await eventService.SearchAsync(model.Key, model.Page, model.PerPage);
+
+            model.Events = await eventService.SearchAsync(source, model.Page, model.PerPage);
             return View(model);
         }
     }

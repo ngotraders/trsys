@@ -15,9 +15,9 @@ namespace Trsys.Web.Services
             this.repository = repository;
         }
 
-        public Task<List<Event>> SearchAsync(string key, int page, int perPage)
+        public Task<List<Event>> SearchAsync(string source, int page, int perPage)
         {
-            return repository.SearchAsync(key, page, perPage);
+            return repository.SearchAsync(source, page, perPage);
         }
 
         public Task RegisterSystemEventAsync(string eventType, object data = null)

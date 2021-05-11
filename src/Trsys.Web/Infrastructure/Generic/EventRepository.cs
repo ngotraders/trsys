@@ -21,12 +21,12 @@ namespace Trsys.Web.Infrastructure.Generic
             return db.Events.ToListAsync();
         }
 
-        public Task<List<Event>> SearchAsync(string key, int page, int perPage)
+        public Task<List<Event>> SearchAsync(string source, int page, int perPage)
         {
             var events = db.Events as IQueryable<Event>;
-            if (!string.IsNullOrEmpty(key))
+            if (!string.IsNullOrEmpty(source))
             {
-                events = events.Where(e => e.EventType.StartsWith("ea/" + key));
+                events = events.Where(e => e.Source == source);
             }
             return events.OrderByDescending(e => e.Timestamp).Skip((page - 1) * perPage).Take(perPage).ToListAsync();
         }

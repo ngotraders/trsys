@@ -11,6 +11,6 @@ namespace Trsys.Web.ViewModels.Events
         public List<SecretKey> SecretKeys { get; set; }
         public List<Event> Events { get; set; }
 
-        public string Key { get; set; }
+        public string Source { get; set; }
     }
 }

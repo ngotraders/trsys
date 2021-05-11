@@ -19,6 +19,9 @@
     </div>
 }
 
+<div class="float-right">
+    <a href="@Url.Action("Index", "Events")">イベント</a>
+</div>
 <form method="post" action="/admin/keys/new">
     @if (!string.IsNullOrEmpty(Model.CacheOrderText))
     {
