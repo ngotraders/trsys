@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Admin;
@@ -15,15 +16,18 @@ namespace Trsys.Web.Controllers
     {
         private readonly OrderService orderService;
         private readonly SecretKeyService secretKeyService;
+        private readonly IAuthenticationTicketStore ticketStore;
         private readonly EventService eventService;
 
         public AdminController(
             OrderService orderService,
             SecretKeyService secretKeyService,
+            IAuthenticationTicketStore ticketStore,
             EventService eventService)
         {
             this.orderService = orderService;
             this.secretKeyService = secretKeyService;
+            this.ticketStore = ticketStore;
             this.eventService = eventService;
         }
 
@@ -129,6 +133,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
+            await ticketStore.RemoveAsync(id);
             await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = id });
             model.SuccessMessage = $"シークレットキー: {id} を無効化しました。";
             return SaveModelAndRedirectToIndex(model);

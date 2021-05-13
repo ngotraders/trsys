@@ -8,13 +8,11 @@ namespace Trsys.Web.Services
     {
         private readonly ISecretKeyRepository repository;
         private readonly ISecretKeyUsageStore usageStore;
-        private readonly EventService eventService;
 
-        public SecretKeyService(ISecretKeyRepository repository, ISecretKeyUsageStore usageStore, EventService eventService)
+        public SecretKeyService(ISecretKeyRepository repository, ISecretKeyUsageStore usageStore)
         {
             this.repository = repository;
             this.usageStore = usageStore;
-            this.eventService = eventService;
         }
 
         public Task<List<SecretKey>> SearchAllAsync()
