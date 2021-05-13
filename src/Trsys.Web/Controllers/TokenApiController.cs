@@ -47,7 +47,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await eventService.RegisterEaEventAsync(secretKey, "TokenGenerated", new { SecretToken = result.Token });
+            await eventService.RegisterEaEventAsync(secretKey, "TokenGenerated", new { SecretKey = secretKey, SecretToken = result.Token });
             var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
             await ticketStore.AddAsync(result.Token, principal);
             return Ok(result.Token);
