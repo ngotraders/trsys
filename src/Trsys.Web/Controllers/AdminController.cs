@@ -133,8 +133,12 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
 
-            await ticketStore.RemoveAsync(id);
             await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = id });
+            if (result is RevokeSecretKeyResult revokeSecretKeyResult && !string.IsNullOrEmpty(revokeSecretKeyResult.Token))
+            {
+                await ticketStore.RemoveAsync(revokeSecretKeyResult.Token);
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "TokenInvalidated", new { SecretKey = id, revokeSecretKeyResult.Token });
+            }
             model.SuccessMessage = $"シークレットキー: {id} を無効化しました。";
             return SaveModelAndRedirectToIndex(model);
         }

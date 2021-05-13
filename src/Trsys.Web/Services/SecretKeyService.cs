@@ -136,10 +136,11 @@ namespace Trsys.Web.Services
                 return OperationResult.Fail($"シークレットキー: {key} を無効化できません。");
             }
 
+            var currentToken = secretKey.ValidToken;
             secretKey.Revoke();
             await repository.SaveAsync(secretKey);
             await usageStore.RemoveAsync(key);
-            return OperationResult.Ok();
+            return RevokeSecretKeyResult.Ok(currentToken);
         }
 
         public async Task<OperationResult> DeleteSecretKeyAsync(string key)

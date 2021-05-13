@@ -28,7 +28,7 @@ namespace Trsys.Web.Tests
         private const string VALID_VERSION = "20210331";
 
         [TestMethod]
-        public async Task PostLog_should_return_ok_given_empty_string()
+        public async Task PostLog_should_return_accepted_given_empty_string()
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
@@ -41,9 +41,7 @@ namespace Trsys.Web.Tests
             await Task.Delay(1);
             var repository = server.Services.GetRequiredService<IEventRepository>();
             var events = await repository.SearchAllAsync();
-            Assert.AreEqual(1, events.Count);
-            Assert.AreEqual($"ea/{VALID_KEY}/Log", events.First().EventType);
-            Assert.IsNull(events.First().Data);
+            Assert.AreEqual(0, events.Count);
         }
         [TestMethod]
         public async Task PostLog_should_return_ok_given_non_empty_string()
@@ -59,7 +57,8 @@ namespace Trsys.Web.Tests
             var repository = server.Services.GetRequiredService<IEventRepository>();
             var events = await repository.SearchAllAsync();
             Assert.AreEqual(1, events.Count);
-            Assert.AreEqual($"ea/{VALID_KEY}/Log", events.First().EventType);
+            Assert.AreEqual($"ea/{VALID_KEY}", events.First().Source);
+            Assert.AreEqual("Log", events.First().EventType);
             Assert.AreEqual("NonEmpty", events.First().Data);
         }
 

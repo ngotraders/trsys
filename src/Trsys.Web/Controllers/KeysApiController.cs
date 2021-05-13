@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Trsys.Web.Authentication;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 
@@ -12,10 +13,14 @@ namespace Trsys.Web.Controllers
     public class KeysApiController : Controller
     {
         private readonly SecretKeyService service;
+        private readonly IAuthenticationTicketStore ticketStore;
+        private readonly EventService eventService;
 
-        public KeysApiController(SecretKeyService service)
+        public KeysApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
         {
             this.service = service;
+            this.ticketStore = ticketStore;
+            this.eventService = eventService;
         }
 
         [HttpPost]
@@ -32,14 +37,13 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest(new { result.ErrorMessage });
             }
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { SecretKey = result.Key, request.KeyType.Value, request.Description });
             if (request.IsApproved)
             {
                 await service.ApproveSecretKeyAsync(result.Key);
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { result.Key });
             }
-            else
-            {
-                await service.RevokeSecretKeyAsync(result.Key);
-            }
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyPosted", new { SecretKey = result.Key, request.KeyType, request.Description, request.IsApproved });
             return CreatedAtAction("GetKey", new { key = result.Key }, new { key = result.Key });
         }
 
@@ -86,8 +90,14 @@ namespace Trsys.Web.Controllers
             }
             else
             {
-                await service.RevokeSecretKeyAsync(key);
+                var operationResult = await service.RevokeSecretKeyAsync(key);
+                if (operationResult is RevokeSecretKeyResult revokeSecretKeyResult && !string.IsNullOrEmpty(revokeSecretKeyResult.Token))
+                {
+                    await ticketStore.RemoveAsync(revokeSecretKeyResult.Token);
+                }
             }
+
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyPutted", new { SecretKey = key, request.KeyType, request.Description, request.IsApproved });
             return Ok();
         }
 
@@ -104,6 +114,7 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest(new { result.ErrorMessage });
             }
+            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = key });
             return Ok();
         }
 
