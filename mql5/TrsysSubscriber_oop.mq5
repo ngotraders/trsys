@@ -10,8 +10,6 @@ input int Slippage = 10;
 
 double Percent = MathMax(0, MathMin(100, PercentOfFreeMargin));
 
-
-
 //+------------------------------------------------------------------+
 //| Custom classes                                                   |
 //+------------------------------------------------------------------+
@@ -99,7 +97,7 @@ public:
       Enqueue(text);
    }
    
-   void WriteOrderOpenSuccessLog(long serverTicketNo, string serverSymbol, string serverOrderType, int ticketNo) {
+   void WriteOrderOpenSuccessLog(long serverTicketNo, string serverSymbol, int serverOrderType, int ticketNo) {
       int waitCount = 0;
       bool found = false;
       while (waitCount < 5) {
@@ -109,7 +107,7 @@ public:
          }
          Sleep(10);
       }
-      string text = IntegerToString(serverTicketNo) + ":" + serverSymbol + ":" + serverOrderType + ":" + IntegerToString(ticketNo) + ":";
+      string text = IntegerToString(serverTicketNo) + ":" + serverSymbol + ":" + IntegerToString(serverOrderType) + ":" + IntegerToString(ticketNo) + ":";
       if (found) {
          text = text + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ":" + PositionGetString(POSITION_SYMBOL) + ":" + IntegerToString(PositionGetInteger(POSITION_TYPE)) + ":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN)) + ":" + DoubleToString(PositionGetDouble(POSITION_VOLUME)) + ":" + IntegerToString(PositionGetInteger(POSITION_TIME));
       } else {
@@ -173,12 +171,24 @@ public:
       }
       m_array[m_count - 1] = item;
    };
-   bool Get(int index, T &item) {
-      if (index > m_count) {
-         return false;
+   void Remove(int index) {
+      if (index >= m_count) {
+         Print("index must under the count");
+         return;
       }
-      item = m_array[index];
-      return true;
+      for (int i = index + 1; i < m_count; i++) {
+         m_array[i - 1] = m_array[i];
+      }
+      m_count--;
+   };
+   T Get(int index) {
+      T ret;
+      if (index >= m_count) {
+         Print("index must under the count");
+         return ret;
+      }
+      ret = m_array[index];
+      return ret;
    };
    int Length() {
       return m_count;
@@ -186,7 +196,7 @@ public:
 };
 
 struct CopyTradeInfo {
-   int server_ticket_no;
+   long server_ticket_no;
    string symbol;
    int order_type;
    CopyTradeInfo() { 
@@ -194,18 +204,21 @@ struct CopyTradeInfo {
       symbol = "";
       order_type = -1;
    };
-   static CopyTradeInfo Parse(string copy_trade_string, string &parse_error) {
+   static CopyTradeInfo Create(long server_ticket_no, string symbol, int order_type) {
       CopyTradeInfo info;
+      info.server_ticket_no = server_ticket_no;
+      info.symbol = symbol;
+      info.order_type = order_type;
+      return info;
+   };
+   static CopyTradeInfo Parse(string copy_trade_string, string &parse_error) {
       string splittedValues[];
       if (StringSplit(copy_trade_string, StringGetCharacter(":", 0), splittedValues) < 3) {
          parse_error = "Invalid Data: " + copy_trade_string;
+         CopyTradeInfo info;
          return info;
       }
-
-      info.server_ticket_no = (int) StringToInteger(splittedValues[0]);
-      info.symbol = splittedValues[1];
-      info.order_type = (int) StringToInteger(splittedValues[2]);
-      return info;
+      return Create((long) StringToInteger(splittedValues[0]), splittedValues[1], (int) StringToInteger(splittedValues[2]));
    };
    
    string ToString() {
@@ -213,9 +226,26 @@ struct CopyTradeInfo {
    };
 };
 
-class CopyTradeInfoList: List<CopyTradeInfo> {
-   string m_error;
-   void m_initialize(string response) {
+class CopyTradeInfoList: public List<CopyTradeInfo> {
+public:   
+   int IndexOfTicketNo(long server_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         CopyTradeInfo info = Get(i);
+         if (info.server_ticket_no == server_ticket_no) {
+            return i;
+         }
+      }
+      return -1;
+   };
+   bool Exists(long server_ticket_no) {
+      return IndexOfTicketNo(server_ticket_no) >= 0;
+   };
+};
+
+class CopyTradeInfoParser {
+public:
+   static CopyTradeInfoList *Parse(string response, string &parse_error) {
+      CopyTradeInfoList *list = new CopyTradeInfoList();
       string processing_data = response;
       while(processing_data != "" )
       {
@@ -229,30 +259,21 @@ class CopyTradeInfoList: List<CopyTradeInfo> {
             processing_data = "";
          }
          
-         string parse_error;
          CopyTradeInfo info = CopyTradeInfo::Parse(order_data, parse_error);
          if (parse_error != NULL) {
-            m_error = "Invalid Data: " + order_data;
-            return;
+            parse_error = "Invalid Data: " + order_data;
+            delete list;
+            return NULL;
          }
-         Add(info);
+         list.Add(info);
       }
-   };
-public:
-   CopyTradeInfoList(string response) {
-      m_error = NULL;
-      m_initialize(response);
-   };
-   bool IsError() {
-      return m_error != NULL;
-   };
-   string GetError() {
-      return m_error;
+      return list;
    };
 };
 
 struct LocalOrderInfo {
-   int server_ticket_no;
+   long server_ticket_no;
+   long local_ticket_no;
    string symbol;
    int order_type;
    LocalOrderInfo() { 
@@ -260,17 +281,362 @@ struct LocalOrderInfo {
       symbol = "";
       order_type = -1;
    };
-   static LocalOrderInfo Create(int server_ticket_no, string symbol) {
+   static LocalOrderInfo Create(long server_ticket_no, long local_ticket_no, string symbol, int order_type) {
       LocalOrderInfo info;
+      info.server_ticket_no = server_ticket_no;
+      info.local_ticket_no = local_ticket_no;
+      info.symbol = symbol;
+      info.order_type = order_type;
       return info;
    };
    
    string ToString() {
-      return IntegerToString(server_ticket_no) + "/" + symbol + "/" + IntegerToString(order_type);
+      return IntegerToString(server_ticket_no) + "/" + IntegerToString(local_ticket_no) + "/" + symbol + "/" + IntegerToString(order_type);
    };
 };
 
-class LocalOrderInfoList: List<LocalOrderInfo> {
+class LocalOrderInfoList: public List<LocalOrderInfo> {   
+   int m_index_of_local_ticket(long local_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         LocalOrderInfo info = Get(i);
+         if (info.local_ticket_no == local_ticket_no) {
+            return i;
+         }
+      }
+      return -1;
+   };
+
+   int m_index_of_server_ticket(long server_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         LocalOrderInfo info = Get(i);
+         if (info.server_ticket_no == server_ticket_no) {
+            return i;
+         }
+      }
+      return -1;
+   };
+public:
+   bool Create(long server_ticket_no, long local_ticket_no, string symbol, int order_type) {
+      if (m_index_of_local_ticket(local_ticket_no) >= 0) {
+         Print("Local ticket already exists: ", local_ticket_no);
+         return false;
+      }
+      Add(LocalOrderInfo::Create(server_ticket_no, local_ticket_no, symbol, order_type));
+      return true;
+   };
+   
+   bool ServerTicketNoExists(long server_ticket_no) {
+      return m_index_of_server_ticket(server_ticket_no) >= 0;
+   };
+
+   bool RemoveByLocalTicketNo(long local_ticket_no) {
+      int index = m_index_of_local_ticket(local_ticket_no);
+      if (index < 0) {
+         Print("Local ticket has been closed: ", local_ticket_no);
+         return false;
+      }
+      Remove(index);
+      return true;
+   };
+};
+
+struct TicketNoDifference {
+   long m_opened_ticket[];
+   int m_opened_ticket_count;
+   long m_closed_ticket[];
+   int m_closed_ticket_count;
+public:
+   TicketNoDifference() {
+      m_opened_ticket_count = 0;
+      m_closed_ticket_count = 0;
+   };
+   void Opened(long server_ticket_no) {
+      ArrayResize(m_opened_ticket, m_opened_ticket_count + 1);
+      m_opened_ticket[m_opened_ticket_count] = server_ticket_no;
+      m_opened_ticket_count++;
+   };
+   void Closed(long server_ticket_no) {
+      ArrayResize(m_closed_ticket, m_closed_ticket_count + 1);
+      m_closed_ticket[m_closed_ticket_count] = server_ticket_no;
+      m_closed_ticket_count++;
+   };
+   int OpenedCount() {
+      return m_opened_ticket_count;
+   };
+   long GetOpened(int i) {
+      return m_opened_ticket[i];
+   };
+   int ClosedCount() {
+      return m_closed_ticket_count;
+   };
+   long GetClosed(int i) {
+      return m_closed_ticket[i];
+   };
+};
+
+class RemoteOrderState {
+   CopyTradeInfoList orders;
+   void m_initialize() {
+      int positionCount = PositionsTotal();
+      for(int i = 0; i < positionCount ; i++) {
+         long position_magic = (long)PositionGetInteger(POSITION_MAGIC);
+         if (position_magic == 0) continue;
+         if (orders.Exists(position_magic)) continue;
+         string symbol = PositionGetString(POSITION_SYMBOL);
+         int order_type = (int)PositionGetInteger(POSITION_TYPE);
+         orders.Add(CopyTradeInfo::Create(position_magic, symbol, order_type));
+      } 
+   };
+public:
+   RemoteOrderState() {
+      m_initialize();
+   };
+   TicketNoDifference Diff(CopyTradeInfoList &serverInfo) {
+      TicketNoDifference diff;
+      for (int i = 0; i < orders.Length(); i++) {
+         CopyTradeInfo ii = orders.Get(i);
+         bool exists = false;
+         for (int j = 0; j < serverInfo.Length(); j++) {
+            CopyTradeInfo ij = serverInfo.Get(j);
+            if (ii.server_ticket_no == ij.server_ticket_no) {
+               exists = true;
+               break;
+            }
+         }
+         if (!exists) {
+            diff.Closed(ii.server_ticket_no);
+         }
+      }
+      for (int i = 0; i < serverInfo.Length(); i++) {
+         CopyTradeInfo ii = serverInfo.Get(i);
+         bool exists = false;
+         for (int j = 0; j < orders.Length(); j++) {
+            CopyTradeInfo ij = orders.Get(j);
+            if (ii.server_ticket_no == ij.server_ticket_no) {
+               exists = true;
+               break;
+            }
+         }
+         if (!exists) {
+            diff.Opened(ii.server_ticket_no);
+         }
+      }
+      return diff;
+   };
+   void Add(CopyTradeInfo &info) {
+      orders.Add(info);
+   };
+   void Remove(long server_ticket_no) {
+      int index = orders.IndexOfTicketNo(server_ticket_no);
+      if (index > -1) {
+         orders.Remove(index);
+      }
+   };
+};
+
+class LocalOrderState {
+   LocalOrderInfoList orders;
+   void m_initialize() {
+      int positionCount = PositionsTotal();
+      for(int i = 0; i < positionCount ; i++) {
+         long position_ticket_no = (long)PositionGetTicket(i);
+         if (position_ticket_no == 0) continue;
+         long position_magic = PositionGetInteger(POSITION_MAGIC);
+         if (position_magic == 0) continue;
+         string symbol = PositionGetString(POSITION_SYMBOL);
+         int order_type = (int)PositionGetInteger(POSITION_TYPE);
+         orders.Create(position_magic, position_ticket_no, symbol, order_type);
+      } 
+   };
+public:
+   LocalOrderState() {
+      m_initialize();
+   };
+   bool Exists(long server_ticket_no) {
+      return orders.ServerTicketNoExists(server_ticket_no);
+   };
+   bool Open(long server_ticket_no, long local_ticket_no, string symbol, int order_type) {
+      return orders.Create(server_ticket_no, local_ticket_no, symbol, order_type);
+   };
+
+   bool Close(long local_ticket_no) {
+      return orders.RemoveByLocalTicketNo(local_ticket_no);
+   };
+
+   int FindByServerTicketNo(long server_ticket_no, long &arr_ticket_no[]) {
+      int count = 0;
+      for (int i = 0; i < orders.Length(); i++) {
+         LocalOrderInfo info = orders.Get(i);
+         if (info.server_ticket_no == server_ticket_no) {
+            count++;
+         }
+      }
+      if (count == 0) {
+         return 0;
+      }
+      ArrayResize(arr_ticket_no, count);
+      int j = 0;
+      for (int i = 0; i < orders.Length(); i++) {
+         LocalOrderInfo info = orders.Get(i);
+         if (info.server_ticket_no == server_ticket_no) {
+            arr_ticket_no[j] = info.local_ticket_no;
+         }
+      }
+      return count;
+   };
+};
+
+class PositionManager {
+   Logger *m_logger;
+   double m_calculate_volume(string symbol, ENUM_ORDER_TYPE order_type, double price) {
+      double one_lot;//!-lot cost
+      if (!OrderCalcMargin(order_type, symbol, 1, price, one_lot)) {
+         Print("OrderCalcMargin returned false");
+         return 0;
+      }
+      if (one_lot == 0) {
+         Print("one_lot is zero");
+         return 0;
+      }
+      double step   =SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP); // Step in volume changing
+      if (step == 0) {
+         Print("SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
+         return 0;
+      }
+      double free   =AccountInfoDouble(ACCOUNT_FREEMARGIN);// Free margin
+      double lots   =MathFloor(free*Percent/100/one_lot/step)*step;
+      return lots;
+   }
+   string m_find_symbol(string symbol_str) {
+      for (int i = 0; i < SymbolsTotal(false); i++) {
+         if (StringFind(SymbolName(i, false), symbol_str) >= 0) {
+            return SymbolName(i, false);
+         }
+      }
+      return NULL;
+   }
+   int m_send_open_order(string orderSymbol, ENUM_ORDER_TYPE orderType, double orderPrice, double orderLots, long magicNo) {
+      //--- リクエストを準備する
+      MqlTradeRequest request={0};
+      request.action   =TRADE_ACTION_DEAL;                     // 取引操作タイプ
+      request.symbol   =orderSymbol;                           // シンボル
+      request.volume   =orderLots;                             // ロットのボリューム
+      request.type     =orderType;                             // 注文タイプ
+      request.price    =orderPrice;                            // 発注価格
+      request.deviation=Slippage;                              // 価格からの許容偏差
+      request.magic    =magicNo;                               // 注文のMagicNumber
+      request.type_filling = ORDER_FILLING_IOC;
+      MqlTradeCheckResult checkResult={0};
+      if (!OrderCheck(request, checkResult)) {
+         Print(__FUNCTION__,":", checkResult.retcode, "/", checkResult.comment);
+         return -1;
+      }
+      MqlTradeResult result={0};
+      if (!OrderSend(request, result)) {
+         Print(__FUNCTION__,":", result.retcode, "/", result.comment);
+         return -1;
+      }
+      return (int) result.order;
+   }
+   
+   int m_send_close_order(ulong position_ticket) {
+      if (!PositionSelectByTicket(position_ticket)) {
+         return -1;
+      }
+      string position_symbol = PositionGetString(POSITION_SYMBOL);
+      double volume = PositionGetDouble(POSITION_VOLUME);
+      ENUM_POSITION_TYPE type = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+      long magic = PositionGetInteger(POSITION_MAGIC);
+   
+      MqlTradeRequest request={0};
+      request.action    = TRADE_ACTION_DEAL;                   //          - type of trade operation
+      request.position  = position_ticket;                     //          - ticket of the position
+      request.symbol    = position_symbol;                     //          - symbol 
+      request.volume    = volume;                              //          - volume of the position
+      request.deviation = Slippage;                            //          - allowed deviation from the price
+      request.magic     = magic;                               //          - MagicNumber of the position
+      request.type_filling = ORDER_FILLING_IOC;
+      if (type == POSITION_TYPE_BUY) {
+         request.price = SymbolInfoDouble(position_symbol, SYMBOL_BID);
+         request.type  = ORDER_TYPE_SELL;
+      } else {
+         request.price = SymbolInfoDouble(position_symbol, SYMBOL_ASK);
+         request.type  = ORDER_TYPE_BUY;
+      }
+      MqlTradeCheckResult checkResult={0};
+      if (!OrderCheck(request, checkResult)) {
+         Print(__FUNCTION__,",OrderCheck:", checkResult.retcode, "/", checkResult.comment);
+         return -1;
+      }
+      MqlTradeResult result={0};
+      if (!OrderSend(request, result)) {
+         Print(__FUNCTION__,",OrderSend:", result.retcode, "/", result.comment);
+         return -1;
+      }
+      return (int) result.order;
+   }
+public:
+   PositionManager(Logger *l_logger) {
+      m_logger = l_logger;
+   };
+   bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, long &ticket_no_arr[]) {
+      string symbol = m_find_symbol(server_symbol);
+      if (symbol == NULL) {
+         m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol);
+         return true;
+      }
+      ENUM_ORDER_TYPE order_type;
+      double order_price;
+      MqlTick tick;
+      if (!SymbolInfoTick(symbol, tick)) {
+         m_logger.WriteLog("ERROR", "OrderSend fail: SymbolInfoTick returned false. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol);
+         return false;
+      }
+      if (server_order_type == 0) {
+         order_type = ORDER_TYPE_BUY;
+         order_price = tick.ask;
+      } else if (server_order_type == 1) {
+         order_type = ORDER_TYPE_SELL;
+         order_price = tick.bid;
+      } else {
+         m_logger.WriteLog("ERROR", "OrderSend fail: Invalid OrderType. " + IntegerToString(server_ticket_no) + ", OrderType = " + IntegerToString(server_order_type));
+         return true;
+      }
+      double order_lots = m_calculate_volume(symbol, order_type, order_price);
+      double min_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);         // Min. amount of lots
+      double max_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);         // Max amount of lotsr
+      if (order_lots <= min_lots) {
+         m_logger.WriteLog("WARN", "OrderSend fail: Not enough margin. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol + ", Calculated lots = " + DoubleToString(order_lots));
+         return true;
+      }
+      m_logger.WriteLog("DEBUG", "OrderSend executing: " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + "/" + DoubleToString(order_lots));
+      bool success = false;
+      while (order_lots > 0) {
+         double lots;
+         if (order_lots >= max_lots) {
+            lots = max_lots;
+            order_lots -= max_lots;
+         } else {
+            lots  = order_lots;
+            order_lots -= order_lots;
+         }
+         int OrderOpenResult = m_send_open_order(symbol, order_type, order_price, lots, server_ticket_no);
+         if (OrderOpenResult < 0) {
+            m_logger.WriteLog("ERROR", "OrderSend failed." + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+            break;
+         } else {
+            ArrayResize(ticket_no_arr, ArraySize(ticket_no_arr) + 1);
+            ticket_no_arr[ArraySize(ticket_no_arr) - 1] = OrderOpenResult;
+            success = true;
+            m_logger.WriteLog("INFO", "OrderSend success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(OrderOpenResult));
+            m_logger.WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, OrderOpenResult);
+         }
+      }
+      return success;
+   };
+   bool ClosePosition(long local_ticket_no) {
+      return m_send_close_order(local_ticket_no) >= 0;
+   };
 };
 
 class ApiStatus {
@@ -520,7 +886,9 @@ string error_code_to_string(int error_code) {
    }
 }
 
+Logger *logger = NULL;
 TrsysClient *client = NULL;
+PositionManager *positionManager = NULL;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -530,6 +898,8 @@ int OnInit()
 //--- create timer
    EventSetMillisecondTimer(100);
    client = new TrsysClient();
+   logger = new Logger();
+   positionManager = new PositionManager(logger);
 //---
    return(INIT_SUCCEEDED);
 }
@@ -540,6 +910,8 @@ void OnDeinit(const int reason)
 {
 //--- destroy timer
    EventKillTimer();
+   delete positionManager;
+   delete logger;
    delete client;
 }
 //+------------------------------------------------------------------+
@@ -556,24 +928,59 @@ void OnTimer()
 {
 //---
    static EaState state;
-   static Logger logger;
+   static RemoteOrderState serverOrders;
+   static LocalOrderState localOrders;
    static string last_response;
    if (!state.IsEaEnabled()) {
       return;
    }
-
+   
    string response;
    if (client.GetOrders(response) == 200) {
       if (last_response != response) {
-         CopyTradeInfoList *list = new CopyTradeInfoList(response);
-         if (!list.IsError()) {
-            
+         string error = NULL;
+         CopyTradeInfoList *list = CopyTradeInfoParser::Parse(response, error);
+         if (error == NULL) {
+            TicketNoDifference diff = serverOrders.Diff(list);
+            for (int i = 0; i < diff.ClosedCount(); i++) {
+               long closed_server_ticket_no = diff.GetClosed(i);
+               long arr_close_ticket_no[];
+               int close_order_count = localOrders.FindByServerTicketNo(closed_server_ticket_no, arr_close_ticket_no);
+               if (close_order_count > 0) {
+                  for (int j = 0; j < close_order_count; j++) {
+                     if (positionManager.ClosePosition(arr_close_ticket_no[j])) {
+                        localOrders.Close(arr_close_ticket_no[j]);
+                     }
+                  }
+               }
+               serverOrders.Remove(closed_server_ticket_no);
+            }
+            for (int i = 0; i < diff.OpenedCount(); i++) {
+               long opened_server_ticket_no = diff.GetOpened(i);
+               if (!localOrders.Exists(opened_server_ticket_no)) {
+                  int index = list.IndexOfTicketNo(opened_server_ticket_no);
+                  if (index >= 0) {
+                     CopyTradeInfo info = list.Get(index);
+                     Print("Open order", opened_server_ticket_no);
+                     long arr_open_ticket_no[];
+                     if (positionManager.CreatePosition(info.server_ticket_no, info.symbol, info.order_type, arr_open_ticket_no)) {
+                        int size = ArraySize(arr_open_ticket_no);
+                        for (int j = 0; j < size; j++) {
+                           localOrders.Open(info.server_ticket_no, arr_open_ticket_no[j], info.symbol, info.order_type);
+                        }
+                        serverOrders.Add(info);
+                     }
+                  }
+               }
+            }
             state.ClearError();
          } else {
-            state.SetError(list.GetError());
-            logger.WriteLog("DEBUG", list.GetError());
+            state.SetError(error);
+            logger.WriteLog("DEBUG", error);
          }
-         delete list;
+         if (list != NULL) {
+            delete list;
+         }
       }
    } else {
       state.SetError("サーバーと通信できません。");
