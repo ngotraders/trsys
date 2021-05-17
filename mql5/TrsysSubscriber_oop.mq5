@@ -10,65 +10,11 @@ input int Slippage = 10;
 
 double Percent = MathMax(0, MathMin(100, PercentOfFreeMargin));
 
-//+------------------------------------------------------------------+
-//| Expert initialization function                                   |
-//+------------------------------------------------------------------+
-int OnInit()
-{
-//--- create timer
-   EventSetMillisecondTimer(100);
-//---
-   return(INIT_SUCCEEDED);
-}
-//+------------------------------------------------------------------+
-//| Expert deinitialization function                                 |
-//+------------------------------------------------------------------+
-void OnDeinit(const int reason)
-{
-//--- destroy timer
-   EventKillTimer();
-   
-}
-//+------------------------------------------------------------------+
-//| Expert tick function                                             |
-//+------------------------------------------------------------------+
-void OnTick()
-{
-//---
-}
-//+------------------------------------------------------------------+
-//| Timer function                                                   |
-//+------------------------------------------------------------------+
-void OnTimer()
-{
-//---
-   static EaState state;
-   static Logger logger;
-   static TrsysClient client;
-   static string last_response;
-   if (!state.IsEaEnabled()) {
-      return;
-   }
 
-   string response;
-   if (client.GetOrders(response) == 200) {
-      if (last_response != response) {
-         CopyTradeInfoList *list = new CopyTradeInfoList(response);
-         if (!list.IsError()) {
-            
-            state.ClearError();
-         } else {
-            state.SetError(list.GetError());
-            logger.WriteLog("DEBUG", list.GetError());
-         }
-      }
-   } else {
-      state.SetError("サーバーと通信できません。");
-   }
-   client.PostLog(logger);
-}
-//+------------------------------------------------------------------+
 
+//+------------------------------------------------------------------+
+//| Custom classes                                                   |
+//+------------------------------------------------------------------+
 class EaState {
    bool m_ea_enabled;
    string m_error_message;
@@ -122,8 +68,8 @@ public:
       m_queue[(m_current_index + m_count) % MAX_QUEUE_COUNT] = item;
       m_count++;
    };
-   int Peak(string &str_array[]) {
-      int peak_length = MathMin(m_count, 10);
+   int Peak(string &str_array[], int length) {
+      int peak_length = MathMin(m_count, length);
       if (peak_length == 0) {
          return 0;
       }
@@ -472,6 +418,10 @@ public:
    }
    ~TrsysClient() {
       m_clear_secret_token();
+      delete m_post_secret_key_status;
+      delete m_post_token_release_status;
+      delete m_get_orders_status;
+      delete m_post_log_status;
    }
    
    int GetOrders(string &response)
@@ -530,7 +480,7 @@ public:
          return -1;
       }
       string logs[];
-      int peak = q.Peak(logs);
+      int peak = q.Peak(logs, 10);
       if (peak == 0) {
          return 0;
       }
@@ -569,3 +519,65 @@ string error_code_to_string(int error_code) {
          return "Unknown Error, Error = " + IntegerToString(error_code);
    }
 }
+
+TrsysClient *client = NULL;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+//--- create timer
+   EventSetMillisecondTimer(100);
+   client = new TrsysClient();
+//---
+   return(INIT_SUCCEEDED);
+}
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+//--- destroy timer
+   EventKillTimer();
+   delete client;
+}
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+//---
+}
+//+------------------------------------------------------------------+
+//| Timer function                                                   |
+//+------------------------------------------------------------------+
+void OnTimer()
+{
+//---
+   static EaState state;
+   static Logger logger;
+   static string last_response;
+   if (!state.IsEaEnabled()) {
+      return;
+   }
+
+   string response;
+   if (client.GetOrders(response) == 200) {
+      if (last_response != response) {
+         CopyTradeInfoList *list = new CopyTradeInfoList(response);
+         if (!list.IsError()) {
+            
+            state.ClearError();
+         } else {
+            state.SetError(list.GetError());
+            logger.WriteLog("DEBUG", list.GetError());
+         }
+         delete list;
+      }
+   } else {
+      state.SetError("サーバーと通信できません。");
+   }
+   client.PostLog(logger);
+}
+//+------------------------------------------------------------------+
