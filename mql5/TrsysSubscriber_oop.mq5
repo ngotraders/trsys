@@ -3,7 +3,7 @@
 bool DEBUG = false;
 bool PERFORMANCE = false;
 
-string Endpoint = "https://copy-trading-system.azurewebsites.net";
+string Endpoint = "https://trsys-server.azurewebsites.net";
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -292,102 +292,134 @@ public:
    };
 };
 
+template<typename T>
 struct TicketNoDifference {
-   long m_opened_ticket[];
+   T m_opened_ticket[];
    int m_opened_ticket_count;
-   long m_closed_ticket[];
+   T m_closed_ticket[];
    int m_closed_ticket_count;
 public:
    TicketNoDifference() {
       m_opened_ticket_count = 0;
       m_closed_ticket_count = 0;
    };
-   void Opened(long server_ticket_no) {
+   void Opened(T &server_ticket) {
       ArrayResize(m_opened_ticket, m_opened_ticket_count + 1);
-      m_opened_ticket[m_opened_ticket_count] = server_ticket_no;
+      m_opened_ticket[m_opened_ticket_count] = server_ticket;
       m_opened_ticket_count++;
    };
-   void Closed(long server_ticket_no) {
+   void Closed(T &server_ticket) {
       ArrayResize(m_closed_ticket, m_closed_ticket_count + 1);
-      m_closed_ticket[m_closed_ticket_count] = server_ticket_no;
+      m_closed_ticket[m_closed_ticket_count] = server_ticket;
       m_closed_ticket_count++;
+   };
+   bool HasDifference() {
+      return m_opened_ticket_count > 0 || m_closed_ticket_count > 0;
    };
    int OpenedCount() {
       return m_opened_ticket_count;
    };
-   long GetOpened(int i) {
+   T GetOpened(int i) {
       return m_opened_ticket[i];
    };
    int ClosedCount() {
       return m_closed_ticket_count;
    };
-   long GetClosed(int i) {
+   T GetClosed(int i) {
       return m_closed_ticket[i];
    };
 };
 
 class RemoteOrderState {
-   CopyTradeInfoList orders;
+   List<CopyTradeInfo> m_orders;
+   string m_last_server_response;
+
    void m_initialize() {
-      int positionCount = PositionsTotal();
-      for(int i = 0; i < positionCount ; i++) {
+      int position_count = PositionsTotal();
+      for(int i = 0; i < position_count; i++) {
          long position_magic = (long)PositionGetInteger(POSITION_MAGIC);
          if (position_magic == 0) continue;
-         if (orders.Exists(position_magic)) continue;
+         if (m_index_of(position_magic) > -1) continue;
          string symbol = PositionGetString(POSITION_SYMBOL);
          int order_type = (int)PositionGetInteger(POSITION_TYPE);
-         orders.Add(CopyTradeInfo::Create(position_magic, symbol, order_type));
+         m_orders.Add(CopyTradeInfo::Create(position_magic, symbol, order_type));
       } 
+   };
+   int m_index_of(long server_ticket_no) {
+      for (int i = 0; i < m_orders.Length(); i++) {
+         CopyTradeInfo info = m_orders.Get(i);
+         if (info.server_ticket_no == server_ticket_no) {
+            return i;
+         }
+      }
+      return -1;
    };
 public:
    RemoteOrderState() {
+      m_last_server_response = NULL;
       m_initialize();
    };
-   TicketNoDifference Diff(CopyTradeInfoList &serverInfo) {
-      TicketNoDifference diff;
-      for (int i = 0; i < orders.Length(); i++) {
-         CopyTradeInfo ii = orders.Get(i);
-         bool exists = false;
-         for (int j = 0; j < serverInfo.Length(); j++) {
-            CopyTradeInfo ij = serverInfo.Get(j);
-            if (ii.server_ticket_no == ij.server_ticket_no) {
-               exists = true;
-               break;
+   TicketNoDifference<CopyTradeInfo> GetDifference() {
+      TicketNoDifference<CopyTradeInfo> diff;
+      string response;
+      if (client.GetOrders(response) == 200) {
+         if (m_last_server_response != response) {
+            string error = NULL;
+            CopyTradeInfoList serverInfo = CopyTradeInfoParser::Parse(response, error);
+            if (error == NULL) {
+               for (int i = 0; i < m_orders.Length(); i++) {
+                  CopyTradeInfo ii = m_orders.Get(i);
+                  bool exists = false;
+                  for (int j = 0; j < serverInfo.Length(); j++) {
+                     CopyTradeInfo ij = serverInfo.Get(j);
+                     if (ii.server_ticket_no == ij.server_ticket_no) {
+                        exists = true;
+                        break;
+                     }
+                  }
+                  if (!exists) {
+                     diff.Closed(ii);
+                  }
+               }
+               for (int i = 0; i < serverInfo.Length(); i++) {
+                  CopyTradeInfo ii = serverInfo.Get(i);
+                  bool exists = false;
+                  for (int j = 0; j < m_orders.Length(); j++) {
+                     CopyTradeInfo ij = m_orders.Get(j);
+                     if (ii.server_ticket_no == ij.server_ticket_no) {
+                        exists = true;
+                        break;
+                     }
+                  }
+                  if (!exists) {
+                     diff.Opened(ii);
+                  }
+               }
+               state.ClearError();
+            } else {
+               state.SetError(error);
+               logger.WriteLog("DEBUG", error);
             }
+            m_last_server_response = response;
          }
-         if (!exists) {
-            diff.Closed(ii.server_ticket_no);
-         }
-      }
-      for (int i = 0; i < serverInfo.Length(); i++) {
-         CopyTradeInfo ii = serverInfo.Get(i);
-         bool exists = false;
-         for (int j = 0; j < orders.Length(); j++) {
-            CopyTradeInfo ij = orders.Get(j);
-            if (ii.server_ticket_no == ij.server_ticket_no) {
-               exists = true;
-               break;
-            }
-         }
-         if (!exists) {
-            diff.Opened(ii.server_ticket_no);
-         }
+      } else {
+         state.SetError("サーバーと通信できません。");
       }
       return diff;
    };
    void Add(CopyTradeInfo &info) {
-      orders.Add(info);
+      m_orders.Add(info);
    };
    void Remove(long server_ticket_no) {
-      int index = orders.IndexOfTicketNo(server_ticket_no);
+      int index = m_index_of(server_ticket_no);
       if (index > -1) {
-         orders.Remove(index);
+         m_orders.Remove(index);
       }
    };
 };
 
 class LocalOrderState {
-   LocalOrderInfoList orders;
+   LocalOrderInfoList m_orders;
    void m_initialize() {
       int positionCount = PositionsTotal();
       for(int i = 0; i < positionCount ; i++) {
@@ -397,7 +429,7 @@ class LocalOrderState {
          if (position_magic == 0) continue;
          string symbol = PositionGetString(POSITION_SYMBOL);
          int order_type = (int)PositionGetInteger(POSITION_TYPE);
-         orders.Create(position_magic, position_ticket_no, symbol, order_type);
+         m_orders.Create(position_magic, position_ticket_no, symbol, order_type);
       } 
    };
 public:
@@ -405,20 +437,20 @@ public:
       m_initialize();
    };
    bool Exists(long server_ticket_no) {
-      return orders.server_ticket_noExists(server_ticket_no);
+      return m_orders.server_ticket_noExists(server_ticket_no);
    };
    bool Open(long server_ticket_no, long local_ticket_no, string symbol, int order_type) {
-      return orders.Create(server_ticket_no, local_ticket_no, symbol, order_type);
+      return m_orders.Create(server_ticket_no, local_ticket_no, symbol, order_type);
    };
 
    bool Close(long local_ticket_no) {
-      return orders.RemoveByLocalTicketNo(local_ticket_no);
+      return m_orders.RemoveByLocalTicketNo(local_ticket_no);
    };
 
-   int FindByserver_ticket_no(long server_ticket_no, long &arr_ticket_no[]) {
+   int FindByServerTicketNo(long server_ticket_no, long &arr_ticket_no[]) {
       int count = 0;
-      for (int i = 0; i < orders.Length(); i++) {
-         LocalOrderInfo info = orders.Get(i);
+      for (int i = 0; i < m_orders.Length(); i++) {
+         LocalOrderInfo info = m_orders.Get(i);
          if (info.server_ticket_no == server_ticket_no) {
             count++;
          }
@@ -428,8 +460,8 @@ public:
       }
       ArrayResize(arr_ticket_no, count);
       int j = 0;
-      for (int i = 0; i < orders.Length(); i++) {
-         LocalOrderInfo info = orders.Get(i);
+      for (int i = 0; i < m_orders.Length(); i++) {
+         LocalOrderInfo info = m_orders.Get(i);
          if (info.server_ticket_no == server_ticket_no) {
             arr_ticket_no[j] = info.local_ticket_no;
          }
@@ -950,60 +982,39 @@ void OnTick()
 void OnTimer()
 {
 //---
-   static string last_response;
    if (!state.IsEaEnabled()) {
       return;
    }
-   
-   string response;
-   if (client.GetOrders(response) == 200) {
-      if (last_response != response) {
-         string error = NULL;
-         CopyTradeInfoList *list = CopyTradeInfoParser::Parse(response, error);
-         if (error == NULL) {
-            TicketNoDifference diff = remoteOrders.Diff(list);
-            for (int i = 0; i < diff.ClosedCount(); i++) {
-               long closed_server_ticket_no = diff.GetClosed(i);
-               long arr_close_ticket_no[];
-               int close_order_count = localOrders.FindByserver_ticket_no(closed_server_ticket_no, arr_close_ticket_no);
-               if (close_order_count > 0) {
-                  for (int j = 0; j < close_order_count; j++) {
-                     if (positionManager.ClosePosition(closed_server_ticket_no, arr_close_ticket_no[j])) {
-                        localOrders.Close(arr_close_ticket_no[j]);
-                     }
-                  }
-               }
-               remoteOrders.Remove(closed_server_ticket_no);
-            }
-            for (int i = 0; i < diff.OpenedCount(); i++) {
-               long opened_server_ticket_no = diff.GetOpened(i);
-               if (!localOrders.Exists(opened_server_ticket_no)) {
-                  int index = list.IndexOfTicketNo(opened_server_ticket_no);
-                  if (index >= 0) {
-                     CopyTradeInfo info = list.Get(index);
-                     Print("Open order", opened_server_ticket_no);
-                     long arr_open_ticket_no[];
-                     if (positionManager.CreatePosition(info.server_ticket_no, info.symbol, info.order_type, arr_open_ticket_no)) {
-                        int size = ArraySize(arr_open_ticket_no);
-                        for (int j = 0; j < size; j++) {
-                           localOrders.Open(info.server_ticket_no, arr_open_ticket_no[j], info.symbol, info.order_type);
-                        }
-                        remoteOrders.Add(info);
-                     }
-                  }
+
+   TicketNoDifference<CopyTradeInfo> diff = remoteOrders.GetDifference();
+   if (diff.HasDifference()) {
+      for (int i = 0; i < diff.ClosedCount(); i++) {
+         CopyTradeInfo closedInfo = diff.GetClosed(i);
+         long arr_close_ticket_no[];
+         int close_order_count = localOrders.FindByServerTicketNo(closedInfo.server_ticket_no, arr_close_ticket_no);
+         if (close_order_count > 0) {
+            for (int j = 0; j < close_order_count; j++) {
+               if (positionManager.ClosePosition(closedInfo.server_ticket_no, arr_close_ticket_no[j])) {
+                  localOrders.Close(arr_close_ticket_no[j]);
                }
             }
-            state.ClearError();
-         } else {
-            state.SetError(error);
-            logger.WriteLog("DEBUG", error);
          }
-         if (list != NULL) {
-            delete list;
+         remoteOrders.Remove(closedInfo.server_ticket_no);
+      }
+      for (int i = 0; i < diff.OpenedCount(); i++) {
+         CopyTradeInfo openedInfo = diff.GetOpened(i);
+         if (!localOrders.Exists(openedInfo.server_ticket_no)) {
+            Print("Open order", openedInfo.server_ticket_no);
+            long arr_open_ticket_no[];
+            if (positionManager.CreatePosition(openedInfo.server_ticket_no, openedInfo.symbol, openedInfo.order_type, arr_open_ticket_no)) {
+               int size = ArraySize(arr_open_ticket_no);
+               for (int j = 0; j < size; j++) {
+                  localOrders.Open(openedInfo.server_ticket_no, arr_open_ticket_no[j], openedInfo.symbol, openedInfo.order_type);
+               }
+               remoteOrders.Add(openedInfo);
+            }
          }
       }
-   } else {
-      state.SetError("サーバーと通信できません。");
    }
    client.PostLog(logger);
 }
