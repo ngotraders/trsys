@@ -90,7 +90,6 @@ public:
       return peak_length;
    };
    bool Dequeue(int length) {
-      Print("m_count = ", m_count, ", length = ", length);
       if (m_count >= length) {
          m_current_index = (m_current_index + length) % MAX_QUEUE_COUNT;
          m_count -= length;
@@ -198,26 +197,10 @@ struct CopyTradeInfo {
    };
 };
 
-class CopyTradeInfoList: public List<CopyTradeInfo> {
-public:   
-   int IndexOfTicketNo(long server_ticket_no) {
-      for (int i = 0; i < Length(); i++) {
-         CopyTradeInfo info = Get(i);
-         if (info.server_ticket_no == server_ticket_no) {
-            return i;
-         }
-      }
-      return -1;
-   };
-   bool Exists(long server_ticket_no) {
-      return IndexOfTicketNo(server_ticket_no) >= 0;
-   };
-};
-
 class CopyTradeInfoParser {
 public:
-   static CopyTradeInfoList *Parse(string response, string &parse_error) {
-      CopyTradeInfoList *list = new CopyTradeInfoList();
+   static List<CopyTradeInfo> *Parse(string response, string &parse_error) {
+      List<CopyTradeInfo> *list = new List<CopyTradeInfo>();
       string processing_data = response;
       while(processing_data != "" )
       {
@@ -342,7 +325,7 @@ public:
       if (client.GetOrders(response) == 200) {
          if (m_last_server_response != response) {
             string error = NULL;
-            CopyTradeInfoList serverInfo = CopyTradeInfoParser::Parse(response, error);
+            List<CopyTradeInfo> *serverInfo = CopyTradeInfoParser::Parse(response, error);
             if (error == NULL) {
                for (int i = 0; i < m_orders.Length(); i++) {
                   CopyTradeInfo ii = m_orders.Get(i);
@@ -378,6 +361,7 @@ public:
                logger.WriteLog("DEBUG", error);
             }
             m_last_server_response = response;
+            delete serverInfo;
          }
       } else {
          state.SetError("サーバーと通信できません。");
