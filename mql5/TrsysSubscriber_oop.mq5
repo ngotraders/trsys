@@ -105,7 +105,11 @@ class Logger : public LogQueue {
 public:
    void WriteLog(string logType, string message) {
       string text = IntegerToString(GetTickCount()) + ":" + logType + ":" + message;
-      if (DEBUG && logType == "DEBUG") {
+      if (logType == "DEBUG") {
+         if (DEBUG) {
+            Print(message);
+         }
+      } else if (logType != "OPEN" && logType != "CLOSE") {
          Print(message);
       }
       Enqueue(text);
@@ -459,6 +463,10 @@ public:
       }
       return diff;
    };
+   
+   bool ExistsLocalTicketNo(long local_ticket_no) {
+      return m_index_of_local_ticket(local_ticket_no) >= 0;
+   };
 
    bool ExistsServerTicketNo(long server_ticket_no) {
       return m_index_of_server_ticket(server_ticket_no) >= 0;
@@ -507,18 +515,18 @@ class PositionManager {
          return 0;
       }
       if (one_lot == 0) {
-         Print("one_lot is zero");
+         m_logger.WriteLog("WARN", "one_lot is zero");
          return 0;
       }
       double step   =SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP); // Step in volume changing
       if (step == 0) {
-         m_logger.WriteLog("DEBUG", "SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
+         m_logger.WriteLog("WARN", "SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
          return 0;
       }
       double free   =AccountInfoDouble(ACCOUNT_FREEMARGIN);// Free margin
       double lots   =MathFloor(free*Percent/100/one_lot/step)*step;
       return lots;
-   }
+   };
    string m_find_symbol(string symbol_str) {
       for (int i = 0; i < SymbolsTotal(false); i++) {
          if (StringFind(SymbolName(i, false), symbol_str) >= 0) {
@@ -526,7 +534,7 @@ class PositionManager {
          }
       }
       return NULL;
-   }
+   };
    int m_send_open_order(string orderSymbol, ENUM_ORDER_TYPE orderType, double orderPrice, double orderLots, long magicNo) {
       //--- リクエストを準備する
       MqlTradeRequest request={0};
@@ -553,7 +561,7 @@ class PositionManager {
    
    int m_send_close_order(ulong position_ticket) {
       if (!PositionSelectByTicket(position_ticket)) {
-         return -1;
+         return 0;
       }
       string position_symbol = PositionGetString(POSITION_SYMBOL);
       double volume = PositionGetDouble(POSITION_VOLUME);
@@ -594,14 +602,14 @@ public:
    bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, long &ticket_no_arr[]) {
       string symbol = m_find_symbol(server_symbol);
       if (symbol == NULL) {
-         m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol);
+         m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
       }
       ENUM_ORDER_TYPE order_type;
       double order_price;
       MqlTick tick;
       if (!SymbolInfoTick(symbol, tick)) {
-         m_logger.WriteLog("ERROR", "OrderSend fail: SymbolInfoTick returned false. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol);
+         m_logger.WriteLog("ERROR", "OrderSend fail: SymbolInfoTick returned false. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", LocalSymbol = " + symbol);
          return false;
       }
       if (server_order_type == 0) {
@@ -611,17 +619,21 @@ public:
          order_type = ORDER_TYPE_SELL;
          order_price = tick.bid;
       } else {
-         m_logger.WriteLog("ERROR", "OrderSend fail: Invalid OrderType. " + IntegerToString(server_ticket_no) + ", OrderType = " + IntegerToString(server_order_type));
+         m_logger.WriteLog("ERROR", "OrderSend fail: Invalid OrderType. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
       }
       double order_lots = m_calculate_volume(symbol, order_type, order_price);
       double min_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);         // Min. amount of lots
       double max_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);         // Max amount of lotsr
-      if (order_lots <= min_lots) {
-         m_logger.WriteLog("WARN", "OrderSend fail: Not enough margin. " + IntegerToString(server_ticket_no) + ", Symbol = " + server_symbol + ", Calculated lots = " + DoubleToString(order_lots));
+      if (order_lots == 0) {
+         m_logger.WriteLog("WARN", "OrderSend fail: Calculated order lot was 0. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
       }
-      m_logger.WriteLog("DEBUG", "OrderSend executing: " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + "/" + DoubleToString(order_lots));
+      if (order_lots < min_lots) {
+         m_logger.WriteLog("WARN", "OrderSend fail: Not enough margin. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", Calculated lots = " + DoubleToString(order_lots));
+         return true;
+      }
+      m_logger.WriteLog("DEBUG", "OrderSend executing: ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", Calculated lots = " + DoubleToString(order_lots));
       bool success = false;
       while (order_lots > 0) {
          double lots;
@@ -634,13 +646,13 @@ public:
          }
          int local_ticket_no = m_send_open_order(symbol, order_type, order_price, lots, server_ticket_no);
          if (local_ticket_no < 0) {
-            m_logger.WriteLog("ERROR", "OrderSend failed." + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+            m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
             break;
          } else {
             ArrayResize(ticket_no_arr, ArraySize(ticket_no_arr) + 1);
             ticket_no_arr[ArraySize(ticket_no_arr) - 1] = local_ticket_no;
             success = true;
-            m_logger.WriteLog("INFO", "OrderSend success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+            m_logger.WriteLog("INFO", "OrderSend succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
             WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
          }
       }
@@ -649,11 +661,15 @@ public:
    bool ClosePosition(long server_ticket_no, long local_ticket_no) {
       m_logger.WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
       int result = m_send_close_order(local_ticket_no);
+      if (result == 0) {
+         m_logger.WriteLog("WARN", "OrderClose failed: Already closed. " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+         return true;
+      }
       if (result < 0) {
-         m_logger.WriteLog("ERROR", "OrderClose failed." + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+         m_logger.WriteLog("ERROR", "OrderClose failed: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
          return false;
       } else {
-         m_logger.WriteLog("DEBUG", "OrderClose success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+         m_logger.WriteLog("INFO", "OrderClose succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
          WriteOrderCloseSuccessLog(server_ticket_no, local_ticket_no);
          return true;
       }
@@ -727,7 +743,7 @@ public:
          if (error_code == -1) {
             Print(m_api_name + ": Recover from Error");
          } else {
-            Print(m_api_name + ": " + error_code_to_string(error_code));
+            Print(m_api_name + ": " + ErrorCodeToString(error_code));
          }
       }
       m_last_error_code = error_code;
@@ -954,7 +970,7 @@ int ConvertToOrderType(ENUM_POSITION_TYPE position_type) {
    return -1;
 }
 
-string error_code_to_string(int error_code) {
+string ErrorCodeToString(int error_code) {
    switch (error_code) {
       case ERR_WEBREQUEST_INVALID_ADDRESS:
          return "Invalid URL";
@@ -1027,15 +1043,25 @@ void OnTimer()
    if (localDiff.HasDifference()) {
       for (int i = 0; i < localDiff.ClosedCount(); i++) {
          LocalOrderInfo closedInfo = localDiff.GetClosed(i);
+         logger.WriteLog("DEBUG", "Local order closed. LocalOrder = " + closedInfo.ToString());
          long arr_close_ticket_no[];
          int close_order_count = localOrders.FindByServerTicketNo(closedInfo.server_ticket_no, arr_close_ticket_no);
          if (close_order_count > 0) {
             for (int j = 0; j < close_order_count; j++) {
-               if (positionManager.ClosePosition(closedInfo.server_ticket_no, arr_close_ticket_no[j])) {
-                  localOrders.Remove(arr_close_ticket_no[j]);
+               if (closedInfo.local_ticket_no == arr_close_ticket_no[j]) continue;
+               if (localOrders.ExistsLocalTicketNo(arr_close_ticket_no[j])) {
+                  if (positionManager.ClosePosition(closedInfo.server_ticket_no, arr_close_ticket_no[j])) {
+                     localOrders.Remove(arr_close_ticket_no[j]);
+                  }
                }
             }
          }
+         localOrders.Remove(closedInfo.local_ticket_no);
+      }
+      for (int i = 0; i < localDiff.OpenedCount(); i++) {
+         LocalOrderInfo openedInfo = localDiff.GetOpened(i);
+         logger.WriteLog("DEBUG", "Local order opened. LocalOrder = " + openedInfo.ToString());
+         localOrders.Add(openedInfo.server_ticket_no, openedInfo.local_ticket_no, openedInfo.symbol, openedInfo.order_type);
       }
    }
 
@@ -1043,6 +1069,7 @@ void OnTimer()
    if (serverDiff.HasDifference()) {
       for (int i = 0; i < serverDiff.ClosedCount(); i++) {
          CopyTradeInfo closedInfo = serverDiff.GetClosed(i);
+         logger.WriteLog("DEBUG", "Server order closed. ServerOrder = " + closedInfo.ToString());
          long arr_close_ticket_no[];
          int close_order_count = localOrders.FindByServerTicketNo(closedInfo.server_ticket_no, arr_close_ticket_no);
          if (close_order_count > 0) {
@@ -1056,17 +1083,17 @@ void OnTimer()
       }
       for (int i = 0; i < serverDiff.OpenedCount(); i++) {
          CopyTradeInfo openedInfo = serverDiff.GetOpened(i);
+         logger.WriteLog("DEBUG", "Server order opened. ServerOrder = " + openedInfo.ToString());
          if (!localOrders.ExistsServerTicketNo(openedInfo.server_ticket_no)) {
-            Print("Open order", openedInfo.server_ticket_no);
             long arr_open_ticket_no[];
             if (positionManager.CreatePosition(openedInfo.server_ticket_no, openedInfo.symbol, openedInfo.order_type, arr_open_ticket_no)) {
                int size = ArraySize(arr_open_ticket_no);
                for (int j = 0; j < size; j++) {
                   localOrders.Add(openedInfo.server_ticket_no, arr_open_ticket_no[j], openedInfo.symbol, openedInfo.order_type);
                }
-               remoteOrders.Add(openedInfo);
             }
          }
+         remoteOrders.Add(openedInfo);
       }
    }
    client.PostLog(logger);
