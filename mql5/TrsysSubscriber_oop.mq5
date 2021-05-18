@@ -10,40 +10,54 @@ input int Slippage = 10;
 
 double Percent = MathMax(0, MathMin(100, PercentOfFreeMargin));
 
+
+
 //+------------------------------------------------------------------+
 //| Custom classes                                                   |
 //+------------------------------------------------------------------+
-class EaState {
-   bool m_ea_enabled;
-   string m_error_message;
-   void m_update_comment() {
-      if (!m_ea_enabled) {
-         Comment("TrsysSubscriber: 自動売買が無効です");
-         return;
-      }
-      if (m_error_message != NULL) {
-         Comment("TrsysSubscriber: " + m_error_message);
-         return;
-      }
-      Comment("TrsysSubscriber: 正常");
+template<typename T>
+class List {
+   T m_array[];
+   int m_actual_array_length;
+   int m_count;
+   void m_resize() {
+      m_actual_array_length *= 2;
+      ArrayResize(m_array, m_actual_array_length);
    };
 public:
-   EaState() {
-      m_ea_enabled = true;
-      m_error_message = NULL;
+   List() {
+      m_count = 0;
+      m_actual_array_length = 4;
+      m_resize();
    };
-   bool IsEaEnabled() {
-      m_ea_enabled = MQLInfoInteger(MQL_TRADE_ALLOWED) == 1 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) == 1 && AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) == 1 && TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) == 1;
-      m_update_comment();
-      return m_ea_enabled;
+   void Add(T &item) {
+      m_count++;
+      if (m_count > m_actual_array_length) {
+         m_resize();
+      }
+      m_array[m_count - 1] = item;
    };
-   void SetError(string error_message) {
-      m_error_message = error_message;
-      m_update_comment();
+   void Remove(int index) {
+      if (index >= m_count) {
+         Print("index must under the count");
+         return;
+      }
+      for (int i = index + 1; i < m_count; i++) {
+         m_array[i - 1] = m_array[i];
+      }
+      m_count--;
    };
-   void ClearError() {
-      m_error_message = NULL;
-      m_update_comment();
+   T Get(int index) {
+      T ret;
+      if (index >= m_count) {
+         Print("index must under the count");
+         return ret;
+      }
+      ret = m_array[index];
+      return ret;
+   };
+   int Length() {
+      return m_count;
    };
 };
 
@@ -96,104 +110,42 @@ public:
       }
       Enqueue(text);
    }
-   
-   void WriteOrderOpenSuccessLog(long serverTicketNo, string serverSymbol, int serverOrderType, int ticketNo) {
-      int waitCount = 0;
-      bool found = false;
-      while (waitCount < 5) {
-         found = PositionSelectByTicket(ticketNo);
-         if (found) {
-            break;
-         }
-         Sleep(10);
-      }
-      string text = IntegerToString(serverTicketNo) + ":" + serverSymbol + ":" + IntegerToString(serverOrderType) + ":" + IntegerToString(ticketNo) + ":";
-      if (found) {
-         text = text + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ":" + PositionGetString(POSITION_SYMBOL) + ":" + IntegerToString(PositionGetInteger(POSITION_TYPE)) + ":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN)) + ":" + DoubleToString(PositionGetDouble(POSITION_VOLUME)) + ":" + IntegerToString(PositionGetInteger(POSITION_TIME));
-      } else {
-         text = text + "NA:NA:NA:NA:NA:NA";
-      }
-      WriteLog("OPEN", text);
-   }  
-   
-   void WriteOrderCloseSuccessLog(long serverTicketNo, int ticketNo) {
-      int waitCount = 0;
-      bool found = false;
-      while (waitCount < 5) {
-         found = HistorySelectByPosition(ticketNo);
-         if (found) {
-            break;
-         }
-         Sleep(10);
-      }
-      if (found) {
-         PositionSelectByTicket(ticketNo);
-         long position_type = PositionGetInteger(POSITION_TYPE);
-         //--- リスト中の約定の数の合計
-         int deals=HistoryDealsTotal();
-         //--- 取引をひとつづつ処理する
-         for(int i=0;i<deals;i++) {
-            ulong deal_ticket = HistoryDealGetTicket(i);
-            if (HistoryDealGetInteger(deal_ticket,DEAL_TYPE) == position_type) {
-               continue;
-            }
-            string text = IntegerToString(serverTicketNo) + ":" + IntegerToString(ticketNo) + ":";
-            text = text + IntegerToString(deal_ticket) + ":" + HistoryDealGetString(deal_ticket, DEAL_SYMBOL) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TYPE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket, DEAL_PRICE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_VOLUME)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_PROFIT)) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TIME));
-            WriteLog("CLOSE", text);
-          }
-      } else {
-         string text = IntegerToString(serverTicketNo) + ":" + IntegerToString(ticketNo) + ":";
-         text = text + "NA:NA:NA:NA:NA:NA:NA";
-         WriteLog("CLOSE", text);
-      }
-   }
 };
 
-template<typename T>
-class List {
-   T m_array[];
-   int m_actual_array_length;
-   int m_count;
-   void m_resize() {
-      m_actual_array_length *= 2;
-      ArrayResize(m_array, m_actual_array_length);
-   };
-public:
-   List() {
-      m_count = 0;
-      m_actual_array_length = 4;
-      m_resize();
-   };
-   void Add(T &item) {
-      m_count++;
-      if (m_count > m_actual_array_length) {
-         m_resize();
-      }
-      m_array[m_count - 1] = item;
-   };
-   void Remove(int index) {
-      if (index >= m_count) {
-         Print("index must under the count");
+class EaState {
+   bool m_ea_enabled;
+   string m_error_message;
+   void m_update_comment() {
+      if (!m_ea_enabled) {
+         Comment("TrsysSubscriber: 自動売買が無効です");
          return;
       }
-      for (int i = index + 1; i < m_count; i++) {
-         m_array[i - 1] = m_array[i];
+      if (m_error_message != NULL) {
+         Comment("TrsysSubscriber: " + m_error_message);
+         return;
       }
-      m_count--;
+      Comment("TrsysSubscriber: 正常");
    };
-   T Get(int index) {
-      T ret;
-      if (index >= m_count) {
-         Print("index must under the count");
-         return ret;
-      }
-      ret = m_array[index];
-      return ret;
+public:
+   EaState() {
+      m_ea_enabled = true;
+      m_error_message = NULL;
    };
-   int Length() {
-      return m_count;
+   bool IsEaEnabled() {
+      m_ea_enabled = MQLInfoInteger(MQL_TRADE_ALLOWED) == 1 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) == 1 && AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) == 1 && TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) == 1;
+      m_update_comment();
+      return m_ea_enabled;
+   };
+   void SetError(string error_message) {
+      m_error_message = error_message;
+      m_update_comment();
+   };
+   void ClearError() {
+      m_error_message = NULL;
+      m_update_comment();
    };
 };
+
 
 struct CopyTradeInfo {
    long server_ticket_no;
@@ -325,7 +277,7 @@ public:
       return true;
    };
    
-   bool ServerTicketNoExists(long server_ticket_no) {
+   bool server_ticket_noExists(long server_ticket_no) {
       return m_index_of_server_ticket(server_ticket_no) >= 0;
    };
 
@@ -453,7 +405,7 @@ public:
       m_initialize();
    };
    bool Exists(long server_ticket_no) {
-      return orders.ServerTicketNoExists(server_ticket_no);
+      return orders.server_ticket_noExists(server_ticket_no);
    };
    bool Open(long server_ticket_no, long local_ticket_no, string symbol, int order_type) {
       return orders.Create(server_ticket_no, local_ticket_no, symbol, order_type);
@@ -463,7 +415,7 @@ public:
       return orders.RemoveByLocalTicketNo(local_ticket_no);
    };
 
-   int FindByServerTicketNo(long server_ticket_no, long &arr_ticket_no[]) {
+   int FindByserver_ticket_no(long server_ticket_no, long &arr_ticket_no[]) {
       int count = 0;
       for (int i = 0; i < orders.Length(); i++) {
          LocalOrderInfo info = orders.Get(i);
@@ -491,7 +443,7 @@ class PositionManager {
    double m_calculate_volume(string symbol, ENUM_ORDER_TYPE order_type, double price) {
       double one_lot;//!-lot cost
       if (!OrderCalcMargin(order_type, symbol, 1, price, one_lot)) {
-         Print("OrderCalcMargin returned false");
+         m_logger.WriteLog("DEBUG", "OrderCalcMargin returned false");
          return 0;
       }
       if (one_lot == 0) {
@@ -500,7 +452,7 @@ class PositionManager {
       }
       double step   =SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP); // Step in volume changing
       if (step == 0) {
-         Print("SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
+         m_logger.WriteLog("DEBUG", "SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
          return 0;
       }
       double free   =AccountInfoDouble(ACCOUNT_FREEMARGIN);// Free margin
@@ -620,23 +572,83 @@ public:
             lots  = order_lots;
             order_lots -= order_lots;
          }
-         int OrderOpenResult = m_send_open_order(symbol, order_type, order_price, lots, server_ticket_no);
-         if (OrderOpenResult < 0) {
+         int local_ticket_no = m_send_open_order(symbol, order_type, order_price, lots, server_ticket_no);
+         if (local_ticket_no < 0) {
             m_logger.WriteLog("ERROR", "OrderSend failed." + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
             break;
          } else {
             ArrayResize(ticket_no_arr, ArraySize(ticket_no_arr) + 1);
-            ticket_no_arr[ArraySize(ticket_no_arr) - 1] = OrderOpenResult;
+            ticket_no_arr[ArraySize(ticket_no_arr) - 1] = local_ticket_no;
             success = true;
-            m_logger.WriteLog("INFO", "OrderSend success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(OrderOpenResult));
-            m_logger.WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, OrderOpenResult);
+            m_logger.WriteLog("INFO", "OrderSend success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+            WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
          }
       }
       return success;
    };
-   bool ClosePosition(long local_ticket_no) {
-      return m_send_close_order(local_ticket_no) >= 0;
+   bool ClosePosition(long server_ticket_no, long local_ticket_no) {
+      m_logger.WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+      int result = m_send_close_order(local_ticket_no);
+      if (result < 0) {
+         m_logger.WriteLog("ERROR", "OrderClose failed." + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+         return false;
+      } else {
+         m_logger.WriteLog("DEBUG", "OrderClose success: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
+         WriteOrderCloseSuccessLog(server_ticket_no, local_ticket_no);
+         return true;
+      }
    };
+   
+   void WriteOrderOpenSuccessLog(long server_ticket_no, string serverSymbol, int serverOrderType, int ticketNo) {
+      int waitCount = 0;
+      bool found = false;
+      while (waitCount < 5) {
+         found = PositionSelectByTicket(ticketNo);
+         if (found) {
+            break;
+         }
+         Sleep(10);
+      }
+      string text = IntegerToString(server_ticket_no) + ":" + serverSymbol + ":" + IntegerToString(serverOrderType) + ":" + IntegerToString(ticketNo) + ":";
+      if (found) {
+         text = text + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ":" + PositionGetString(POSITION_SYMBOL) + ":" + IntegerToString(PositionGetInteger(POSITION_TYPE)) + ":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN)) + ":" + DoubleToString(PositionGetDouble(POSITION_VOLUME)) + ":" + IntegerToString(PositionGetInteger(POSITION_TIME));
+      } else {
+         text = text + "NA:NA:NA:NA:NA:NA";
+      }
+      m_logger.WriteLog("OPEN", text);
+   }  
+   
+   void WriteOrderCloseSuccessLog(long server_ticket_no, long local_ticket_no) {
+      int waitCount = 0;
+      bool found = false;
+      while (waitCount < 5) {
+         found = HistorySelectByPosition(local_ticket_no);
+         if (found) {
+            break;
+         }
+         Sleep(10);
+      }
+      if (found) {
+         PositionSelectByTicket(local_ticket_no);
+         long position_type = PositionGetInteger(POSITION_TYPE);
+         //--- リスト中の約定の数の合計
+         int deals=HistoryDealsTotal();
+         //--- 取引をひとつづつ処理する
+         for(int i=0;i<deals;i++) {
+            ulong deal_ticket = HistoryDealGetTicket(i);
+            if (HistoryDealGetInteger(deal_ticket,DEAL_TYPE) == position_type) {
+               continue;
+            }
+            string text = IntegerToString(server_ticket_no) + ":" + IntegerToString(local_ticket_no) + ":";
+            text = text + IntegerToString(deal_ticket) + ":" + HistoryDealGetString(deal_ticket, DEAL_SYMBOL) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TYPE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket, DEAL_PRICE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_VOLUME)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_PROFIT)) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TIME));
+            m_logger.WriteLog("CLOSE", text);
+          }
+      } else {
+         string text = IntegerToString(server_ticket_no) + ":" + IntegerToString(local_ticket_no) + ":";
+         text = text + "NA:NA:NA:NA:NA:NA:NA";
+         m_logger.WriteLog("CLOSE", text);
+      }
+   }
 };
 
 class ApiStatus {
@@ -687,6 +699,7 @@ class TrsysClient {
    ApiStatus *m_post_log_status;
    string m_get_orders_etag;
    string m_get_orders_etag_response;
+   Logger *m_logger;
 
    string m_generate_secret_key() {
       return "MT5/" + AccountInfoString(ACCOUNT_COMPANY) + "/" + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "/" + IntegerToString(AccountInfoInteger(ACCOUNT_TRADE_MODE));
@@ -771,7 +784,7 @@ class TrsysClient {
    }
 
 public:
-   TrsysClient() {
+   TrsysClient(Logger *l_logger) {
       m_secret_key = m_generate_secret_key();
       m_secret_token = NULL;
       m_next_token_fetch_time = -1;
@@ -781,6 +794,7 @@ public:
       m_post_log_status = new ApiStatus("PostLog");
       m_get_orders_etag = NULL;
       m_get_orders_etag_response = NULL;
+      m_logger = l_logger;
    }
    ~TrsysClient() {
       m_clear_secret_token();
@@ -887,8 +901,11 @@ string error_code_to_string(int error_code) {
 }
 
 Logger *logger = NULL;
+EaState *state = NULL;
 TrsysClient *client = NULL;
 PositionManager *positionManager = NULL;
+RemoteOrderState *remoteOrders = NULL;
+LocalOrderState *localOrders = NULL;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -897,9 +914,12 @@ int OnInit()
 {
 //--- create timer
    EventSetMillisecondTimer(100);
-   client = new TrsysClient();
    logger = new Logger();
+   state = new EaState();
+   client = new TrsysClient(logger);
    positionManager = new PositionManager(logger);
+   remoteOrders = new RemoteOrderState();
+   localOrders = new LocalOrderState();
 //---
    return(INIT_SUCCEEDED);
 }
@@ -910,9 +930,12 @@ void OnDeinit(const int reason)
 {
 //--- destroy timer
    EventKillTimer();
+   delete localOrders;
+   delete remoteOrders;
    delete positionManager;
-   delete logger;
    delete client;
+   delete state;
+   delete logger;
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
@@ -927,9 +950,6 @@ void OnTick()
 void OnTimer()
 {
 //---
-   static EaState state;
-   static RemoteOrderState serverOrders;
-   static LocalOrderState localOrders;
    static string last_response;
    if (!state.IsEaEnabled()) {
       return;
@@ -941,19 +961,19 @@ void OnTimer()
          string error = NULL;
          CopyTradeInfoList *list = CopyTradeInfoParser::Parse(response, error);
          if (error == NULL) {
-            TicketNoDifference diff = serverOrders.Diff(list);
+            TicketNoDifference diff = remoteOrders.Diff(list);
             for (int i = 0; i < diff.ClosedCount(); i++) {
                long closed_server_ticket_no = diff.GetClosed(i);
                long arr_close_ticket_no[];
-               int close_order_count = localOrders.FindByServerTicketNo(closed_server_ticket_no, arr_close_ticket_no);
+               int close_order_count = localOrders.FindByserver_ticket_no(closed_server_ticket_no, arr_close_ticket_no);
                if (close_order_count > 0) {
                   for (int j = 0; j < close_order_count; j++) {
-                     if (positionManager.ClosePosition(arr_close_ticket_no[j])) {
+                     if (positionManager.ClosePosition(closed_server_ticket_no, arr_close_ticket_no[j])) {
                         localOrders.Close(arr_close_ticket_no[j]);
                      }
                   }
                }
-               serverOrders.Remove(closed_server_ticket_no);
+               remoteOrders.Remove(closed_server_ticket_no);
             }
             for (int i = 0; i < diff.OpenedCount(); i++) {
                long opened_server_ticket_no = diff.GetOpened(i);
@@ -968,7 +988,7 @@ void OnTimer()
                         for (int j = 0; j < size; j++) {
                            localOrders.Open(info.server_ticket_no, arr_open_ticket_no[j], info.symbol, info.order_type);
                         }
-                        serverOrders.Add(info);
+                        remoteOrders.Add(info);
                      }
                   }
                }
