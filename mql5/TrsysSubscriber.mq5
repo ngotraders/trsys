@@ -90,6 +90,7 @@ public:
       return peak_length;
    };
    bool Dequeue(int length) {
+      Print("m_count = ", m_count, ", length = ", length);
       if (m_count >= length) {
          m_current_index = (m_current_index + length) % MAX_QUEUE_COUNT;
          m_count -= length;
@@ -117,6 +118,7 @@ public:
 class EaState {
    bool m_ea_enabled;
    string m_error_message;
+   long m_start_time;
    void m_update_comment() {
       if (!m_ea_enabled) {
          Comment("TrsysSubscriber: 自動売買が無効です");
@@ -145,6 +147,22 @@ public:
    void ClearError() {
       m_error_message = NULL;
       m_update_comment();
+   };
+   void Begin() {
+      if (PERFORMANCE) {
+         m_start_time = GetTickCount();
+         Print("OnTimer: start");
+      }
+   };
+   void Lap(string comment) {
+      if (PERFORMANCE) {
+         Print("OnTimer: ", comment, " in ", GetTickCount() - m_start_time, "ms");
+      }
+   };
+   void End() {
+      if (PERFORMANCE) {
+         Print("OnTimer: finish in ", GetTickCount() - m_start_time, "ms");
+      }
    };
 };
 
@@ -735,6 +753,10 @@ public:
       m_last_status_code = -1;
       m_last_error_code = -1;
    };
+   
+   string GetName() {
+      return m_api_name;
+   };
 
    void SetErrorCode(int error_code) {
       if (m_last_error_code != error_code) {
@@ -760,6 +782,10 @@ public:
          }
       }
       m_last_status_code = local_status_code;
+   };
+   
+   int GetLastStatus() {
+      return m_last_status_code;
    };
 };
 
@@ -839,8 +865,10 @@ class TrsysClient {
       if (request_data_string != NULL || request_data_string != "") {
          StringToCharArray(request_data_string, request_data, 0, WHOLE_ARRAY, CP_UTF8);
       }
-      
+
+      state.Lap(status.GetName() +  " begin");
       int res = WebRequest(method, url, request_headers, timeout, request_data, response_data, response_headers);
+      state.Lap(status.GetName() +  " end");
       if (res == -1) {
          error_code = GetLastError();
          status.SetErrorCode(error_code);
@@ -929,6 +957,9 @@ public:
    
    int PostLog(Logger &q)
    {
+      if (m_post_log_status.GetLastStatus() == 404) {
+         return 0;
+      }
       string secret_token = m_get_secret_token();
       if (secret_token == NULL) {
          return -1;
@@ -1033,6 +1064,7 @@ void OnTick()
 void OnTimer()
 {
 //---
+   state.Begin();
    if (!state.IsEaEnabled()) {
       return;
    }
@@ -1095,5 +1127,6 @@ void OnTimer()
       }
    }
    client.PostLog(logger);
+   state.End();
 }
 //+------------------------------------------------------------------+
