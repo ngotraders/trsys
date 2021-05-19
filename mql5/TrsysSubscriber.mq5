@@ -104,7 +104,7 @@ class Logger : public LogQueue {
 public:
    void WriteLog(string logType, string message) {
       string text = IntegerToString(GetTickCount()) + ":" + logType + ":" + message;
-      if (logType == "DEBUG" || logType == "OPEN" || logType == "CLOSE") {
+      if (logType == "DEBUG") {
          if (DEBUG) {
             Print(message);
          }
@@ -514,7 +514,6 @@ class PositionManager {
          info.price_open = OrderOpenPrice();
          info.volume = OrderLots();
          info.position_time = (datetime)OrderOpenTime();
-         Print(info.ToString());
          list.Add(info);
       }
       if (list.Length() == 0) {
@@ -538,7 +537,6 @@ class PositionManager {
             info.price_open = OrderOpenPrice();
             info.volume = OrderLots();
             info.position_time = (datetime)OrderOpenTime();
-            Print(info.ToString());
             return true;
          }
          Sleep(10);
@@ -557,6 +555,7 @@ class PositionManager {
          info[0].volume = OrderLots();
          info[0].profit = OrderProfit();
          info[0].time = (datetime)OrderCloseTime();
+         return 1;
       }
       return 0;
    };
@@ -656,13 +655,13 @@ public:
    void WriteOrderOpenSuccessLog(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
       PositionInfo info;
       bool found = m_get_position(local_ticket_no, info);
-      string text = IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
+      string text = "OPEN:" + IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
       if (found) {
          text = text + IntegerToString(info.local_ticket_no) + ":" + info.symbol + ":" + IntegerToString(info.order_type) + ":" + DoubleToString(info.price_open) + ":" + DoubleToString(info.volume) + ":" + IntegerToString(info.position_time);
       } else {
          text = text + "NA:NA:NA:NA:NA:NA";
       }
-      m_logger.WriteLog("OPEN", text);
+      m_logger.WriteLog("DEBUG", text);
    }  
    
    void WriteOrderCloseSuccessLog(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
@@ -670,14 +669,14 @@ public:
       int count = m_get_deals(local_ticket_no, info);
       if (count > 0) {
          for (int i = 0; i < count; i++) {
-            string text = IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
+            string text = "CLOSE:" + IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
             text = text + IntegerToString(info[i].deal_ticket_no) + ":" + info[i].symbol + ":" + IntegerToString(info[i].order_type) + ":" + DoubleToString(info[i].price) + ":" + DoubleToString(info[i].volume) + ":" + IntegerToString(info[i].time) + ":" + DoubleToString(info[i].profit);
-            m_logger.WriteLog("CLOSE", text);
+            m_logger.WriteLog("DEBUG", text);
          }
       } else {
-         string text = IntegerToString(server_ticket_no) + ":" + IntegerToString(local_ticket_no) + ":";
+         string text = "CLOSE:" + IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
          text = text + "NA:NA:NA:NA:NA:NA:NA";
-         m_logger.WriteLog("CLOSE", text);
+         m_logger.WriteLog("DEBUG", text);
       }
    }
 };
@@ -999,6 +998,7 @@ public:
          LocalOrderInfo info = m_orders.Get(i);
          if (info.server_ticket_no == server_ticket_no) {
             arr_ticket_no[j] = info.local_ticket_no;
+            j++;
          }
       }
       return count;
