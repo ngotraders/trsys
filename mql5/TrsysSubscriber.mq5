@@ -166,32 +166,56 @@ public:
 };
 
 struct PositionInfo {
-   long local_ticket_no;
    long server_ticket_no;
+   long local_ticket_no;
    string symbol;
    int order_type;
+   double price_open;
+   double volume;
+   datetime position_time;
+};
+
+struct DealInfo {
+   long deal_ticket_no;
+   string symbol;
+   int order_type;
+   double price;
+   double volume;
+   double profit;
+   datetime time;
 };
 
 class PositionManager {
    Logger *m_logger;
-   double m_calculate_volume(string symbol, ENUM_ORDER_TYPE order_type, double price) {
-      double one_lot;//!-lot cost
-      if (!OrderCalcMargin(order_type, symbol, 1, price, one_lot)) {
-         m_logger.WriteLog("DEBUG", "OrderCalcMargin returned false");
+
+   double m_calculate_volume(string symbol, int order_type, double current_price) {
+      double one_lot = 0;
+      double step = 0;
+      double account_free_margin = 0;
+      m_fetch_calculate_volume_params(symbol, order_type, current_price, one_lot, step, account_free_margin);
+      if (account_free_margin == 0) {
          return 0;
       }
       if (one_lot == 0) {
-         m_logger.WriteLog("WARN", "one_lot is zero");
+         m_logger.WriteLog("WARN", "CalculateVolume: One lot is 0. Symbol = " + symbol);
          return 0;
       }
-      double step   =SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP); // Step in volume changing
       if (step == 0) {
-         m_logger.WriteLog("WARN", "SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP) returned zero");
+         m_logger.WriteLog("WARN", "CalculateVolume: Step is 0. using 1 as lot step, Symbol = " + symbol);
          return 0;
       }
-      double free   =AccountInfoDouble(ACCOUNT_FREEMARGIN);// Free margin
-      double lots   =MathFloor(free*Percent/100/one_lot/step)*step;
+      double lots = MathFloor(account_free_margin * Percent / 100 / one_lot / step ) * step;
       return lots;
+   };
+#ifdef __MQL5__
+   void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin) {
+      ENUM_ORDER_TYPE mt5_order_type = m_convert_to_local_order_type(order_type);
+      // fetch one lot cost
+      if (!OrderCalcMargin(mt5_order_type, symbol, 1, current_price, one_lot)) {
+         m_logger.WriteLog("DEBUG", "OrderCalcMargin returned false");
+      }
+      step = SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP);
+      account_free_margin = AccountInfoDouble(ACCOUNT_FREEMARGIN);
    };
    string m_find_symbol(string symbol_str) {
       for (int i = 0; i < SymbolsTotal(false); i++) {
@@ -201,26 +225,68 @@ class PositionManager {
       }
       return NULL;
    };
+   
+   ENUM_ORDER_TYPE m_convert_to_local_order_type(int order_type) {
+      if (order_type == 0) {
+         return ORDER_TYPE_BUY;
+      } else if (order_type == 1) {
+         return ORDER_TYPE_SELL;
+      }
+      return -1;
+   };
 
-   int m_convert_to_order_type(ENUM_POSITION_TYPE position_type) {
+   ENUM_POSITION_TYPE m_convert_to_local_position_type(int order_type) {
+      if (order_type == 0) {
+         return POSITION_TYPE_BUY;
+      } else if (order_type == 1) {
+         return POSITION_TYPE_SELL;
+      }
+      return -1;
+   };
+
+   int m_convert_from_position_type(ENUM_POSITION_TYPE position_type) {
       if (position_type == POSITION_TYPE_BUY) {
          return 0;
       } else if (position_type == POSITION_TYPE_SELL) {
          return 1;
       }
       return -1;
-   }
+   };
 
-   int m_send_open_order(string orderSymbol, ENUM_ORDER_TYPE orderType, double orderPrice, double orderLots, long magicNo) {
+   int m_convert_from_deal_type(ENUM_DEAL_TYPE deal_type) {
+      if (deal_type == DEAL_TYPE_BUY) {
+         return 0;
+      } else if (deal_type == DEAL_TYPE_SELL) {
+         return 1;
+      }
+      return -1;
+   };
+   
+   double m_get_current_price(string symbol, int order_type) {
+      if (order_type == 0) {
+         return SymbolInfoDouble(symbol, SYMBOL_BID);
+      } else {
+         return SymbolInfoDouble(symbol, SYMBOL_ASK);
+      }
+   };
+   
+   double m_get_min_volume(string symbol) {
+      return SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+   };
+   double m_get_max_volume(string symbol) {
+      return SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+   };
+
+   int m_send_open_order(string orderSymbol, int order_type, double orderPrice, double orderLots, long magicNo) {
       //--- リクエストを準備する
       MqlTradeRequest request={0};
-      request.action   =TRADE_ACTION_DEAL;                     // 取引操作タイプ
-      request.symbol   =orderSymbol;                           // シンボル
-      request.volume   =orderLots;                             // ロットのボリューム
-      request.type     =orderType;                             // 注文タイプ
-      request.price    =orderPrice;                            // 発注価格
-      request.deviation=Slippage;                              // 価格からの許容偏差
-      request.magic    =magicNo;                               // 注文のMagicNumber
+      request.action       = TRADE_ACTION_DEAL;                         // 取引操作タイプ
+      request.symbol       = orderSymbol;                               // シンボル
+      request.volume       = orderLots;                                 // ロットのボリューム
+      request.type         = m_convert_to_local_order_type(order_type); // 注文タイプ
+      request.price        = orderPrice;                                // 発注価格
+      request.deviation    = Slippage;                                  // 価格からの許容偏差
+      request.magic        = magicNo;                                   // 注文のMagicNumber
       request.type_filling = ORDER_FILLING_IOC;
       MqlTradeCheckResult checkResult={0};
       if (!OrderCheck(request, checkResult)) {
@@ -271,11 +337,8 @@ class PositionManager {
       }
       return (int) result.order;
    }
-public:
-   PositionManager(Logger *l_logger) {
-      m_logger = l_logger;
-   };
-   int GetPositions(PositionInfo &arr_positions[]) {
+
+   int m_get_positions(PositionInfo &arr_positions[]) {
       List<PositionInfo> list;
       int position_count = PositionsTotal();
       for(int i = 0; i < position_count ; i++) {
@@ -287,7 +350,10 @@ public:
          info.server_ticket_no = server_ticket_no;
          info.local_ticket_no = local_ticket_no;
          info.symbol = PositionGetString(POSITION_SYMBOL);
-         info.order_type = m_convert_to_order_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
+         info.order_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
+         info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
+         info.volume = PositionGetDouble(POSITION_VOLUME);
+         info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
          list.Add(info);
       }
       if (list.Length() == 0) {
@@ -299,32 +365,87 @@ public:
       }
       return list.Length();
    };
+   
+   bool m_get_position(long local_ticket_no, PositionInfo &info) {
+      int waitCount = 0;
+      while (waitCount < 5) {
+         if (PositionSelectByTicket(local_ticket_no)) {
+            info.server_ticket_no = PositionGetInteger(POSITION_MAGIC);
+            info.local_ticket_no = PositionGetInteger(POSITION_TICKET);
+            info.symbol = PositionGetString(POSITION_SYMBOL);
+            info.order_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
+            info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
+            info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
+            info.volume = PositionGetDouble(POSITION_VOLUME);
+            return true;
+         }
+         Sleep(10);
+      }
+      return false;
+   };
+   
+   int m_get_deals(long local_ticket_no, DealInfo &info[]) {
+      int waitCount = 0;
+      int count = 0;
+      while (waitCount < 5) {
+         if (HistorySelectByPosition(local_ticket_no)) {
+            PositionSelectByTicket(local_ticket_no);
+            long position_type = PositionGetInteger(POSITION_TYPE);
+            //--- リスト中の約定の数の合計
+            int deals = HistoryDealsTotal();
+            //--- 取引をひとつづつ処理する
+            for (int i = 0; i < deals; i++) {
+               long deal_ticket_no = (long)HistoryDealGetTicket(i);
+               if (HistoryDealGetInteger(deal_ticket_no, DEAL_TYPE) == position_type) {
+                  continue;
+               }
+               ArrayResize(info, count + 1);
+               info[count].deal_ticket_no = deal_ticket_no;
+               info[count].symbol = HistoryDealGetString(deal_ticket_no, DEAL_SYMBOL);
+               info[count].order_type = m_convert_from_deal_type((ENUM_DEAL_TYPE)HistoryDealGetInteger(deal_ticket_no, DEAL_TYPE));
+               info[count].price = HistoryDealGetDouble(deal_ticket_no, DEAL_PRICE);
+               info[count].volume = HistoryDealGetDouble(deal_ticket_no, DEAL_VOLUME);
+               info[count].profit = HistoryDealGetDouble(deal_ticket_no, DEAL_PROFIT);
+               info[count].time = (datetime)HistoryDealGetInteger(deal_ticket_no, DEAL_TIME);
+               count++;
+            }
+            return count;
+         }
+         Sleep(10);
+      }
+      return count;
+   };
+#endif
+#ifdef __MQL4__
+#endif
+public:
+   PositionManager(Logger *l_logger) {
+      m_logger = l_logger;
+   };
+   int GetPositions(PositionInfo &arr_positions[]) {
+      return m_get_positions(arr_positions);
+   };
    bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, long &ticket_no_arr[]) {
       string symbol = m_find_symbol(server_symbol);
       if (symbol == NULL) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
       }
-      ENUM_ORDER_TYPE order_type;
-      double order_price;
-      MqlTick tick;
-      if (!SymbolInfoTick(symbol, tick)) {
-         m_logger.WriteLog("ERROR", "OrderSend fail: SymbolInfoTick returned false. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", LocalSymbol = " + symbol);
-         return false;
+      
+      double order_price = m_get_current_price(symbol, server_order_type);
+      if (order_price <= 0) {
+         m_logger.WriteLog("ERROR", "OrderSend fail: Could not retrieve order price. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", LocalSymbol = " + symbol);
+         return true;
       }
-      if (server_order_type == 0) {
-         order_type = ORDER_TYPE_BUY;
-         order_price = tick.ask;
-      } else if (server_order_type == 1) {
-         order_type = ORDER_TYPE_SELL;
-         order_price = tick.bid;
-      } else {
+      int order_type = server_order_type;
+      if (order_type != 0 && order_type != 1) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Invalid OrderType. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
       }
+
       double order_lots = m_calculate_volume(symbol, order_type, order_price);
-      double min_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);         // Min. amount of lots
-      double max_lots = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);         // Max amount of lotsr
+      double min_lots = m_get_min_volume(symbol); // Min. amount of lots
+      double max_lots = m_get_max_volume(symbol); // Max amount of lotsr
       if (order_lots == 0) {
          m_logger.WriteLog("WARN", "OrderSend fail: Calculated order lot was 0. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
          return true;
@@ -358,7 +479,7 @@ public:
       }
       return success;
    };
-   bool ClosePosition(long server_ticket_no, long local_ticket_no) {
+   bool ClosePosition(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
       m_logger.WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
       int result = m_send_close_order(local_ticket_no);
       if (result == 0) {
@@ -370,55 +491,32 @@ public:
          return false;
       } else {
          m_logger.WriteLog("INFO", "OrderClose succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
-         WriteOrderCloseSuccessLog(server_ticket_no, local_ticket_no);
+         WriteOrderCloseSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
          return true;
       }
    };
    
-   void WriteOrderOpenSuccessLog(long server_ticket_no, string serverSymbol, int serverOrderType, int ticketNo) {
-      int waitCount = 0;
-      bool found = false;
-      while (waitCount < 5) {
-         found = PositionSelectByTicket(ticketNo);
-         if (found) {
-            break;
-         }
-         Sleep(10);
-      }
-      string text = IntegerToString(server_ticket_no) + ":" + serverSymbol + ":" + IntegerToString(serverOrderType) + ":" + IntegerToString(ticketNo) + ":";
+   void WriteOrderOpenSuccessLog(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      PositionInfo info;
+      bool found = m_get_position(local_ticket_no, info);
+      string text = IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
       if (found) {
-         text = text + IntegerToString(PositionGetInteger(POSITION_TICKET)) + ":" + PositionGetString(POSITION_SYMBOL) + ":" + IntegerToString(PositionGetInteger(POSITION_TYPE)) + ":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN)) + ":" + DoubleToString(PositionGetDouble(POSITION_VOLUME)) + ":" + IntegerToString(PositionGetInteger(POSITION_TIME));
+         text = text + IntegerToString(info.local_ticket_no) + ":" + info.symbol + ":" + IntegerToString(info.order_type) + ":" + DoubleToString(info.price_open) + ":" + DoubleToString(info.volume) + ":" + IntegerToString(info.position_time);
       } else {
          text = text + "NA:NA:NA:NA:NA:NA";
       }
       m_logger.WriteLog("OPEN", text);
    }  
    
-   void WriteOrderCloseSuccessLog(long server_ticket_no, long local_ticket_no) {
-      int waitCount = 0;
-      bool found = false;
-      while (waitCount < 5) {
-         found = HistorySelectByPosition(local_ticket_no);
-         if (found) {
-            break;
-         }
-         Sleep(10);
-      }
-      if (found) {
-         PositionSelectByTicket(local_ticket_no);
-         long position_type = PositionGetInteger(POSITION_TYPE);
-         //--- リスト中の約定の数の合計
-         int deals=HistoryDealsTotal();
-         //--- 取引をひとつづつ処理する
-         for(int i=0;i<deals;i++) {
-            ulong deal_ticket = HistoryDealGetTicket(i);
-            if (HistoryDealGetInteger(deal_ticket,DEAL_TYPE) == position_type) {
-               continue;
-            }
-            string text = IntegerToString(server_ticket_no) + ":" + IntegerToString(local_ticket_no) + ":";
-            text = text + IntegerToString(deal_ticket) + ":" + HistoryDealGetString(deal_ticket, DEAL_SYMBOL) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TYPE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket, DEAL_PRICE)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_VOLUME)) + ":" + DoubleToString(HistoryDealGetDouble(deal_ticket,DEAL_PROFIT)) + ":" + IntegerToString(HistoryDealGetInteger(deal_ticket, DEAL_TIME));
+   void WriteOrderCloseSuccessLog(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      DealInfo info[];
+      int count = m_get_deals(local_ticket_no, info);
+      if (count > 0) {
+         for (int i = 0; i < count; i++) {
+            string text = IntegerToString(server_ticket_no) + ":" + server_symbol + ":" + IntegerToString(server_order_type) + ":" + IntegerToString(local_ticket_no) + ":";
+            text = text + IntegerToString(info[i].deal_ticket_no) + ":" + info[i].symbol + ":" + IntegerToString(info[i].order_type) + ":" + DoubleToString(info[i].price) + ":" + DoubleToString(info[i].volume) + ":" + IntegerToString(info[i].time) + ":" + DoubleToString(info[i].profit);
             m_logger.WriteLog("CLOSE", text);
-          }
+         }
       } else {
          string text = IntegerToString(server_ticket_no) + ":" + IntegerToString(local_ticket_no) + ":";
          text = text + "NA:NA:NA:NA:NA:NA:NA";
@@ -1089,7 +1187,7 @@ void OnTimer()
             for (int j = 0; j < close_order_count; j++) {
                if (closedInfo.local_ticket_no == arr_close_ticket_no[j]) continue;
                if (localOrders.ExistsLocalTicketNo(arr_close_ticket_no[j])) {
-                  if (positionManager.ClosePosition(closedInfo.server_ticket_no, arr_close_ticket_no[j])) {
+                  if (positionManager.ClosePosition(closedInfo.server_ticket_no, closedInfo.symbol, closedInfo.order_type, arr_close_ticket_no[j])) {
                      localOrders.Remove(arr_close_ticket_no[j]);
                   }
                }
@@ -1113,7 +1211,7 @@ void OnTimer()
          int close_order_count = localOrders.FindByServerTicketNo(closedInfo.server_ticket_no, arr_close_ticket_no);
          if (close_order_count > 0) {
             for (int j = 0; j < close_order_count; j++) {
-               if (positionManager.ClosePosition(closedInfo.server_ticket_no, arr_close_ticket_no[j])) {
+               if (positionManager.ClosePosition(closedInfo.server_ticket_no, closedInfo.symbol, closedInfo.order_type, arr_close_ticket_no[j])) {
                   localOrders.Remove(arr_close_ticket_no[j]);
                }
             }
