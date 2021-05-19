@@ -609,7 +609,8 @@ public:
          }
          int local_ticket_no = m_send_open_order(server_ticket_no, symbol, order_type, lots, m_get_current_price(symbol, order_type));
          if (local_ticket_no < 0) {
-            m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+            int error_code = GetLastError();
+            m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(error_code) + ":" + ErrorCodeToString(error_code));
             break;
          } else {
             ArrayResize(ticket_no_arr, ArraySize(ticket_no_arr) + 1);
@@ -643,7 +644,8 @@ public:
          return true;
       }
       if (result < 0) {
-         m_logger.WriteLog("ERROR", "OrderClose failed: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(GetLastError()));
+         int error_code = GetLastError();
+         m_logger.WriteLog("ERROR", "OrderClose failed: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(error_code) + ":" + ErrorCodeToString(error_code));
          return false;
       } else {
          m_logger.WriteLog("INFO", "OrderClose succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
