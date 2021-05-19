@@ -210,6 +210,8 @@ class PositionManager {
          return 0;
       }
       double lots = MathFloor(account_free_margin * Percent / 100 / one_lot / step ) * step;
+      m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step));
+      m_logger.WriteLog("DEBUG", "CalculateVolume: Account free margin = " + DoubleToString(account_free_margin) + ", Account leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Calculated volume = " + DoubleToString(lots));
       return lots;
    };
 #ifdef __MQL5__
