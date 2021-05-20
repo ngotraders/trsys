@@ -339,14 +339,16 @@ class PositionManager {
       return (int) result.order;
    }
 
-   int m_get_positions(PositionInfo &arr_positions[]) {
+   int m_get_positions(PositionInfo &arr_positions[], bool includeAll) {
       List<PositionInfo> list;
       int position_count = PositionsTotal();
       for(int i = 0; i < position_count ; i++) {
          long local_ticket_no = (long)PositionGetTicket(i);
          if (local_ticket_no == 0) continue;
          long server_ticket_no = PositionGetInteger(POSITION_MAGIC);
-         if (server_ticket_no == 0) continue;
+         if (!includeAll) {
+            if (server_ticket_no == 0) continue;
+         }
          PositionInfo info;
          info.server_ticket_no = server_ticket_no;
          info.local_ticket_no = local_ticket_no;
@@ -501,13 +503,15 @@ class PositionManager {
       return OrderClose((int)local_ticket_no, volume, price, Slippage);
    }
 
-   int m_get_positions(PositionInfo &arr_positions[]) {
+   int m_get_positions(PositionInfo &arr_positions[], bool includeAll) {
       List<PositionInfo> list;
       int position_count = OrdersTotal();
       for(int i = 0; i < position_count ; i++) {
          if (!OrderSelect(i, SELECT_BY_POS)) continue;
          long server_ticket_no = OrderMagicNumber();
-         if (server_ticket_no == 0) continue;
+         if (!includeAll) {
+            if (server_ticket_no == 0) continue;
+         }
          PositionInfo info;
          info.server_ticket_no = server_ticket_no;
          info.local_ticket_no = OrderTicket();
@@ -566,8 +570,8 @@ public:
    PositionManager(Logger *l_logger) {
       m_logger = l_logger;
    };
-   int GetPositions(PositionInfo &arr_positions[]) {
-      return m_get_positions(arr_positions);
+   int GetPositions(PositionInfo &arr_positions[], bool includeAll = false) {
+      return m_get_positions(arr_positions, includeAll);
    };
    bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, long &ticket_no_arr[]) {
       string symbol = m_find_symbol(server_symbol);
@@ -935,12 +939,12 @@ public:
       m_initialize();
    };
 
-   TicketNoDifference<LocalOrderInfo> GetDifference() {
+   TicketNoDifference<LocalOrderInfo> GetDifference(bool includeAll = false) {
       TicketNoDifference<LocalOrderInfo> diff;
       List<LocalOrderInfo> localInfo;
 
       PositionInfo arr_position[];
-      int arr_position_count = m_position_manager.GetPositions(arr_position);
+      int arr_position_count = m_position_manager.GetPositions(arr_position, includeAll);
       for (int i = 0; i < arr_position_count; i++) {
          PositionInfo info = arr_position[i];
          localInfo.Add(LocalOrderInfo::Create(info.server_ticket_no, info.local_ticket_no, info.symbol, info.order_type));
@@ -1073,6 +1077,7 @@ class TrsysClient {
    ApiStatus *m_post_secret_key_status;
    ApiStatus *m_post_token_release_status;
    ApiStatus *m_get_orders_status;
+   ApiStatus *m_post_orders_status;
    ApiStatus *m_post_log_status;
    string m_get_orders_etag;
    string m_get_orders_etag_response;
@@ -1175,6 +1180,7 @@ public:
       m_post_secret_key_status = new ApiStatus("PostSecretKey");
       m_post_token_release_status = new ApiStatus("PostTokenRelease");
       m_get_orders_status = new ApiStatus("GetOrders");
+      m_post_orders_status = new ApiStatus("PostOrders");
       m_post_log_status = new ApiStatus("PostLog");
       m_get_orders_etag = NULL;
       m_get_orders_etag_response = NULL;
@@ -1185,6 +1191,7 @@ public:
       delete m_post_secret_key_status;
       delete m_post_token_release_status;
       delete m_get_orders_status;
+      delete m_post_orders_status;
       delete m_post_log_status;
    }
    
@@ -1234,6 +1241,27 @@ public:
       }
 
       response = response_data;
+      return res;
+   }
+   
+   int PostOrders(string data)
+   {
+      string secret_token = m_get_secret_token();
+      if (secret_token == NULL) {
+         return -1;
+      }
+   
+      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + secret_token;
+      string request_data = data;
+      string response_headers;
+      string response_data;
+      int error_code;
+
+      int res = m_send_web_request(m_post_orders_status, "POST", Endpoint + "/api/orders", request_headers, request_data, response_headers, response_data, error_code);
+      if(res != 200) {
+         return -1;
+      }
+
       return res;
    }
    
