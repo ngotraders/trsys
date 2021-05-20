@@ -49,15 +49,15 @@ namespace Trsys.Web
                 .AddSecretTokenAuthentication();
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            var sqlServerConnection = Configuration.GetConnectionString("SqlServerConnection");
-            if (string.IsNullOrEmpty(sqlServerConnection))
+            var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
+            if (string.IsNullOrEmpty(sqliteConnection))
             {
-                services.AddDbContext<TrsysContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
                 services.AddSQLiteRepositories();
             }
             else
             {
-                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlServerConnection));
+                services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
                 services.AddRepositories();
             }
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
@@ -90,7 +90,7 @@ namespace Trsys.Web
             using (var scope = app.ApplicationServices.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<TrsysContext>())
             {
-                db.Database.EnsureCreated();
+                db.Database.Migrate();
                 if (!db.Users.Any())
                 {
                     var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();

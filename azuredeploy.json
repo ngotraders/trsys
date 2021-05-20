@@ -173,7 +173,7 @@
                         "[resourceId('Microsoft.Cache/Redis', variables('redis-name'))]"
                     ],
                     "properties": {
-                        "SqlServerConnection": {
+                        "DefaultConnection": {
                             "value": "[concat('Server=tcp:',reference(variables('dbserver-name')).fullyQualifiedDomainName,',1433;Initial Catalog=',variables('database-name'),';Persist Security Info=False;User ID=',parameters('dbAdminName'),';Password=',parameters('dbAdminPassword'),';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
                             "type": "SQLAzure"
                         },
