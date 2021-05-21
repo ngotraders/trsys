@@ -53,12 +53,12 @@ namespace Trsys.Web
             if (string.IsNullOrEmpty(sqliteConnection))
             {
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-                services.AddSQLiteRepositories();
+                services.AddRepositories();
             }
             else
             {
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
-                services.AddRepositories();
+                services.AddSQLiteRepositories();
             }
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
             if (string.IsNullOrEmpty(redisConnection))
