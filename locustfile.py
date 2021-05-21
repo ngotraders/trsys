@@ -44,7 +44,7 @@ class Subscriber(HttpUser):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.secretKey = str(uuid.uuid4())
+        self.secretKey = ''
         self.token = ''
         self.etag = ''
 
@@ -62,6 +62,7 @@ class Subscriber(HttpUser):
     def on_start(self):
         self.admin = Admin(self.client)
         self.admin.login("admin", "P@ssw0rd")
+        self.secretKey = str(uuid.uuid4())
         self.admin.createKey(self.secretKey, "3")
         self.admin.activateKey(self.secretKey)
 
