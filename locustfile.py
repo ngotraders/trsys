@@ -44,20 +44,19 @@ class Subscriber(HttpUser):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.client.verify = False
         self.secretKey = ''
         self.token = ''
         self.etag = ''
 
     def fetch_secret_key(self):
-        self.client.verify = False
+        self.client.headers = {}
+        self.client.headers['Content-Type'] = 'text/plain'
+        self.client.headers['Version'] = '20210331'
         self.client.headers['Content-Type'] = 'text/plain'
         res = self.client.post("/api/token", data=self.secretKey)
         if res.status_code == 200:
             self.token = res.text
-            self.client.headers = {}
-            self.client.headers['Content-Type'] = 'text/plain'
-            self.client.headers['Version'] = '20210331'
-            self.client.headers['X-Secret-Token'] = self.token
 
     def on_start(self):
         self.admin = Admin(self.client)
@@ -67,6 +66,8 @@ class Subscriber(HttpUser):
         self.admin.activateKey(self.secretKey)
 
     def on_stop(self):
+        self.admin = Admin(self.client)
+        self.admin.login("admin", "P@ssw0rd")
         self.admin.deactivateKey(self.secretKey)
         self.admin.deleteKey(self.secretKey)
 
@@ -76,12 +77,21 @@ class Subscriber(HttpUser):
             self.fetch_secret_key()
         if self.token == '':
             return
+        else:
+            self.client.cookies.clear()
+            self.client.headers = {}
+            self.client.headers['Content-Type'] = 'text/plain'
+            self.client.headers['Version'] = '20210331'
+            self.client.headers['X-Secret-Token'] = self.token
 
         if self.etag != '':
             self.client.headers['If-None-Match'] = self.etag
         res = self.client.get("/api/orders")
         if res.status_code == 200:
             self.etag = res.headers['ETag']
+            self.client.post(
+                '/api/logs',
+                data=f'{self.secretKey}/{self.token}/{res.content}')
         elif res.status_code == 401:
             self.token = ''
         elif res.status_code != 304:
