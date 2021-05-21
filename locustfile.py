@@ -31,6 +31,7 @@ class Subscriber(HttpUser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.secretKey = str(uuid.uuid4())
+        self.etag  = ''
     
     def on_start(self):
         self.admin = Admin(self.client)
@@ -55,6 +56,10 @@ class Subscriber(HttpUser):
 
     @task
     def subscribe(self):
+        if self.etag != '':
+            self.client.headers['If-None-Match'] = self.etag
         res = self.client.get("/api/orders")
-        if res.status_code != 200:
+        if res.status_code == 200:
+            self.etag = res.headers['ETag']
+        elif res.status_code != 304:
             raise ValueError(f"HTTP Error! Status code: {res.status_code}")
