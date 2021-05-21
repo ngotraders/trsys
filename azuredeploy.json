@@ -215,7 +215,7 @@
                     ],
                     "properties": {
                         "repoUrl": "https://github.com/chameleonhead/trsys.git",
-                        "branch": "dev/csharp",
+                        "branch": "csharp",
                         "isManualIntegration": true
                     }
                 }
