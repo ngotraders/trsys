@@ -21,7 +21,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - ConnectionStrings:SqlServerConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
+      - ConnectionStrings:DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
       - ConnectionStrings:RedisConnection=redis
     depends_on:
       - db
@@ -33,7 +33,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - ConnectionStrings:SqlServerConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
+      - ConnectionStrings:DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
       - ConnectionStrings:RedisConnection=redis
     depends_on:
       - db
