@@ -29,12 +29,13 @@ namespace Trsys.Web.Data
                         {
                             db.Database.EnsureCreated();
                         }
+                        break;
                     }
                     catch
                     {
+                        Thread.Sleep(1000);
+                        retryCount++;
                     }
-                    Thread.Sleep(1000);
-                    retryCount++;
                 }
                 if (!await db.Users.AnyAsync())
                 {

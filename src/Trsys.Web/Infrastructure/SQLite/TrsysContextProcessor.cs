@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
-using Trsys.Web.Models.Users;
 
 namespace Trsys.Web.Infrastructure.SQLite
 {
@@ -15,11 +14,6 @@ namespace Trsys.Web.Infrastructure.SQLite
         private readonly IServiceScope scope;
         private readonly TrsysContext db;
         private readonly Task task;
-
-        internal Task<User> Enqueue(Func<TrsysContext, Task> p1, object p2)
-        {
-            throw new NotImplementedException();
-        }
 
         private bool disposedValue;
 
