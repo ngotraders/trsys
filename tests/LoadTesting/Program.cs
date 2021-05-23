@@ -17,7 +17,7 @@ namespace LoadTesting
 
         static void Main(string[] _)
         {
-            // using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
+            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
@@ -38,20 +38,29 @@ namespace LoadTesting
                 })
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
-                .WithClean(context => Task.WhenAll(publisher.FinalizeAsync()));
+                .WithClean(async context =>
+                {
+                    await Task.WhenAll(publisher.FinalizeAsync());
+                    await DeleteSecretKeys(secretKeys.Take(1));
+                });
+
 
             var scenario2 = ScenarioBuilder
                 .CreateScenario("sub", step2)
                 .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitializeAsync())))
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
-                .WithClean(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.FinalizeAsync())));
+                .WithClean(async context =>
+                {
+                    await Task.WhenAll(subscribers.Select(subscriber => subscriber.FinalizeAsync()));
+                    await DeleteSecretKeys(secretKeys.Skip(1));
+                });
 
             NBomberRunner
                 .RegisterScenarios(scenario1, scenario2)
                 .Run();
 
-            DeleteSecretKeys(secretKeys).Wait();
+            ;
         }
 
         private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)

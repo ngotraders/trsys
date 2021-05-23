@@ -37,7 +37,7 @@ namespace LoadTesting
 
         public async Task FinalizeAsync()
         {
-            var res = await Client.PostAsync("/api/token" + secretToken + "release", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
+            var res = await Client.PostAsync("/api/token/" + Uri.UnescapeDataString(secretToken) + "/release", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
             res.EnsureSuccessStatusCode();
             secretToken = null;
             Client.DefaultRequestHeaders.Clear();
