@@ -18,11 +18,13 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly OrderService service;
+        private readonly SecretKeyService secretKeyService;
         private readonly EventService eventService;
 
-        public OrdersApiController(OrderService service, EventService eventService)
+        public OrdersApiController(OrderService service, SecretKeyService secretKeyService,  EventService eventService)
         {
             this.service = service;
+            this.secretKeyService = secretKeyService;
             this.eventService = eventService;
         }
 
@@ -31,6 +33,7 @@ namespace Trsys.Web.Controllers
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
+            await secretKeyService.TouchSecretTokenAsync(User.Identity.Name);
             var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
@@ -60,6 +63,7 @@ namespace Trsys.Web.Controllers
         [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Publisher")]
         public async Task<IActionResult> PostOrder([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
+            await secretKeyService.TouchSecretTokenAsync(User.Identity.Name);
             var orders = new List<Order>();
             if (!string.IsNullOrEmpty(text))
             {

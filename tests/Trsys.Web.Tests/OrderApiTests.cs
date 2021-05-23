@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.InMemory;
+using Trsys.Web.Infrastructure.KeyValueStores;
+using Trsys.Web.Infrastructure.KeyValueStores.InMemory;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
@@ -255,9 +256,9 @@ namespace Trsys.Web.Tests
 
         }
 
-        private class MockAuthenticationTicketStore : InMemoryAuthenticationTicketStore
+        private class MockAuthenticationTicketStore : AuthenticationTicketStore
         {
-            public MockAuthenticationTicketStore()
+            public MockAuthenticationTicketStore() : base(new InMemoryKeyValueStoreFactory())
             {
                 AddAsync(VALID_PUBLISHER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Publisher));
                 AddAsync(VALID_SUBSCRIBER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Subscriber));

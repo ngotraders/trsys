@@ -17,7 +17,7 @@ namespace Trsys.Web.Authentication
             var token = Context.Request.Headers["X-Secret-Token"];
             if (string.IsNullOrEmpty(token))
             {
-                return AuthenticateResult.Fail($"X-Secret-Token header is missing.");
+                return AuthenticateResult.Fail("X-Secret-Token header is missing.");
             }
 
             var store = Options.Store;
@@ -26,7 +26,6 @@ namespace Trsys.Web.Authentication
             {
                 return AuthenticateResult.Fail("unknown token.");
             }
-            await Options.SecretKeyUsage.TouchAsync(ticket.Principal.Identity.Name);
             return AuthenticateResult.Success(ticket);
         }
     }

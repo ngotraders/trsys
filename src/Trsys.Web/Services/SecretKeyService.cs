@@ -101,8 +101,7 @@ namespace Trsys.Web.Services
 
         public Task TouchSecretTokenAsync(string key)
         {
-            usageStore.TouchAsync(key);
-            return Task.CompletedTask;
+            return usageStore.TouchAsync(key);
         }
 
         public async Task ReleaseSecretTokenAsync(string secretKey)

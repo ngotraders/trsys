@@ -15,9 +15,10 @@ namespace LoadTesting
         const double LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
 
-        static void Main(string[] _)
+        static void Main(string[] args)
         {
-            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
+            using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
+            server.StartAsync().Wait();
 
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
@@ -60,7 +61,6 @@ namespace LoadTesting
                 .RegisterScenarios(scenario1, scenario2)
                 .Run();
 
-            ;
         }
 
         private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)

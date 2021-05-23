@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Trsys.Web.Authentication
