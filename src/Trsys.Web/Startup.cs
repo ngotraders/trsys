@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
@@ -27,7 +28,6 @@ namespace Trsys.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllersWithViews(options =>
             {
                 options.InputFormatters.Add(new TextPlainInputFormatter());
@@ -72,7 +72,7 @@ namespace Trsys.Web
                 services.AddRedisStores(options =>
                 {
                     options.Configuration = redisConnection;
-                    options.InstanceName = "Trsys.Web";
+                    options.InstanceName = "Trsys.Web/";
                 });
             }
             services.AddEventProcessor();
@@ -83,9 +83,29 @@ namespace Trsys.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
+            if (string.IsNullOrEmpty(sqliteConnection))
+            {
+                logger.LogInformation("Using sql server connection.");
+            }
+            else
+            {
+                logger.LogInformation("Using sqlite connection.");
+            }
+            var redisConnection = Configuration.GetConnectionString("RedisConnection");
+            if (string.IsNullOrEmpty(redisConnection))
+            {
+                logger.LogInformation("Using in memory implementation for key-value stores.");
+            }
+            else
+            {
+                logger.LogInformation("Using redis implementation for key-value stores.");
+            }
+            logger.LogInformation("Database initializing.");
             DatabaseInitializer.InitializeAsync(app).Wait();
+            logger.LogInformation("Database initialized.");
 
             if (env.IsDevelopment())
             {
