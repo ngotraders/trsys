@@ -12,6 +12,8 @@ class Admin:
         self.client.verify = False
 
     def login(self, username: str, password: str):
+        self.client.cookies.clear()
+        self.client.headers = {}
         self.client.get("/login")
         return self.client.post("/login",
                                 data={
@@ -27,16 +29,13 @@ class Admin:
                                 })
 
     def activateKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/approve",
-                                name="/admin/keys/[key]/approve")
+        return self.client.post(f"/admin/keys/{key}/approve")
 
     def deactivateKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/revoke",
-                                name="/admin/keys/[key]/revoke")
+        return self.client.post(f"/admin/keys/{key}/revoke")
 
     def deleteKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/delete",
-                                name="/admin/keys/[key]/delete")
+        return self.client.post(f"/admin/keys/{key}/delete")
 
 
 class Subscriber(HttpUser):
@@ -53,23 +52,22 @@ class Subscriber(HttpUser):
         self.client.headers = {}
         self.client.headers['Content-Type'] = 'text/plain'
         self.client.headers['Version'] = '20210331'
-        self.client.headers['Content-Type'] = 'text/plain'
         res = self.client.post("/api/token", data=self.secretKey)
         if res.status_code == 200:
             self.token = res.text
 
     def on_start(self):
-        self.admin = Admin(self.client)
-        self.admin.login("admin", "P@ssw0rd")
         self.secretKey = str(uuid.uuid4())
-        self.admin.createKey(self.secretKey, "3")
-        self.admin.activateKey(self.secretKey)
+        admin = Admin(self.client)
+        admin.login("admin", "P@ssw0rd")
+        admin.createKey(self.secretKey, "3")
+        admin.activateKey(self.secretKey)
 
     def on_stop(self):
-        self.admin = Admin(self.client)
-        self.admin.login("admin", "P@ssw0rd")
-        self.admin.deactivateKey(self.secretKey)
-        self.admin.deleteKey(self.secretKey)
+        admin = Admin(self.client)
+        admin.login("admin", "P@ssw0rd")
+        admin.deactivateKey(self.secretKey)
+        admin.deleteKey(self.secretKey)
 
     @task
     def subscribe(self):
