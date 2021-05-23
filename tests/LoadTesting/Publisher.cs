@@ -24,7 +24,7 @@ namespace LoadTesting
                 var res = await Client.PostAsync("/api/orders", new StringContent(orderText, Encoding.UTF8, "text/plain"));
                 if (!res.IsSuccessStatusCode)
                 {
-                    Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
+                    return Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
                 }
                 Log.Logger.Information($"Publisher:{SecretKey}:OrderUpdated:{orderText}");
                 sentOrder = orderText;

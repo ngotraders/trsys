@@ -28,9 +28,9 @@ namespace LoadTesting
             {
                 return Response.Ok();
             }
-            if (res.IsSuccessStatusCode)
+            if (!res.IsSuccessStatusCode)
             {
-                Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
+                 return Response.Fail($"Order response is not valid. Status code = {res.StatusCode}");
             }
 
             orderHash = res.Headers.ETag.Tag;

@@ -4,8 +4,6 @@ using NBomber.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LoadTesting
@@ -19,7 +17,7 @@ namespace LoadTesting
 
         static void Main(string[] _)
         {
-            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
+            // using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
@@ -52,63 +50,44 @@ namespace LoadTesting
             NBomberRunner
                 .RegisterScenarios(scenario1, scenario2)
                 .Run();
+
+            DeleteSecretKeys(secretKeys).Wait();
         }
 
         private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)
         {
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(ENDPOINT_URL);
-            await client.PostAsync("/login", new FormUrlEncodedContent(
-                new KeyValuePair<string, string>[] {
-                    KeyValuePair.Create("Username", "admin"),
-                    KeyValuePair.Create("Password", "P@ssw0rd"),
-                }));
+            var admin = new Admin(ENDPOINT_URL, "admin", "P@ssw0rd");
+            await admin.LoginAsync();
 
-            var secretKeys = await GetSecretKeysAsync(client);
+            var secretKeys = await admin.GetSecretKeysAsync();
             foreach (var secretKey in secretKeys)
             {
-                await client.PostAsync($"/admin/keys/{secretKey}/revoke", new StringContent("", Encoding.UTF8, "text/plain"));
-                await client.PostAsync($"/admin/keys/{secretKey}/delete", new StringContent("", Encoding.UTF8, "text/plain"));
+                await admin.RevokeSecretKeyAsync(secretKey);
+                await admin.DeleteSecretKeyAsync(secretKey);
             }
 
             for (var i = 0; i < count; i++)
             {
-                await client.PostAsync("/admin/keys/new", new FormUrlEncodedContent(
-                    new KeyValuePair<string, string>[] {
-                        KeyValuePair.Create("KeyType", "3"),
-                    }));
+                await admin.CreateKeyAsync();
             }
 
-            secretKeys = await GetSecretKeysAsync(client);
+            secretKeys = await admin.GetSecretKeysAsync();
             foreach (var secretKey in secretKeys)
             {
-                await client.PostAsync($"/admin/keys/{secretKey}/approve", new StringContent("", Encoding.UTF8, "text/plain"));
+                await admin.ApproveSecretKeyAsync(secretKey);
             }
             return secretKeys;
         }
 
-        private static async Task<IEnumerable<string>> GetSecretKeysAsync(HttpClient client)
+        private static async Task DeleteSecretKeys(IEnumerable<string> secretKeys)
         {
-            var secretKeys = new List<string>();
-            var adminRes = await client.GetAsync("/admin");
-            var html = await adminRes.Content.ReadAsStringAsync();
-            var index = html.IndexOf("<table");
-            if (index >= 0)
+            var admin = new Admin(ENDPOINT_URL, "admin", "P@ssw0rd");
+            await admin.LoginAsync();
+            foreach (var secretKey in secretKeys)
             {
-                index = html.IndexOf("<span class=\"secret-key\"", index);
+                await admin.RevokeSecretKeyAsync(secretKey);
+                await admin.DeleteSecretKeyAsync(secretKey);
             }
-            while (index >= 0)
-            {
-                var endIndex = html.IndexOf("</span>", index);
-                if (endIndex < 0)
-                {
-                    break;
-                }
-                var secretKey = html.Substring(index + 25, endIndex - (index + 25));
-                secretKeys.Add(secretKey);
-                index = html.IndexOf("<span class=\"secret-key\">", index + 1);
-            }
-            return secretKeys;
         }
     }
 }

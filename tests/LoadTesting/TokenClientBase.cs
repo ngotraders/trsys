@@ -20,10 +20,7 @@ namespace LoadTesting
         public TokenClientBase(string endpoint, string secretKey)
         {
             SecretKey = secretKey;
-            Client = new HttpClient
-            {
-                BaseAddress = new Uri(endpoint)
-            };
+            Client = HttpClientFactory.Create(endpoint, true);
         }
 
         public async Task InitializeAsync()

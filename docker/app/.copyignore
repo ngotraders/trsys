@@ -1,0 +1,13 @@
+.git
+.vs
+docker
+src/Trsys.Web/bin
+src/Trsys.Web/obj
+src/Trsys.Web/Trsys.Web.csproj.user
+tests/Trsys.Web.Tests/bin
+tests/Trsys.Web.Tests/obj
+tests/Trsys.Web.Tests/Trsys.Web.Tests.csproj.user
+tests/LoadTesting/bin
+tests/LoadTesting/obj
+tests/LoadTesting/LoadTesting.csproj.user
+TestResults

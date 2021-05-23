@@ -16,17 +16,25 @@ namespace Trsys.Web.Data
             using (var scope = app.ApplicationServices.CreateScope())
             using (var db = scope.ServiceProvider.GetRequiredService<TrsysContext>())
             {
-                while (!await db.Database.CanConnectAsync())
+                int retryCount = 0;
+                while (retryCount < 10)
                 {
+                    try
+                    {
+                        if (db.Database.IsSqlServer())
+                        {
+                            await db.Database.MigrateAsync();
+                        }
+                        else
+                        {
+                            db.Database.EnsureCreated();
+                        }
+                    }
+                    catch
+                    {
+                    }
                     Thread.Sleep(1000);
-                }
-                if (db.Database.IsSqlServer())
-                {
-                    await db.Database.MigrateAsync();
-                }
-                else
-                {
-                    db.Database.EnsureCreated();
+                    retryCount++;
                 }
                 if (!await db.Users.AnyAsync())
                 {
