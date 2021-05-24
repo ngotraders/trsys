@@ -4,7 +4,6 @@ bool DEBUG = false;
 bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
-
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 
 input double PercentOfFreeMargin = 98;
@@ -48,13 +47,11 @@ public:
       m_count--;
    };
    T Get(int index) {
-      T ret;
       if (index >= m_count) {
          Print("index must under the count");
-         return ret;
+         return m_array[0];
       }
-      ret = m_array[index];
-      return ret;
+      return m_array[index];
    };
    int Length() {
       return m_count;
@@ -167,6 +164,54 @@ public:
    };
 };
 
+struct PendingOrder {
+   long server_ticket_no;
+   string symbol;
+   int order_type;
+   long local_ticket_no;
+   
+   string ToString() {
+      return "PENDING_ORDER:" + IntegerToString(server_ticket_no) + "/" + IntegerToString(local_ticket_no) + "/" + symbol + "/" + IntegerToString(order_type);
+   };
+   
+   static PendingOrder Create(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      PendingOrder order;
+      order.server_ticket_no = server_ticket_no;
+      order.symbol = server_symbol;
+      order.order_type = server_order_type;
+      order.local_ticket_no = local_ticket_no;
+      return order;
+   };
+};
+
+class PendingOrderList : public List<PendingOrder> {
+public:
+   int IndexOfLocalTicket(long local_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         if (Get(i).local_ticket_no == local_ticket_no) {
+            return i;
+         }
+      };
+      return -1;
+   };
+   bool ExistsLocalTicket(long local_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         if (Get(i).local_ticket_no == local_ticket_no) {
+            return true;
+         }
+      };
+      return false;
+   };
+   bool ExistsServerTicket(long server_ticket_no) {
+      for (int i = 0; i < Length(); i++) {
+         if (Get(i).server_ticket_no == server_ticket_no) {
+            return true;
+         }
+      };
+      return false;
+   };
+};
+
 struct PositionInfo {
    long server_ticket_no;
    long local_ticket_no;
@@ -189,10 +234,16 @@ struct DealInfo {
    double volume;
    double profit;
    datetime time;
+
+   string ToString() {
+      return "DEAL:" + IntegerToString(deal_ticket_no) + "/" + symbol + "/" + IntegerToString(order_type);
+   };
 };
 
 class PositionManager {
    Logger *m_logger;
+   PendingOrderList m_opening_ticket_no_list;
+   PendingOrderList m_closing_ticket_no_list;
 
    double m_calculate_volume(string symbol, int order_type, double current_price) {
       double one_lot = 0;
@@ -394,19 +445,20 @@ class PositionManager {
       while (waitCount < 5) {
          if (HistorySelectByPosition(local_ticket_no)) {
             PositionSelectByTicket(local_ticket_no);
-            long position_type = PositionGetInteger(POSITION_TYPE);
+            int position_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
             //--- リスト中の約定の数の合計
             int deals = HistoryDealsTotal();
             //--- 取引をひとつづつ処理する
             for (int i = 0; i < deals; i++) {
                long deal_ticket_no = (long)HistoryDealGetTicket(i);
-               if (HistoryDealGetInteger(deal_ticket_no, DEAL_TYPE) == position_type) {
+               int deal_type = m_convert_from_deal_type((ENUM_DEAL_TYPE)HistoryDealGetInteger(deal_ticket_no, DEAL_TYPE));
+               if (deal_type == position_type) {
                   continue;
                }
                ArrayResize(info, count + 1);
                info[count].deal_ticket_no = deal_ticket_no;
                info[count].symbol = HistoryDealGetString(deal_ticket_no, DEAL_SYMBOL);
-               info[count].order_type = m_convert_from_deal_type((ENUM_DEAL_TYPE)HistoryDealGetInteger(deal_ticket_no, DEAL_TYPE));
+               info[count].order_type = deal_type;
                info[count].price = HistoryDealGetDouble(deal_ticket_no, DEAL_PRICE);
                info[count].volume = HistoryDealGetDouble(deal_ticket_no, DEAL_VOLUME);
                info[count].profit = HistoryDealGetDouble(deal_ticket_no, DEAL_PROFIT);
@@ -574,7 +626,10 @@ public:
    int GetPositions(PositionInfo &arr_positions[], bool includeAll = false) {
       return m_get_positions(arr_positions, includeAll);
    };
-   bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, long &ticket_no_arr[]) {
+   bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type) {
+      if (m_opening_ticket_no_list.ExistsServerTicket(server_ticket_no)) {
+         return true;
+      }
       string symbol = m_find_symbol(server_symbol);
       if (symbol == NULL) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
@@ -614,22 +669,31 @@ public:
             lots  = order_lots;
             order_lots -= order_lots;
          }
-         int local_ticket_no = m_send_open_order(server_ticket_no, symbol, order_type, lots, m_get_current_price(symbol, order_type));
+         long local_ticket_no = m_send_open_order(server_ticket_no, symbol, order_type, lots, m_get_current_price(symbol, order_type));
          if (local_ticket_no < 0) {
             int error_code = GetLastError();
             m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(error_code) + ":" + ErrorCodeToString(error_code));
             break;
          } else {
-            ArrayResize(ticket_no_arr, ArraySize(ticket_no_arr) + 1);
-            ticket_no_arr[ArraySize(ticket_no_arr) - 1] = local_ticket_no;
             success = true;
             m_logger.WriteLog("INFO", "OrderSend succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
-            WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
+            m_opening_ticket_no_list.Add(PendingOrder::Create(server_ticket_no, server_symbol, server_order_type, local_ticket_no));
          }
       }
       return success;
    };
+   void OrderOpened(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      WriteOrderOpenSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
+      int index = m_opening_ticket_no_list.IndexOfLocalTicket(local_ticket_no);
+      if (index < 0) {
+         return;
+      }
+      m_opening_ticket_no_list.Remove(index);
+   };
    bool ClosePosition(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      if (m_closing_ticket_no_list.ExistsLocalTicket(local_ticket_no)) {
+         return true;
+      }
       m_logger.WriteLog("DEBUG", "OrderClose executing: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
       PositionInfo info;
       if (!m_get_position(local_ticket_no, info)) {
@@ -656,11 +720,19 @@ public:
          return false;
       } else {
          m_logger.WriteLog("INFO", "OrderClose succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
-         WriteOrderCloseSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
+         m_closing_ticket_no_list.Add(PendingOrder::Create(server_ticket_no, server_symbol, server_order_type, local_ticket_no));
          return true;
       }
    };
-   
+   void OrderClosed(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
+      WriteOrderCloseSuccessLog(server_ticket_no, server_symbol, server_order_type, local_ticket_no);
+      int index = m_closing_ticket_no_list.IndexOfLocalTicket(local_ticket_no);
+      if (index < 0) {
+         return;
+      }
+      m_closing_ticket_no_list.Remove(index);
+   };
+
    void WriteOrderOpenSuccessLog(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
       PositionInfo info;
       bool found = m_get_position(local_ticket_no, info);
