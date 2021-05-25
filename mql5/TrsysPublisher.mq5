@@ -277,9 +277,9 @@ class PositionManager {
       account_free_margin = AccountInfoDouble(ACCOUNT_FREEMARGIN);
    };
    string m_find_symbol(string symbol_str) {
-      for (int i = 0; i < SymbolsTotal(false); i++) {
-         if (StringFind(SymbolName(i, false), symbol_str) >= 0) {
-            return SymbolName(i, false);
+      for (int i = 0; i < SymbolsTotal(true); i++) {
+         if (StringFind(SymbolName(i, true), symbol_str) >= 0) {
+            return SymbolName(i, true);
          }
       }
       return NULL;
@@ -491,9 +491,9 @@ class PositionManager {
       account_free_margin = AccountFreeMargin();                     // Free margin
    };
    string m_find_symbol(string symbol_str) {
-      for (int i = 0; i < SymbolsTotal(false); i++) {
-         if (StringFind(SymbolName(i, false), symbol_str) >= 0) {
-            return SymbolName(i, false);
+      for (int i = 0; i < SymbolsTotal(true); i++) {
+         if (StringFind(SymbolName(i, true), symbol_str) >= 0) {
+            return SymbolName(i, true);
          }
       }
       return NULL;
