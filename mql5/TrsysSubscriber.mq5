@@ -115,15 +115,20 @@ public:
 
 class EaState {
    bool m_ea_enabled;
-   string m_error_message;
+   bool m_has_server_connection;
+   bool m_key_is_valid;
    long m_start_time;
    void m_update_comment() {
       if (!m_ea_enabled) {
          Comment("TrsysSubscriber: 自動売買が無効です");
          return;
       }
-      if (m_error_message != NULL) {
-         Comment("TrsysSubscriber: " + m_error_message);
+      if (!m_has_server_connection) {
+         Comment("TrsysSubscriber: サーバーと通信できません。");
+         return;
+      }
+      if (!m_key_is_valid) {
+         Comment("TrsysSubscriber: シークレットキーが異常です。");
          return;
       }
       Comment("TrsysSubscriber: 正常");
@@ -131,19 +136,20 @@ class EaState {
 public:
    EaState() {
       m_ea_enabled = true;
-      m_error_message = NULL;
+      m_has_server_connection = false;
+      m_key_is_valid = false;
    };
    bool IsEaEnabled() {
       m_ea_enabled = MQLInfoInteger(MQL_TRADE_ALLOWED) == 1 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) == 1 && AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) == 1 && TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) == 1;
       m_update_comment();
       return m_ea_enabled;
    };
-   void SetError(string error_message) {
-      m_error_message = error_message;
+   void SetServerConnection(bool has_server_connection) {
+      m_has_server_connection = has_server_connection;
       m_update_comment();
    };
-   void ClearError() {
-      m_error_message = NULL;
+   void SetKeyIsValid(bool key_is_valid) {
+      m_key_is_valid = key_is_valid;
       m_update_comment();
    };
    void Begin() {
@@ -959,16 +965,12 @@ public:
                      diff.Opened(ii);
                   }
                }
-               state.ClearError();
             } else {
-               state.SetError(error);
-               logger.WriteLog("DEBUG", error);
+               logger.WriteLog("ERROR", error);
             }
             m_last_server_response = response;
             delete serverInfo;
          }
-      } else {
-         state.SetError("サーバーと通信できません。");
       }
       return diff;
    };
@@ -1163,6 +1165,7 @@ class TrsysClient {
    ApiStatus *m_post_log_status;
    string m_get_orders_etag;
    string m_get_orders_etag_response;
+   EaState *m_state;
    Logger *m_logger;
 
    string m_generate_secret_key() {
@@ -1203,9 +1206,11 @@ class TrsysClient {
       int error_code;
       int res = m_send_web_request(m_post_secret_key_status, "POST", Endpoint + "/api/token", request_headers, request_data, response_headers, response_data, error_code);
       if(res != 200) {
+         m_state.SetKeyIsValid(false);
          m_secret_token = NULL;
          return -1;
       }
+      m_state.SetKeyIsValid(true);
       m_secret_token = response_data;
       return res;
    };
@@ -1222,6 +1227,7 @@ class TrsysClient {
       if(res != 200) {
          return -1;
       }
+      m_state.SetKeyIsValid(false);
       m_secret_token = NULL;
       return res;
    };
@@ -1239,14 +1245,17 @@ class TrsysClient {
       int res = WebRequest(method, url, request_headers, timeout, request_data, response_data, response_headers);
       state.Lap(status.GetName() +  " end");
       if (res == -1) {
+         m_state.SetServerConnection(false);
          error_code = GetLastError();
          status.SetErrorCode(error_code);
          return res;
       }
+      m_state.SetServerConnection(true);
       error_code = -1;
       status.SetErrorCode(error_code);
       status.SetStatusCode(res);
-      if (res == 401 || res == 403) {
+      if (res == 401) {
+         m_state.SetKeyIsValid(false);
          m_secret_token = NULL;
          return res;
       }
@@ -1255,7 +1264,7 @@ class TrsysClient {
    }
 
 public:
-   TrsysClient(Logger *l_logger) {
+   TrsysClient(EaState *l_state, Logger *l_logger) {
       m_secret_key = m_generate_secret_key();
       m_secret_token = NULL;
       m_next_token_fetch_time = -1;
@@ -1266,6 +1275,7 @@ public:
       m_post_log_status = new ApiStatus("PostLog");
       m_get_orders_etag = NULL;
       m_get_orders_etag_response = NULL;
+      m_state = l_state;
       m_logger = l_logger;
    }
    ~TrsysClient() {
@@ -2031,7 +2041,7 @@ int OnInit()
    EventSetMillisecondTimer(100);
    logger = new Logger();
    state = new EaState();
-   client = new TrsysClient(logger);
+   client = new TrsysClient(state, logger);
    positionManager = new PositionManager(logger);
    remoteOrders = new RemoteOrderState(positionManager);
    localOrders = new LocalOrderState(positionManager);
