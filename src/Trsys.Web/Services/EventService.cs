@@ -20,9 +20,9 @@ namespace Trsys.Web.Services
             return repository.SearchAsync(source, page, perPage);
         }
 
-        public Task RegisterSystemEventAsync(string eventType, object data = null)
+        public Task RegisterSystemEventAsync(string category, string eventType, object data = null)
         {
-            return submitter.SendAsync(Event.Create("system", eventType, data));
+            return submitter.SendAsync(Event.Create($"system/{category}", eventType, data));
         }
 
         public Task RegisterEaEventAsync(string secretKey, string eventType, object data = null)

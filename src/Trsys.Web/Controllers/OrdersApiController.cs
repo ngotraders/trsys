@@ -37,7 +37,7 @@ namespace Trsys.Web.Controllers
             var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
-                await eventService.RegisterSystemEventAsync("CacheNotFound");
+                await eventService.RegisterSystemEventAsync("order", "CacheNotFound");
                 await service.RefreshOrderTextAsync();
                 throw new InvalidOperationException("Cache entry not found.");
             }
@@ -53,7 +53,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await eventService.RegisterSystemEventAsync("OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text });
+            await eventService.RegisterSystemEventAsync("order", "OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text });
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -71,7 +71,7 @@ namespace Trsys.Web.Controllers
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+"))
                     {
-                        await eventService.RegisterSystemEventAsync("OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text });
+                        await eventService.RegisterSystemEventAsync("order", "OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text });
                         return BadRequest();
                     }
                     var splitted = item.Split(":");
@@ -94,7 +94,7 @@ namespace Trsys.Web.Controllers
             }
 
             await service.UpdateOrdersAsync(orders);
-            await eventService.RegisterSystemEventAsync("OrderUpdated", new { SecretKey = User.Identity.Name, Text = text });
+            await eventService.RegisterSystemEventAsync("order", "OrderUpdated", new { SecretKey = User.Identity.Name, Text = text });
             return Ok();
         }
     }

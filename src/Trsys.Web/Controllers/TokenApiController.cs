@@ -41,13 +41,13 @@ namespace Trsys.Web.Controllers
                 {
                     if (result.NewlyCreated)
                     {
-                        await eventService.RegisterSystemEventAsync("NewEaAccessed", new { SecretKey = secretKey });
+                        await eventService.RegisterSystemEventAsync("token", "NewEaAccessed", new { SecretKey = secretKey });
                     }
                     return BadRequest("InvalidSecretKey");
                 }
             }
 
-            await eventService.RegisterSystemEventAsync("TokenGenerated", new { SecretKey = secretKey, SecretToken = result.Token });
+            await eventService.RegisterSystemEventAsync("token", "TokenGenerated", new { SecretKey = secretKey, SecretToken = result.Token });
             var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
             await ticketStore.AddAsync(result.Token, principal);
             return Ok(result.Token);
@@ -65,7 +65,7 @@ namespace Trsys.Web.Controllers
 
             var secretKey = ticket.Principal.Identity.Name;
             await service.ReleaseSecretTokenAsync(secretKey);
-            await eventService.RegisterSystemEventAsync("TokenReleased", new { SecretKey = secretKey, SecretToken = token });
+            await eventService.RegisterSystemEventAsync("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token });
             return Ok(token);
         }
     }
