@@ -294,6 +294,15 @@ class PositionManager {
       return -1;
    };
 
+   int m_convert_from_order_type(ENUM_ORDER_TYPE order_type) {
+      if (order_type == ORDER_TYPE_BUY) {
+         return 0;
+      } else if (order_type == ORDER_TYPE_SELL) {
+         return 1;
+      }
+      return -1;
+   };
+
    int m_convert_from_position_type(ENUM_POSITION_TYPE position_type) {
       if (position_type == POSITION_TYPE_BUY) {
          return 0;
@@ -444,8 +453,8 @@ class PositionManager {
       int count = 0;
       while (waitCount < 5) {
          if (HistorySelectByPosition(local_ticket_no)) {
-            PositionSelectByTicket(local_ticket_no);
-            int position_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
+            HistoryOrderSelect(local_ticket_no);
+            int position_type = m_convert_from_order_type((ENUM_ORDER_TYPE)HistoryOrderGetInteger(local_ticket_no, ORDER_TYPE));
             //--- リスト中の約定の数の合計
             int deals = HistoryDealsTotal();
             //--- 取引をひとつづつ処理する
@@ -458,7 +467,7 @@ class PositionManager {
                ArrayResize(info, count + 1);
                info[count].deal_ticket_no = deal_ticket_no;
                info[count].symbol = HistoryDealGetString(deal_ticket_no, DEAL_SYMBOL);
-               info[count].order_type = deal_type;
+               info[count].order_type = position_type;
                info[count].price = HistoryDealGetDouble(deal_ticket_no, DEAL_PRICE);
                info[count].volume = HistoryDealGetDouble(deal_ticket_no, DEAL_VOLUME);
                info[count].profit = HistoryDealGetDouble(deal_ticket_no, DEAL_PROFIT);
