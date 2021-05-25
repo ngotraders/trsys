@@ -21,7 +21,7 @@ namespace Trsys.Web.Controllers
         private readonly SecretKeyService secretKeyService;
         private readonly EventService eventService;
 
-        public OrdersApiController(OrderService service, SecretKeyService secretKeyService,  EventService eventService)
+        public OrdersApiController(OrderService service, SecretKeyService secretKeyService, EventService eventService)
         {
             this.service = service;
             this.secretKeyService = secretKeyService;
@@ -53,7 +53,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderFetched", cacheEntry.Text);
+            await eventService.RegisterSystemEventAsync("OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text });
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -71,7 +71,7 @@ namespace Trsys.Web.Controllers
                 {
                     if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+"))
                     {
-                        await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderUpdateFailed", text);
+                        await eventService.RegisterSystemEventAsync("OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text });
                         return BadRequest();
                     }
                     var splitted = item.Split(":");
@@ -94,7 +94,7 @@ namespace Trsys.Web.Controllers
             }
 
             await service.UpdateOrdersAsync(orders);
-            await eventService.RegisterEaEventAsync(User.Identity.Name, "OrderUpdated", text);
+            await eventService.RegisterSystemEventAsync("OrderUpdated", new { SecretKey = User.Identity.Name, Text = text });
             return Ok();
         }
     }
