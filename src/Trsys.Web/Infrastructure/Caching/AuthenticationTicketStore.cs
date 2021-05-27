@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores
+namespace Trsys.Web.Infrastructure.Caching
 {
     public class AuthenticationTicketStore : IAuthenticationTicketStore
     {

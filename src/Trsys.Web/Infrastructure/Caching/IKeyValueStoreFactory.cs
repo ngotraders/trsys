@@ -1,4 +1,4 @@
-﻿namespace Trsys.Web.Infrastructure.KeyValueStores
+﻿namespace Trsys.Web.Infrastructure.Caching
 {
     public interface IKeyValueStoreFactory
     {

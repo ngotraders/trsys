@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Trsys.Web.Models.SecretKeys;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores
+namespace Trsys.Web.Infrastructure.Caching
 {
     public class SecretKeyUsageStore : ISecretKeyUsageStore
     {

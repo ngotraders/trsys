@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores
+namespace Trsys.Web.Infrastructure.Caching
 {
     public interface IKeyValueStore<T>
     {

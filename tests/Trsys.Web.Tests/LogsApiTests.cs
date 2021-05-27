@@ -13,8 +13,8 @@ using System.Threading.Tasks;
 using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.KeyValueStores;
-using Trsys.Web.Infrastructure.KeyValueStores.InMemory;
+using Trsys.Web.Infrastructure.Caching;
+using Trsys.Web.Infrastructure.Caching.InMemory;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.SecretKeys;
 

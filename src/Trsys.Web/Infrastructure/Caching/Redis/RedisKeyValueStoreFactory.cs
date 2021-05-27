@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores.Redis
+namespace Trsys.Web.Infrastructure.Caching.Redis
 {
     public class RedisKeyValueStoreFactory : IKeyValueStoreFactory
     {

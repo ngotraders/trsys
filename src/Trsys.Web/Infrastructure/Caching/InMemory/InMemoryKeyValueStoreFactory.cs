@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores.InMemory
+namespace Trsys.Web.Infrastructure.Caching.InMemory
 {
     public class InMemoryKeyValueStoreFactory : IKeyValueStoreFactory
     {

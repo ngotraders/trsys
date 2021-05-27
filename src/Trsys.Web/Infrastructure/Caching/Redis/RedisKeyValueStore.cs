@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trsys.Web.Infrastructure.KeyValueStores.Redis
+namespace Trsys.Web.Infrastructure.Caching.Redis
 {
     public class RedisKeyValueStore<T> : IKeyValueStore<T>
     {
