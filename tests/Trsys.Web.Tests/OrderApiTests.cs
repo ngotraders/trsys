@@ -9,11 +9,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.Caching;
-using Trsys.Web.Infrastructure.Caching.InMemory;
 using Trsys.Web.Models.Orders;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
@@ -23,8 +20,7 @@ namespace Trsys.Web.Tests
     [TestClass]
     public class OrderApiTests
     {
-        private const string VALID_SUBSCRIBER_TOKEN = "VALID_SUBSCRIBER_TOKEN";
-        private const string VALID_PUBLISHER_TOKEN = "VALID_PUBLISHER_TOKEN";
+        private const string VALID_KEY = "VALID_KEY";
         private const string VALID_VERSION = "20210331";
 
         [TestMethod]
@@ -32,8 +28,15 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual("", await res.Content.ReadAsStringAsync());
@@ -44,8 +47,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -69,8 +78,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -102,8 +117,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -155,7 +176,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_SUBSCRIBER_TOKEN);
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
@@ -166,8 +194,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -182,8 +216,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -205,8 +245,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1:1.2:1@2:EURUSD:1:1.2:2.00:100", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -231,7 +277,14 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+
+            var keyService = server.Services.GetRequiredService<SecretKeyService>();
+            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
+            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+
+            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:120.23@2:EURUSD:1:0.0001", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
@@ -251,18 +304,8 @@ namespace Trsys.Web.Tests
                             .ConfigureTestServices(services =>
                             {
                                 services.AddRepositories();
-                                services.AddSingleton<IAuthenticationTicketStore>(new MockAuthenticationTicketStore());
                             }));
 
-        }
-
-        private class MockAuthenticationTicketStore : AuthenticationTicketStore
-        {
-            public MockAuthenticationTicketStore() : base(new InMemoryKeyValueStoreFactory())
-            {
-                AddAsync(VALID_PUBLISHER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Publisher));
-                AddAsync(VALID_SUBSCRIBER_TOKEN, SecretKeyAuthenticationTicketFactory.Create("VALID_KEY", SecretKeyType.Subscriber));
-            }
         }
     }
 }

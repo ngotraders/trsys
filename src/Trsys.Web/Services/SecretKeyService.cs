@@ -7,12 +7,12 @@ namespace Trsys.Web.Services
     public class SecretKeyService
     {
         private readonly ISecretKeyRepository repository;
-        private readonly ISecretKeyUsageStore usageStore;
+        private readonly ISecretTokenStore tokenStore;
 
-        public SecretKeyService(ISecretKeyRepository repository, ISecretKeyUsageStore usageStore)
+        public SecretKeyService(ISecretKeyRepository repository, ISecretTokenStore tokenStore)
         {
             this.repository = repository;
-            this.usageStore = usageStore;
+            this.tokenStore = tokenStore;
         }
 
         public Task<List<SecretKey>> SearchAllAsync()
@@ -45,17 +45,17 @@ namespace Trsys.Web.Services
             return RegisterSecretKeyResult.Ok(newSecretKey.Key);
         }
 
-        public async Task<OperationResult> UpdateSecretKeyAsync(string secretKey, SecretKeyType keyType, string description)
+        public async Task<OperationResult> UpdateSecretKeyAsync(string key, SecretKeyType keyType, string description)
         {
-            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
+            var secretKeyEntity = await repository.FindBySecretKeyAsync(key);
             if (secretKeyEntity == null)
             {
-                return OperationResult.Fail($"シークレットキー: {secretKey} を編集できません。");
+                return OperationResult.Fail($"シークレットキー: {key} を編集できません。");
             }
 
             if (secretKeyEntity.IsValid && keyType != secretKeyEntity.KeyType.Value)
             {
-                return OperationResult.Fail($"シークレットキー: {secretKey} を編集できません。");
+                return OperationResult.Fail($"シークレットキー: {key} を編集できません。");
             }
 
             secretKeyEntity.KeyType = keyType;
@@ -80,38 +80,54 @@ namespace Trsys.Web.Services
                 return GenerateSecretTokenResult.InvalidSecretKey(true);
             }
 
-            var usage = await usageStore.FindAsync(key);
-            if (usage != null)
+            if (secretKey.HasToken)
             {
-                if (usage.IsInUse())
+                var usage = await tokenStore.FindAsync(secretKey.ValidToken);
+                if (usage != null)
                 {
-                    return GenerateSecretTokenResult.SecretKeyInUse();
+                    if (usage.IsInUse())
+                    {
+                        return GenerateSecretTokenResult.SecretKeyInUse();
+                    }
+                    await tokenStore.RemoveAsync(secretKey.ValidToken);
                 }
-                usage.Reset();
-            }
-            else
-            {
-                await usageStore.AddAsync(key);
             }
 
             var token = secretKey.GenerateToken();
+            await tokenStore.AddAsync(secretKey.Key, secretKey.KeyType.Value, secretKey.ValidToken);
             await repository.SaveAsync(secretKey);
             return GenerateSecretTokenResult.Ok(token, secretKey.Key, secretKey.KeyType.Value);
         }
 
-        public Task TouchSecretTokenAsync(string key)
+        public async Task<OperationResult> VerifyAndTouchSecretTokenAsync(string token, SecretKeyType? keyType = null)
         {
-            return usageStore.TouchAsync(key);
+            var checkResult = await tokenStore.VerifyAndTouchAsync(token, keyType);
+            if (checkResult)
+            {
+                var secretToken = await tokenStore.FindAsync(token);
+                return SecretTokenVerifyResult.Ok(secretToken.Key, secretToken.KeyType);
+            }
+            return OperationResult.Fail("token is invalid");
         }
 
-        public async Task ReleaseSecretTokenAsync(string secretKey)
+        public async Task<OperationResult> ReleaseSecretTokenAsync(string token)
         {
-            var secretKeyEntity = await repository.FindBySecretKeyAsync(secretKey);
-            if (secretKeyEntity != null)
+            var secretToken = await tokenStore.FindAsync(token);
+            if (secretToken == null)
             {
-                secretKeyEntity.ReleaseToken();
-                await repository.SaveAsync(secretKeyEntity);
+                return OperationResult.Fail("Token is not valid");
             }
+            await tokenStore.RemoveAsync(token);
+
+            var key = secretToken.Key;
+            var secretKeyEntity = await repository.FindBySecretKeyAsync(key);
+            if (secretKeyEntity == null)
+            {
+                return OperationResult.Fail("Specified key not found.");
+            }
+            secretKeyEntity.ReleaseToken();
+            await repository.SaveAsync(secretKeyEntity);
+            return ReleaseSecretTokenResult.Ok(key, secretKeyEntity.KeyType.Value);
         }
 
         public async Task<OperationResult> ApproveSecretKeyAsync(string key)
@@ -138,7 +154,7 @@ namespace Trsys.Web.Services
             var currentToken = secretKey.ValidToken;
             secretKey.Revoke();
             await repository.SaveAsync(secretKey);
-            await usageStore.RemoveAsync(key);
+            await tokenStore.RemoveAsync(key);
             return RevokeSecretKeyResult.Ok(currentToken);
         }
 

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
+using Trsys.Web.Configurations;
 using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Home;
 

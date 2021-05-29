@@ -11,7 +11,6 @@ namespace Trsys.Web.Controllers
     [Route("api/logs")]
     [EaVersion("20210331")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = "SecretToken")]
     public class LogsApiController : Controller
     {
         private readonly EventService service;
@@ -23,6 +22,7 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
+        [RequireToken()]
         public async Task<IActionResult> PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             if (string.IsNullOrEmpty(text))

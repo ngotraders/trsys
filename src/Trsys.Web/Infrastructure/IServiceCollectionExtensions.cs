@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Trsys.Web.Authentication;
-using Trsys.Web.Infrastructure.EventProcessing;
-using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Infrastructure.Caching;
 using Trsys.Web.Infrastructure.Caching.InMemory;
 using Trsys.Web.Infrastructure.Caching.Redis;
+using Trsys.Web.Infrastructure.EventProcessing;
+using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Infrastructure.SQLite;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Orders;
@@ -28,8 +27,7 @@ namespace Trsys.Web.Infrastructure
 
         public static IServiceCollection AddKeyValueStores(this IServiceCollection services)
         {
-            services.AddTransient<IAuthenticationTicketStore, AuthenticationTicketStore>();
-            services.AddTransient<ISecretKeyUsageStore, SecretKeyUsageStore>();
+            services.AddTransient<ISecretTokenStore, SecretTokenStore>();
             services.AddTransient<IOrdersTextStore, OrdersTextStore>();
             return services;
         }

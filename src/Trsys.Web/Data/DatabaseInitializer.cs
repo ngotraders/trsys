@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
+using Trsys.Web.Configurations;
 using Trsys.Web.Models.Users;
 using Trsys.Web.Services;
 

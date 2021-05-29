@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using Trsys.Web.Authentication;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
@@ -43,8 +42,7 @@ namespace Trsys.Web
                     options.LoginPath = "/login";
                     options.LogoutPath = "/logout";
                     options.ReturnUrlParameter = "returnUrl";
-                })
-                .AddSecretTokenAuthentication();
+                });
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");

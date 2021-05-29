@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
 using Trsys.Web.Filters;
 using Trsys.Web.Services;
 
@@ -13,13 +12,11 @@ namespace Trsys.Web.Controllers
     {
 
         private readonly SecretKeyService service;
-        private readonly IAuthenticationTicketStore ticketStore;
         private readonly EventService eventService;
 
-        public TokenApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
+        public TokenApiController(SecretKeyService service, EventService eventService)
         {
             this.service = service;
-            this.ticketStore = ticketStore;
             this.eventService = eventService;
         }
 
@@ -50,8 +47,6 @@ namespace Trsys.Web.Controllers
             }
 
             await eventService.RegisterSystemEventAsync("token", "TokenGenerated", new { SecretKey = secretKey, SecretToken = result.Token });
-            var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
-            await ticketStore.AddAsync(result.Token, principal);
             return Ok(result.Token);
         }
 
@@ -59,15 +54,12 @@ namespace Trsys.Web.Controllers
         [Consumes("text/plain")]
         public async Task<IActionResult> PostTokenRelease(string token)
         {
-            var ticket = await ticketStore.RemoveAsync(token);
-            if (ticket == null)
+            var result = await service.ReleaseSecretTokenAsync(token) as ReleaseSecretTokenResult;
+            if (result == null)
             {
                 return BadRequest("InvalidToken");
             }
-
-            var secretKey = ticket.Principal.Identity.Name;
-            await service.ReleaseSecretTokenAsync(secretKey);
-            await eventService.RegisterSystemEventAsync("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token });
+            await eventService.RegisterSystemEventAsync("token", "TokenReleased", new { SecretKey = result.Key, SecretToken = token });
             return Ok(token);
         }
     }

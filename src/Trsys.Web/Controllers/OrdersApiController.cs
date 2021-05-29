@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
 using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
@@ -30,10 +31,9 @@ namespace Trsys.Web.Controllers
 
         [HttpGet]
         [Produces("text/plain")]
-        [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Subscriber")]
+        [RequireToken("Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
-            await secretKeyService.TouchSecretTokenAsync(User.Identity.Name);
             var cacheEntry = await service.GetOrderTextEntryAsync();
             if (cacheEntry == null)
             {
@@ -60,10 +60,9 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
-        [Authorize(AuthenticationSchemes = "SecretToken", Roles = "Publisher")]
+        [RequireToken("Publisher")]
         public async Task<IActionResult> PostOrder([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
-            await secretKeyService.TouchSecretTokenAsync(User.Identity.Name);
             var orders = new List<Order>();
             if (!string.IsNullOrEmpty(text))
             {

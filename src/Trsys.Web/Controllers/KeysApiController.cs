@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
 using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 
@@ -13,13 +12,11 @@ namespace Trsys.Web.Controllers
     public class KeysApiController : Controller
     {
         private readonly SecretKeyService service;
-        private readonly IAuthenticationTicketStore ticketStore;
         private readonly EventService eventService;
 
-        public KeysApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
+        public KeysApiController(SecretKeyService service, EventService eventService)
         {
             this.service = service;
-            this.ticketStore = ticketStore;
             this.eventService = eventService;
         }
 
@@ -90,11 +87,7 @@ namespace Trsys.Web.Controllers
             }
             else
             {
-                var operationResult = await service.RevokeSecretKeyAsync(key);
-                if (operationResult is RevokeSecretKeyResult revokeSecretKeyResult && !string.IsNullOrEmpty(revokeSecretKeyResult.Token))
-                {
-                    await ticketStore.RemoveAsync(revokeSecretKeyResult.Token);
-                }
+                await service.RevokeSecretKeyAsync(key);
             }
 
             await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyPutted", new { SecretKey = key, request.KeyType, request.Description, request.IsApproved });

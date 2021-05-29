@@ -9,7 +9,6 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.SecretKeys;
@@ -91,8 +90,6 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
-                var store = scope.ServiceProvider.GetRequiredService<IAuthenticationTicketStore>();
-
                 var result = await service.RegisterSecretKeyAsync(null, SecretKeyType.Subscriber, null);
                 key = result.Key;
                 await service.ApproveSecretKeyAsync(key);
@@ -100,9 +97,7 @@ namespace Trsys.Web.Tests
 
                 // make token in use
                 var token = tokenResult.Token;
-                await service.TouchSecretTokenAsync(key);
-
-                await store.AddAsync(token, SecretKeyAuthenticationTicketFactory.Create(key, SecretKeyType.Publisher));
+                await service.VerifyAndTouchSecretTokenAsync(token);
             }
 
             var res = await client.PostAsync("/api/token", new StringContent(key, Encoding.UTF8, "text/plain"));
@@ -122,16 +117,12 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
-                var store = scope.ServiceProvider.GetRequiredService<IAuthenticationTicketStore>();
-
                 var result = await service.RegisterSecretKeyAsync(null, SecretKeyType.Subscriber, null);
                 key = result.Key;
                 await service.ApproveSecretKeyAsync(key);
                 var tokenResult = await service.GenerateSecretTokenAsync(key);
                 token = tokenResult.Token;
-                await service.TouchSecretTokenAsync(key);
-
-                await store.AddAsync(token, SecretKeyAuthenticationTicketFactory.Create(key, SecretKeyType.Publisher));
+                await service.VerifyAndTouchSecretTokenAsync(key);
             }
 
             var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
@@ -140,7 +131,7 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
-                var store = scope.ServiceProvider.GetRequiredService<IAuthenticationTicketStore>();
+                var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
 
                 Assert.IsNull(await store.FindAsync(token));
                 var secretKey = await service.FindBySecretKeyAsync(key);
@@ -149,18 +140,20 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
-        public async Task PostApiTokenRelease_should_return_ok_given_valid_token()
+        public async Task PostApiTokenRelease_should_return_badrequest_given_valid_token_invalid_key()
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var token = Guid.NewGuid().ToString();
-            var store = server.Services.GetRequiredService<IAuthenticationTicketStore>();
-            await store.AddAsync(token, SecretKeyAuthenticationTicketFactory.Create("AnyKey", SecretKeyType.Publisher));
+            var store = server.Services.GetRequiredService<ISecretTokenStore>();
+            await store.AddAsync("AnyKey", SecretKeyType.Publisher, token);
 
             var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
 
             Assert.IsNull(await store.FindAsync(token));
         }

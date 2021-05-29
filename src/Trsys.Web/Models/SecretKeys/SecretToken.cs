@@ -2,9 +2,11 @@
 
 namespace Trsys.Web.Models.SecretKeys
 {
-    public class SecretKeyUsage
+    public class SecretToken
     {
-        public string SecretKey { get; set; }
+        public string Token { get; set; }
+        public string Key { get; set; }
+        public SecretKeyType KeyType { get; set; }
         public DateTime? LastAccessed { get; set; }
 
         public void Reset()

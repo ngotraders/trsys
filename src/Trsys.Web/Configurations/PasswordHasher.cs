@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
 
-namespace Trsys.Web.Authentication
+namespace Trsys.Web.Configurations
 {
     public class PasswordHasher
     {
