@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
@@ -10,10 +9,12 @@ namespace Trsys.Web.Infrastructure.Generic
     public class SecretKeyRepository : ISecretKeyRepository
     {
         private readonly TrsysContext db;
+        private readonly ISecretKeyTokenStore store;
 
-        public SecretKeyRepository(TrsysContext db)
+        public SecretKeyRepository(TrsysContext db, ISecretKeyTokenStore store)
         {
             this.db = db;
+            this.store = store;
         }
 
         public Task<List<SecretKey>> SearchAllAsync()
@@ -31,8 +32,25 @@ namespace Trsys.Web.Infrastructure.Generic
             return db.SecretKeys.FirstOrDefaultAsync(e => e.Key == secretKey);
         }
 
-        public Task SaveAsync(SecretKey entity)
+        public async Task SaveAsync(SecretKey entity)
         {
+            var secretKeyToken = await store.FindAsync(entity.Key);
+            if (secretKeyToken == null)
+            {
+                secretKeyToken = new SecretKeyToken()
+                {
+                    KeyType = entity.KeyType,
+                    Key = entity.Key,
+                    IsValid = entity.IsValid,
+                };
+            }
+            else
+            {
+                secretKeyToken.KeyType = entity.KeyType;
+                secretKeyToken.IsValid = entity.IsValid;
+            }
+            await store.SaveAsync(secretKeyToken);
+
             if (entity.Id > 0)
             {
                 db.SecretKeys.Update(entity);
@@ -41,13 +59,19 @@ namespace Trsys.Web.Infrastructure.Generic
             {
                 db.SecretKeys.Add(entity);
             }
-            return db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
 
-        public Task RemoveAsync(SecretKey entity)
+        public async Task RemoveAsync(SecretKey entity)
         {
+            var secretKeyToken = await store.FindAsync(entity.Key);
+            if (secretKeyToken != null)
+            {
+                await store.RemoveAsync(entity.Key);
+            }
+
             db.SecretKeys.Remove(entity);
-            return db.SaveChangesAsync();
+            await db.SaveChangesAsync();
         }
     }
 }

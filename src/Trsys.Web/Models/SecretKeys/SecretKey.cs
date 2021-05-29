@@ -19,10 +19,6 @@ namespace Trsys.Web.Models.SecretKeys
         public bool IsValid { get; set; }
         public DateTime? ApprovedAt { get; set; }
 
-        public string ValidToken { get; set; }
-
-        public bool HasToken => !string.IsNullOrEmpty(ValidToken);
-
         public void Approve()
         {
             IsValid = true;
@@ -33,18 +29,6 @@ namespace Trsys.Web.Models.SecretKeys
         {
             IsValid = false;
             ApprovedAt = null;
-            ValidToken = null;
-        }
-
-        public void ReleaseToken()
-        {
-            ValidToken = null;
-        }
-
-        public string GenerateToken()
-        {
-            ValidToken = Guid.NewGuid().ToString();
-            return ValidToken;
         }
 
         public static SecretKey Create(SecretKeyType keyType)

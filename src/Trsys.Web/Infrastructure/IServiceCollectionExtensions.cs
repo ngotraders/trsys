@@ -28,6 +28,7 @@ namespace Trsys.Web.Infrastructure
         public static IServiceCollection AddKeyValueStores(this IServiceCollection services)
         {
             services.AddTransient<ISecretTokenStore, SecretTokenStore>();
+            services.AddTransient<ISecretKeyTokenStore, SecretKeyTokenStore>();
             services.AddTransient<IOrdersTextStore, OrdersTextStore>();
             return services;
         }

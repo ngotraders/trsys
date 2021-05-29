@@ -6,7 +6,6 @@ namespace Trsys.Web.Models.SecretKeys
     {
         Task<SecretToken> FindAsync(string token);
         Task AddAsync(string key, SecretKeyType keyType, string token);
-        Task<bool> VerifyAndTouchAsync(string token, SecretKeyType? keyType = null);
         Task RemoveAsync(string token);
     }
 }

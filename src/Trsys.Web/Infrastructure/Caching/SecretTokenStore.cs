@@ -9,7 +9,7 @@ namespace Trsys.Web.Infrastructure.Caching
 
         public SecretTokenStore(IKeyValueStoreFactory factory)
         {
-            this.store = factory.Create<SecretToken>("SecretKeyUsage");
+            this.store = factory.Create<SecretToken>("SecretToken");
         }
 
         public Task AddAsync(string secretKey, SecretKeyType keyType, string token)
@@ -30,31 +30,6 @@ namespace Trsys.Web.Infrastructure.Caching
         public Task RemoveAsync(string token)
         {
             return store.DeleteAsync(token);
-        }
-
-        public async Task<bool> VerifyAndTouchAsync(string token, SecretKeyType? keyType = default)
-        {
-            var usage = await FindAsync(token);
-            if (usage == null)
-            {
-                return false;
-            }
-
-            await TouchInternalAsync(usage);
-            if (!keyType.HasValue || usage.KeyType.HasFlag(keyType))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        private async Task TouchInternalAsync(SecretToken usage)
-        {
-            if (usage != null)
-            {
-                usage.Touch();
-                await store.PutAsync(usage.Token, usage);
-            }
         }
     }
 }

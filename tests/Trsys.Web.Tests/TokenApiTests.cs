@@ -41,9 +41,9 @@ namespace Trsys.Web.Tests
 
             using (var scope = server.Services.CreateScope())
             {
-                var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
-                var secretKey = await service.FindBySecretKeyAsync(key);
-                Assert.AreEqual(secretKey.ValidToken, await res.Content.ReadAsStringAsync());
+                var service = scope.ServiceProvider.GetRequiredService<ISecretKeyTokenStore>();
+                var secretKey = await service.FindAsync(key);
+                Assert.AreEqual(secretKey.Token, await res.Content.ReadAsStringAsync());
             }
         }
 
@@ -130,12 +130,8 @@ namespace Trsys.Web.Tests
 
             using (var scope = server.Services.CreateScope())
             {
-                var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
                 var store = scope.ServiceProvider.GetRequiredService<ISecretTokenStore>();
-
                 Assert.IsNull(await store.FindAsync(token));
-                var secretKey = await service.FindBySecretKeyAsync(key);
-                Assert.IsFalse(secretKey.HasToken);
             }
         }
 
