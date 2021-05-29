@@ -25,6 +25,8 @@ namespace LoadTesting
 
         public async Task InitializeAsync()
         {
+            Client.DefaultRequestHeaders.Clear();
+            Client.DefaultRequestHeaders.Add("Version", "20210331");
             var res = await Client.PostAsync("/api/token", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
             res.EnsureSuccessStatusCode();
             secretToken = await res.Content.ReadAsStringAsync();
@@ -37,6 +39,8 @@ namespace LoadTesting
 
         public async Task FinalizeAsync()
         {
+            Client.DefaultRequestHeaders.Clear();
+            Client.DefaultRequestHeaders.Add("Version", "20210331");
             var res = await Client.PostAsync("/api/token/" + Uri.UnescapeDataString(secretToken) + "/release", new StringContent(SecretKey, Encoding.UTF8, "text/plain"));
             res.EnsureSuccessStatusCode();
             secretToken = null;

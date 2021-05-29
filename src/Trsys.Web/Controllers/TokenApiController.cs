@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Authentication;
+using Trsys.Web.Filters;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/token")]
+    [EaVersion("20210331")]
     [ApiController]
     public class TokenApiController : ControllerBase
     {

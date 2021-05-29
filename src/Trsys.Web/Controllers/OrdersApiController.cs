@@ -13,8 +13,8 @@ using Trsys.Web.Services;
 namespace Trsys.Web.Controllers
 {
     [Route("api/orders")]
-    [ApiController]
     [EaVersion("20210331")]
+    [ApiController]
     public class OrdersApiController : ControllerBase
     {
         private readonly OrderService service;

@@ -14,10 +14,15 @@ namespace Trsys.Web.Filters
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            if (context.HttpContext.Request.Headers["Version"] != Version)
+            if (context.HttpContext.Request.Headers["X-Ea-Version"] == Version)
             {
-                context.Result = new BadRequestObjectResult("InvalidVersion");
+                return;
             }
+            if (context.HttpContext.Request.Headers["Version"] == Version)
+            {
+                return;
+            }
+            context.Result = new BadRequestObjectResult("InvalidVersion");
         }
 
     }

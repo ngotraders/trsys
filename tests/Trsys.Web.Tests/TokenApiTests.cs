@@ -20,13 +20,16 @@ namespace Trsys.Web.Tests
     [TestClass]
     public class TokenApiTests
     {
+        private const string VALID_VERSION = "20210331";
+
         [TestMethod]
         public async Task PostApiToken_should_return_ok_given_valid_secret_key()
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
-            var key = null as string;
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
+            var key = null as string;
             using (var scope = server.Services.CreateScope())
             {
                 var service = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
@@ -50,6 +53,8 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
             var res = await client.PostAsync("/api/token", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
@@ -60,6 +65,7 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var key = default(string);
             using (var scope = server.Services.CreateScope())
@@ -79,6 +85,7 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var key = default(string);
             using (var scope = server.Services.CreateScope())
@@ -108,6 +115,7 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var key = default(string);
             var token = default(string);
@@ -145,6 +153,7 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var token = Guid.NewGuid().ToString();
             var store = server.Services.GetRequiredService<IAuthenticationTicketStore>();
@@ -161,6 +170,8 @@ namespace Trsys.Web.Tests
         {
             var server = CreateTestServer();
             var client = server.CreateClient();
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
             var res = await client.PostAsync("/api/token/INVALID_TOKEN/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());

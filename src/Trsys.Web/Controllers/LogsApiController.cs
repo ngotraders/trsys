@@ -9,8 +9,8 @@ using Trsys.Web.Services;
 namespace Trsys.Web.Controllers
 {
     [Route("api/logs")]
-    [ApiController]
     [EaVersion("20210331")]
+    [ApiController]
     [Authorize(AuthenticationSchemes = "SecretToken")]
     public class LogsApiController : Controller
     {
