@@ -1,6 +1,5 @@
 ﻿using CQRSlite.Events;
 using System;
-using Trsys.Web.Models.WriteModel.Domain;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {

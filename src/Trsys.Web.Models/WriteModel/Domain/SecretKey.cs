@@ -4,13 +4,6 @@ using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
 {
-    [Flags]
-    public enum SecretKeyType
-    {
-        Publisher = 1,
-        Subscriber = 1 << 1,
-    }
-
     public class SecretKey : AggregateRoot
     {
         private bool _approved;

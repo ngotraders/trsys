@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    internal class SecretKeyCreated : IEvent
+    public class SecretKeyCreated : IEvent
     {
         public SecretKeyCreated(Guid id, string key)
         {
