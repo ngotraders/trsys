@@ -22,7 +22,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
         {
         }
 
-        public SecretKeyAggregate(Guid id, string key) : this()
+        public SecretKeyAggregate(Guid id, string key)
         {
             Id = id;
             ApplyChange(new SecretKeyCreated(id, key));
