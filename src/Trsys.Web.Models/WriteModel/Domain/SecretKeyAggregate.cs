@@ -11,8 +11,9 @@ namespace Trsys.Web.Models.WriteModel.Domain
         private string _description;
         private string _token;
         private bool _connected;
+        private bool _deleted;
 
-        public bool IsApproved { get; internal set; }
+        public bool IsApproved => _approved;
 
         public void Apply(SecretKeyApproved e) => _approved = true;
         public void Apply(SecretKeyRevoked e) => _approved = false;
@@ -22,6 +23,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public void Apply(SecretKeyTokenInvalidated e) => _token = null;
         public void Apply(SecretKeyEaConnected e) => _connected = true;
         public void Apply(SecretKeyEaDisconnected e) => _connected = false;
+        public void Apply(SecretKeyDeleted e) => _deleted = true;
 
         public SecretKeyAggregate()
         {
@@ -114,6 +116,17 @@ namespace Trsys.Web.Models.WriteModel.Domain
             if (_connected)
             {
                 ApplyChange(new SecretKeyEaDisconnected(Id));
+            }
+        }
+        public void Delete()
+        {
+            if (!_deleted)
+            {
+                if (_approved)
+                {
+                    throw new InvalidOperationException("Cannot delete secret key if approved.");
+                }
+                ApplyChange(new SecretKeyDeleted(Id));
             }
         }
     }

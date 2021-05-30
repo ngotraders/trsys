@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.ViewModels.Admin
 {
@@ -12,7 +13,7 @@ namespace Trsys.Web.ViewModels.Admin
         public string Key { get; set; }
         public string Description { get; set; }
 
-        public List<SecretKey> SecretKeys { get; set; }
+        public List<SecretKeyDto> SecretKeys { get; set; }
         public string CacheOrderText { get; set; }
     }
 }

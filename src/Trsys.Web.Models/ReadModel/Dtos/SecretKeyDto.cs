@@ -9,6 +9,7 @@ namespace Trsys.Web.Models.ReadModel.Dtos
         public string Key { get; set; }
         public string Description { get; set; }
         public bool IsValid => ApprovedAt.HasValue;
+        public string Token { get; set; }
         public DateTimeOffset? ApprovedAt { get; set; }
         public bool IsConnected { get; set; }
     }

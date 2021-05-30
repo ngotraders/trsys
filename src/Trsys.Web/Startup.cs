@@ -44,6 +44,8 @@ namespace Trsys.Web
                     options.ReturnUrlParameter = "returnUrl";
                 });
 
+            services.AddInfrastructure();
+
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
             if (string.IsNullOrEmpty(sqliteConnection))

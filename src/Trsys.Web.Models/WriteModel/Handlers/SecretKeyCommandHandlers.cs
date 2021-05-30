@@ -9,8 +9,10 @@ using Trsys.Web.Models.WriteModel.Extensions;
 
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
-    public class SecretKeyCommandHandlers : IRequestHandler<CreateSecretKeyCommand, Guid>,
-        IRequestHandler<UpdateSecretKeyCommand>
+    public class SecretKeyCommandHandlers : 
+        IRequestHandler<CreateSecretKeyCommand, Guid>,
+        IRequestHandler<UpdateSecretKeyCommand>,
+        IRequestHandler<DeleteSecretKeyCommand>
     {
         private readonly ISession session;
         private readonly IRepository repository;
@@ -70,6 +72,14 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                     item.Approve();
                 }
             }
+            await repository.Save(item, item.Version, cancellationToken);
+            return Unit.Value;
+        }
+
+        public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
+        {
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            item.Delete();
             await repository.Save(item, item.Version, cancellationToken);
             return Unit.Value;
         }
