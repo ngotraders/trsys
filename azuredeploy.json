@@ -25,7 +25,7 @@
         }
     },
     "variables": {
-        "locustImage": "locustio/locust:1.1.1",
+        "locustImage": "locustio/locust",
         "prefix": "[parameters('prefix')]",
         "locustfile": "[parameters('locustfile')]",
         "containerDns": "[concat(variables('prefix'),'-master')]",
