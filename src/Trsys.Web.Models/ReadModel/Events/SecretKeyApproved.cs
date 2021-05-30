@@ -1,9 +1,10 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    public class SecretKeyApproved : IEvent
+    public class SecretKeyApproved : INotification, IEvent
     {
         public SecretKeyApproved(Guid id)
         {

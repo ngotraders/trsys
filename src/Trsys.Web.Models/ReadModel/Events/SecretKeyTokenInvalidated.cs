@@ -1,9 +1,10 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    public class SecretKeyTokenInvalidated : IEvent
+    public class SecretKeyTokenInvalidated : INotification, IEvent
     {
         public SecretKeyTokenInvalidated(Guid id, string token)
         {

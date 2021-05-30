@@ -1,8 +1,8 @@
-﻿using CQRSlite.Commands;
+﻿using MediatR;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class CreateSecretKeyCommand : ICommand
+    public class CreateSecretKeyCommand : IRequest
     {
         public CreateSecretKeyCommand(SecretKeyType? keyType, string key, string description, bool approve = false)
         {

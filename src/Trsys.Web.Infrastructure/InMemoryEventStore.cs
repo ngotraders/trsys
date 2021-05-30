@@ -1,4 +1,5 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,12 @@ namespace Trsys.Web.Infrastructure
 {
     public class InMemoryEventStore : IEventStore
     {
-        private readonly IEventPublisher _publisher;
+        private readonly IMediator _mediator;
         private readonly Dictionary<Guid, List<IEvent>> _inMemoryDb = new Dictionary<Guid, List<IEvent>>();
 
-        public InMemoryEventStore(IEventPublisher publisher)
+        public InMemoryEventStore(IMediator mediator)
         {
-            _publisher = publisher;
+            _mediator = mediator;
         }
 
         public async Task Save(IEnumerable<IEvent> events, CancellationToken cancellationToken = default)
@@ -28,7 +29,7 @@ namespace Trsys.Web.Infrastructure
                     _inMemoryDb.Add(@event.Id, list);
                 }
                 list.Add(@event);
-                await _publisher.Publish(@event, cancellationToken);
+                await _mediator.Publish(@event, cancellationToken);
             }
         }
 

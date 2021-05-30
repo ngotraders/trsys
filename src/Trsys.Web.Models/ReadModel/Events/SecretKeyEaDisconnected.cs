@@ -1,9 +1,10 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    public class SecretKeyEaDisconnected : IEvent
+    public class SecretKeyEaDisconnected : INotification, IEvent
     {
         public SecretKeyEaDisconnected(Guid id)
         {

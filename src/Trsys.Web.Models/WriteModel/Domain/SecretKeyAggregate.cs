@@ -4,49 +4,25 @@ using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
 {
-    public class SecretKey : AggregateRoot
+    public class SecretKeyAggregate : AggregateRoot
     {
         private bool _approved;
         private SecretKeyType? _keyType;
         private string _token;
         private bool _connected;
+        public void Apply(SecretKeyApproved e) => _approved = true;
+        public void Apply(SecretKeyRevoked e) => _approved = false;
+        public void Apply(SecretKeyKeyTypeChanged e) => _keyType = e.KeyType;
+        public void Apply(SecretKeyTokenGenerated e) => _token = e.Token;
+        public void Apply(SecretKeyTokenInvalidated e) => _token = null;
+        public void Apply(SecretKeyEaConnected e) => _connected = true;
+        public void Apply(SecretKeyEaDisconnected e) => _connected = false;
 
-        protected void Apply(SecretKeyApproved e)
+        public SecretKeyAggregate()
         {
-            _approved = true;
         }
 
-        protected void Apply(SecretKeyRevoked e)
-        {
-            _approved = false;
-        }
-
-        protected void Apply(SecretKeyKeyTypeChanged e)
-        {
-            _keyType = e.KeyType;
-        }
-
-        protected void Apply(SecretKeyTokenGenerated e)
-        {
-            _token = e.Token;
-        }
-
-        protected void Apply(SecretKeyTokenInvalidated e)
-        {
-            _token = null;
-        }
-
-        protected void Apply(SecretKeyEaConnected e)
-        {
-            _connected = true;
-        }
-
-        protected void Apply(SecretKeyEaDisconnected e)
-        {
-            _connected = false;
-        }
-
-        public SecretKey(Guid id, string key)
+        public SecretKeyAggregate(Guid id, string key) : this()
         {
             Id = id;
             ApplyChange(new SecretKeyCreated(id, key));

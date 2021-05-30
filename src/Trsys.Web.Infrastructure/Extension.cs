@@ -1,12 +1,9 @@
 ﻿using CQRSlite.Caching;
-using CQRSlite.Commands;
 using CQRSlite.Domain;
 using CQRSlite.Events;
-using CQRSlite.Queries;
-using CQRSlite.Routing;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using Trsys.Web.Models.ReadModel.Handlers;
-using Trsys.Web.Models.WriteModel.Handlers;
+using System.Reflection;
 
 namespace Trsys.Web.Infrastructure
 {
@@ -14,22 +11,15 @@ namespace Trsys.Web.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
-            services.AddMemoryCache();
+            // MediatR dependencies
+            services.AddMediatR(Assembly.Load("Trsys.Web.Models"));
 
-            //Add Cqrs services
-            services.AddSingleton<Router>(new Router());
-            services.AddSingleton<ICommandSender>(y => y.GetService<Router>());
-            services.AddSingleton<IEventPublisher>(y => y.GetService<Router>());
-            services.AddSingleton<IHandlerRegistrar>(y => y.GetService<Router>());
-            services.AddSingleton<IQueryProcessor>(y => y.GetService<Router>());
+            // Cqrs services
             services.AddSingleton<IEventStore, InMemoryEventStore>();
             services.AddSingleton<ICache, MemoryCache>();
             services.AddScoped<IRepository>(y => new CacheRepository(new Repository(y.GetService<IEventStore>()), y.GetService<IEventStore>(), y.GetService<ICache>()));
             services.AddScoped<ISession, Session>();
 
-            //Scan for commandhandlers and eventhandlers
-            services.AddTransient<SecretKeyCommandHandlers>();
-            services.AddTransient<SecretKeyListView>();
             return services;
         }
     }

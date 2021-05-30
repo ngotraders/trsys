@@ -1,5 +1,5 @@
-﻿using CQRSlite.Commands;
-using CQRSlite.Domain;
+﻿using CQRSlite.Domain;
+using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +8,7 @@ using Trsys.Web.Models.WriteModel.Domain;
 
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
-    public class SecretKeyCommandHandlers : ICancellableCommandHandler<CreateSecretKeyCommand>
+    public class SecretKeyCommandHandlers : IRequestHandler<CreateSecretKeyCommand>
     {
         private readonly ISession session;
 
@@ -17,11 +17,12 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             this.session = session;
         }
 
-        public async Task Handle(CreateSecretKeyCommand message, CancellationToken token = default)
+        public async Task<Unit> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
         {
-            var item = new SecretKey(Guid.NewGuid(), message.Key);
+            var item = new SecretKeyAggregate(Guid.NewGuid(), request.Key);
             await session.Add(item);
             await session.Commit();
+            return Unit.Value;
         }
     }
 }

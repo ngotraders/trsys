@@ -1,9 +1,10 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    public class SecretKeyDescriptionChanged : IEvent
+    public class SecretKeyDescriptionChanged : INotification, IEvent
     {
         public SecretKeyDescriptionChanged(Guid id, string description)
         {

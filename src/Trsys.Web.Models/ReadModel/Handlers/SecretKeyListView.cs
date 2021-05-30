@@ -1,5 +1,4 @@
-﻿using CQRSlite.Messages;
-using CQRSlite.Queries;
+﻿using MediatR;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +8,7 @@ using Trsys.Web.Models.ReadModel.Queries;
 
 namespace Trsys.Web.Models.ReadModel.Handlers
 {
-    public class SecretKeyListView : ICancellableHandler<SecretKeyCreated>, ICancellableQueryHandler<GetSecretKeys, List<SecretKeyDto>>
+    public class SecretKeyListView : INotificationHandler<SecretKeyCreated>, IRequestHandler<GetSecretKeys, List<SecretKeyDto>>
     {
         public Task Handle(SecretKeyCreated message, CancellationToken token = default)
         {
