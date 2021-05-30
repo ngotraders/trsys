@@ -3,18 +3,18 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class CreateSecretKeyCommand : IRequest<Guid>
+    public class UpdateSecretKeyCommand: IRequest
     {
-        public CreateSecretKeyCommand(SecretKeyType? keyType, string key, string description, bool? approve = null)
+        public UpdateSecretKeyCommand(Guid id, SecretKeyType? keyType, string description, bool? approve = null)
         {
+            Id = id;
             KeyType = keyType;
-            Key = key;
             Description = description;
             Approve = approve;
         }
 
+        public Guid Id { get; set; }
         public SecretKeyType? KeyType { get; set; }
-        public string Key { get; set; }
         public string Description { get; set; }
         public bool? Approve { get; set; }
     }

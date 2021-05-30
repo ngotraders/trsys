@@ -2,6 +2,7 @@ using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure;
@@ -14,7 +15,7 @@ namespace Trsys.Web.Models.Tests
     public class CreateSecretKeyCommandTests
     {
         [TestMethod]
-        public async Task When_KeyType_specified_then_secret_key_created_successfully()
+        public async Task When_KeyType_Key_and_Description_specified_Then_creation_succeeds()
         {
             using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
@@ -33,7 +34,33 @@ namespace Trsys.Web.Models.Tests
         }
 
         [TestMethod]
-        public async Task When_KeyType_Key_and_Description_is_not_specified_then_secret_key_created_successfully()
+        public async Task When_KeyType_is_specified_and_approve_is_true_Then_creation_succeeds()
+        {
+            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            var mediator = services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
+
+            var store = services.GetRequiredService<IEventStore>();
+            var events = (await store.Get(id, 0)).ToList();
+
+            Assert.AreEqual(3, events.Count);
+            Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
+            Assert.IsNotNull(((SecretKeyCreated)events[0]).Key);
+            Assert.AreEqual(typeof(SecretKeyKeyTypeChanged), events[1].GetType());
+            Assert.AreEqual(SecretKeyType.Publisher, ((SecretKeyKeyTypeChanged)events[1]).KeyType);
+            Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
+        }
+
+        [TestMethod]
+        public async Task When_KeyType_is_not_specified_and_approve_is_true_Then_creation_fails()
+        {
+            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            var mediator = services.GetRequiredService<IMediator>();
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, null, null, true)));
+        }
+
+        [TestMethod]
+        public async Task When_KeyType_Key_and_Description_is_not_specified_Then_creation_succeeds()
         {
             using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();

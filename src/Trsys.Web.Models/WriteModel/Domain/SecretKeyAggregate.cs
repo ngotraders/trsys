@@ -8,11 +8,16 @@ namespace Trsys.Web.Models.WriteModel.Domain
     {
         private bool _approved;
         private SecretKeyType? _keyType;
+        private string _description;
         private string _token;
         private bool _connected;
+
+        public bool IsApproved { get; internal set; }
+
         public void Apply(SecretKeyApproved e) => _approved = true;
         public void Apply(SecretKeyRevoked e) => _approved = false;
         public void Apply(SecretKeyKeyTypeChanged e) => _keyType = e.KeyType;
+        public void Apply(SecretKeyDescriptionChanged e) => _description = e.Description;
         public void Apply(SecretKeyTokenGenerated e) => _token = e.Token;
         public void Apply(SecretKeyTokenInvalidated e) => _token = null;
         public void Apply(SecretKeyEaConnected e) => _connected = true;
@@ -30,6 +35,10 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void ChangeKeyType(SecretKeyType keyType)
         {
+            if (_keyType.HasValue && _keyType == keyType)
+            {
+                return;
+            }
             if (_approved)
             {
                 throw new InvalidOperationException("Cannot change key type if secret key is approved.");
@@ -39,6 +48,10 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void ChangeDescription(string description)
         {
+            if (_description == description)
+            {
+                return;
+            }
             ApplyChange(new SecretKeyDescriptionChanged(Id, description));
         }
 

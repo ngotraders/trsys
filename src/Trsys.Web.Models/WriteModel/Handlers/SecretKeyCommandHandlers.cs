@@ -9,13 +9,16 @@ using Trsys.Web.Models.WriteModel.Extensions;
 
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
-    public class SecretKeyCommandHandlers : IRequestHandler<CreateSecretKeyCommand, Guid>
+    public class SecretKeyCommandHandlers : IRequestHandler<CreateSecretKeyCommand, Guid>,
+        IRequestHandler<UpdateSecretKeyCommand>
     {
         private readonly ISession session;
+        private readonly IRepository repository;
 
-        public SecretKeyCommandHandlers(ISession session)
+        public SecretKeyCommandHandlers(ISession session, IRepository repository)
         {
             this.session = session;
+            this.repository = repository;
         }
 
         public async Task<Guid> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
@@ -29,9 +32,13 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 {
                     item.ChangeKeyType(request.KeyType.Value);
                 }
-                if (!string.IsNullOrEmpty(request.Description))
+                item.ChangeDescription(request.Description);
+                if (request.Approve.HasValue)
                 {
-                    item.ChangeDescription(request.Description);
+                    if (request.Approve.Value)
+                    {
+                        item.Approve();
+                    }
                 }
                 await session.Add(state, cancellationToken);
                 await session.Add(item, cancellationToken);
@@ -39,6 +46,32 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 return secretKeyId;
             }
             return secretKeyId;
+        }
+
+        public async Task<Unit> Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
+        {
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            if (request.Approve.HasValue)
+            {
+                if (!request.Approve.Value)
+                {
+                    item.Revoke();
+                }
+            }
+            if (request.KeyType.HasValue)
+            {
+                item.ChangeKeyType(request.KeyType.Value);
+            }
+            item.ChangeDescription(request.Description);
+            if (request.Approve.HasValue)
+            {
+                if (request.Approve.Value)
+                {
+                    item.Approve();
+                }
+            }
+            await repository.Save(item, item.Version, cancellationToken);
+            return Unit.Value;
         }
     }
 }
