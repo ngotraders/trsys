@@ -72,7 +72,7 @@ namespace Trsys.Web.Controllers
             {
                 var id = await mediator.Send(new CreateSecretKeyCommand(model.KeyType.Value, model.Key, model.Description));
                 var result = await mediator.Send(new GetSecretKey(id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { SecretKey = result.Key, result.KeyType, result.Description });
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { Id = id, SecretKey = result.Key, result.KeyType, result.Description });
                 model.SuccessMessage = $"シークレットキー: {result.Key} を作成しました。";
                 model.KeyType = null;
                 model.Key = null;
@@ -100,7 +100,7 @@ namespace Trsys.Web.Controllers
             {
                 await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType.Value, updateRequest.Description));
                 var result = await mediator.Send(new GetSecretKey(id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyUpdated", new { SecretKey = result.Key, result.KeyType, result.Description });
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyUpdated", new { Id = id, SecretKey = result.Key, result.KeyType, result.Description });
                 model.SuccessMessage = $"シークレットキー: {result.Key} を変更しました。";
                 model.KeyType = null;
                 model.Key = null;
@@ -128,7 +128,7 @@ namespace Trsys.Web.Controllers
             {
                 await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, true));
                 var result = await mediator.Send(new GetSecretKey(id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyApproved", new { SecretKey = result.Key });
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyApproved", new { Id = id, SecretKey = result.Key });
                 model.SuccessMessage = $"シークレットキー: {result.Key} を有効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
@@ -156,10 +156,10 @@ namespace Trsys.Web.Controllers
                 await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, false));
                 if (!string.IsNullOrEmpty(token))
                 {
-                    await eventService.RegisterUserEventAsync(User.Identity.Name, "TokenInvalidated", new { SecretKey = result.Key, Token = token });
+                    await eventService.RegisterUserEventAsync(User.Identity.Name, "TokenInvalidated", new { Id = id, SecretKey = result.Key, Token = token });
                 }
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = result.Key });
-                model.SuccessMessage = $"シークレットキー: {id} を無効化しました。";
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRevoked", new { Id = id, SecretKey = result.Key });
+                model.SuccessMessage = $"シークレットキー: {result.Key} を無効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
@@ -183,8 +183,8 @@ namespace Trsys.Web.Controllers
             {
                 var result = await mediator.Send(new GetSecretKey(id));
                 await mediator.Send(new DeleteSecretKeyCommand(id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = id });
-                model.SuccessMessage = $"シークレットキー: {id} を削除しました。";
+                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { Id = id, SecretKey = result.Key });
+                model.SuccessMessage = $"シークレットキー: {result.Key} を削除しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)

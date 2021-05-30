@@ -77,7 +77,6 @@ namespace Trsys.Web
             }
             services.AddEventProcessor();
             services.AddTransient<OrderService>();
-            services.AddTransient<SecretKeyService>();
             services.AddTransient<UserService>();
             services.AddTransient<EventService>();
         }

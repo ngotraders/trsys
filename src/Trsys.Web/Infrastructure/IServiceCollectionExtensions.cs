@@ -9,7 +9,6 @@ using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Infrastructure.SQLite;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Orders;
-using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Models.Users;
 using Trsys.Web.Services;
 
@@ -27,8 +26,6 @@ namespace Trsys.Web.Infrastructure
 
         public static IServiceCollection AddKeyValueStores(this IServiceCollection services)
         {
-            services.AddTransient<ISecretTokenStore, SecretTokenStore>();
-            services.AddTransient<ISecretKeyTokenStore, SecretKeyTokenStore>();
             services.AddTransient<IOrdersTextStore, OrdersTextStore>();
             return services;
         }
@@ -53,7 +50,6 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<TrsysContextProcessor>();
             services.AddTransient<IUserRepository, SQLiteUserRepository>();
             services.AddTransient<IOrderRepository, SQLiteOrderRepository>();
-            services.AddTransient<ISecretKeyRepository, SQLiteSecretKeyRepository>();
             services.AddTransient<IEventRepository, SQLiteEventRepository>();
             return services;
         }
@@ -62,7 +58,6 @@ namespace Trsys.Web.Infrastructure
         {
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IOrderRepository, OrderRepository>();
-            services.AddTransient<ISecretKeyRepository, SecretKeyRepository>();
             services.AddTransient<IEventRepository, EventRepository>();
             return services;
         }

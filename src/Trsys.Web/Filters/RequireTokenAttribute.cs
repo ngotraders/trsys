@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Trsys.Web.Models.SecretKeys;
-using Trsys.Web.Services;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
 
 namespace Trsys.Web.Filters
 {
@@ -61,14 +63,14 @@ namespace Trsys.Web.Filters
                 context.Result = new UnauthorizedObjectResult("X-Secret-Token not se.");
                 return;
             }
-            var service = (SecretKeyService)context.HttpContext.RequestServices.GetService(typeof(SecretKeyService));
-            var result = await service.VerifyAndTouchSecretTokenAsync(token, KeyType) as SecretTokenVerifyResult;
+            var mediator = context.HttpContext.RequestServices.GetRequiredService<IMediator>();
+            var result = await mediator.Send(new FindByCurrentToken(token));
             if (result == null)
             {
                 context.Result = new UnauthorizedObjectResult("X-Secret-Token is invalid.");
                 return;
             }
-            context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(result.SecretKey, result.KeyType);
+            context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(result.Key, result.KeyType.Value);
             await base.OnActionExecutionAsync(context, next);
         }
     }

@@ -12,6 +12,9 @@ namespace Trsys.Web.Models.WriteModel.Handlers
     public class SecretKeyCommandHandlers : 
         IRequestHandler<CreateSecretKeyCommand, Guid>,
         IRequestHandler<UpdateSecretKeyCommand>,
+        IRequestHandler<GenerateSecretTokenCommand, string>,
+        IRequestHandler<InvalidateSecretTokenCommand>,
+        IRequestHandler<TouchSecretTokenCommand>,
         IRequestHandler<DeleteSecretKeyCommand>
     {
         private readonly ISession session;
@@ -72,6 +75,30 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                     item.Approve();
                 }
             }
+            await repository.Save(item, item.Version, cancellationToken);
+            return Unit.Value;
+        }
+
+        public async Task<string> Handle(GenerateSecretTokenCommand request, CancellationToken cancellationToken)
+        {
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            var token = item.GenerateToken();
+            await repository.Save(item, item.Version, cancellationToken);
+            return token;
+        }
+
+        public async Task<Unit> Handle(TouchSecretTokenCommand request, CancellationToken cancellationToken)
+        {
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            item.Connect();
+            await repository.Save(item, item.Version, cancellationToken);
+            return Unit.Value;
+        }
+
+        public async Task<Unit> Handle(InvalidateSecretTokenCommand request, CancellationToken cancellationToken)
+        {
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            item.InvalidateToken();
             await repository.Save(item, item.Version, cancellationToken);
             return Unit.Value;
         }

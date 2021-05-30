@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Tests
 {
@@ -50,10 +53,10 @@ namespace Trsys.Web.Tests
                 Description = default(string),
             }), Encoding.UTF8, "application/json"));
             Assert.AreEqual(HttpStatusCode.Created, res.StatusCode);
-            var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
-            Assert.IsNotNull(key);
+            var id = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("id").Value;
+            Assert.IsNotNull(id);
 
-            var keyRes = await client.GetAsync($"/api/keys/{key}");
+            var keyRes = await client.GetAsync($"/api/keys/{id}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(false, retObj.Property("isApproved").Value);
@@ -73,10 +76,10 @@ namespace Trsys.Web.Tests
                 IsApproved = true,
             }), Encoding.UTF8, "application/json"));
             Assert.AreEqual(HttpStatusCode.Created, res.StatusCode);
-            var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
-            Assert.IsNotNull(key);
+            var id = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("id").Value;
+            Assert.IsNotNull(id);
 
-            var keyRes = await client.GetAsync($"/api/keys/{key}");
+            var keyRes = await client.GetAsync($"/api/keys/{id}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(true, retObj.Property("isApproved").Value);
@@ -88,12 +91,11 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
             await client.LoginAsync();
-            var db = server.Services.GetRequiredService<TrsysContext>();
-            var key = SecretKey.Create(SecretKeyType.Publisher);
-            db.SecretKeys.Add(key);
-            await db.SaveChangesAsync();
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null , null));
+            var key = await mediator.Send(new GetSecretKey(id));
 
-            var res = await client.GetAsync($"/api/keys/{key.Key}");
+            var res = await client.GetAsync($"/api/keys/{id}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
         }

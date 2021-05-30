@@ -50,11 +50,7 @@ namespace Trsys.Web.Data
                 }
                 var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
                 await orderService.RefreshOrderTextAsync();
-
-                var secretKeyService = scope.ServiceProvider.GetRequiredService<SecretKeyService>();
-                await secretKeyService.RefreshScretKeysAsync();
             }
-
         }
     }
 }

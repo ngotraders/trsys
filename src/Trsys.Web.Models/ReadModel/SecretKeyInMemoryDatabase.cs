@@ -4,21 +4,25 @@ using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.Models
 {
-    public static class SecretKeyInMemoryDatabase
+    public class SecretKeyInMemoryDatabase
     {
-        public static readonly List<SecretKeyDto> List = new();
-        public static readonly Dictionary<Guid, SecretKeyDto> Map = new();
+        public readonly List<SecretKeyDto> List = new();
+        public readonly Dictionary<Guid, SecretKeyDto> ById = new();
+        public readonly Dictionary<string, SecretKeyDto> ByKey = new();
+        public readonly Dictionary<string, SecretKeyDto> ByToken = new();
 
-        public static void Add(SecretKeyDto secretKeyDto)
+        public void Add(SecretKeyDto secretKeyDto)
         {
-            Map.Add(secretKeyDto.Id, secretKeyDto);
+            ById.Add(secretKeyDto.Id, secretKeyDto);
+            ByKey.Add(secretKeyDto.Key, secretKeyDto);
             List.Add(secretKeyDto);
         }
 
-        public static void Remove(Guid id)
+        public void Remove(Guid id)
         {
-            var item = Map[id];
-            Map.Remove(id);
+            var item = ById[id];
+            ById.Remove(id);
+            ByKey.Remove(item.Key);
             List.RemoveAt(List.IndexOf(item));
         }
     }

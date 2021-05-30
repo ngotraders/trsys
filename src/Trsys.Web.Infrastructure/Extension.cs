@@ -4,6 +4,7 @@ using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using Trsys.Web.Models;
 
 namespace Trsys.Web.Infrastructure
 {
@@ -19,6 +20,9 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<ICache, MemoryCache>();
             services.AddScoped<IRepository>(y => new CacheRepository(new Repository(y.GetService<IEventStore>()), y.GetService<IEventStore>(), y.GetService<ICache>()));
             services.AddScoped<ISession, Session>();
+
+            // Database
+            services.AddSingleton<SecretKeyInMemoryDatabase>();
 
             return services;
         }

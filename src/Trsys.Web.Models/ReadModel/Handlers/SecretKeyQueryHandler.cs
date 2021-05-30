@@ -20,11 +20,19 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         INotificationHandler<SecretKeyEaDisconnected>,
         INotificationHandler<SecretKeyDeleted>,
         IRequestHandler<GetSecretKeys, List<SecretKeyDto>>,
-        IRequestHandler<GetSecretKey, SecretKeyDto>
+        IRequestHandler<GetSecretKey, SecretKeyDto>,
+        IRequestHandler<FindBySecretKey, SecretKeyDto>,
+        IRequestHandler<FindByCurrentToken, SecretKeyDto>
     {
+        private readonly SecretKeyInMemoryDatabase db;
+
+        public SecretKeyQueryHandler(SecretKeyInMemoryDatabase db)
+        {
+            this.db = db;
+        }
         public Task Handle(SecretKeyCreated notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Add(new SecretKeyDto()
+            db.Add(new SecretKeyDto()
             {
                 Id = notification.Id,
                 Key = notification.Key
@@ -35,66 +43,80 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task Handle(SecretKeyKeyTypeChanged notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].KeyType = notification.KeyType;
+            db.ById[notification.Id].KeyType = notification.KeyType;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyDescriptionChanged notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].Description = notification.Description;
+            db.ById[notification.Id].Description = notification.Description;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyApproved notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].ApprovedAt = notification.TimeStamp;
+            db.ById[notification.Id].ApprovedAt = notification.TimeStamp;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyTokenGenerated notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].Token = notification.Token;
+            var item = db.ById[notification.Id];
+            item.Token = notification.Token;
+            db.ByToken.Add(item.Token, item);
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyTokenInvalidated notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].Token = null;
+            var item = db.ById[notification.Id];
+            db.ByToken.Remove(item.Token);
+            item.Token = null;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyRevoked notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].ApprovedAt = null;
+            db.ById[notification.Id].ApprovedAt = null;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyEaConnected notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].IsConnected = true;
+            db.ById[notification.Id].IsConnected = true;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyEaDisconnected notification, CancellationToken cancellationToken = default)
         {
-            SecretKeyInMemoryDatabase.Map[notification.Id].IsConnected = false;
+            db.ById[notification.Id].IsConnected = false;
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
         {
-            SecretKeyInMemoryDatabase.Remove(notification.Id);
+            db.Remove(notification.Id);
             return Task.CompletedTask;
         }
 
         public Task<List<SecretKeyDto>> Handle(GetSecretKeys message, CancellationToken token = default)
         {
-            return Task.FromResult(SecretKeyInMemoryDatabase.List);
+            return Task.FromResult(db.List);
         }
 
         public Task<SecretKeyDto> Handle(GetSecretKey request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(SecretKeyInMemoryDatabase.Map[request.Id]);
+            return Task.FromResult(db.ById.TryGetValue(request.Id, out var value) ? value : null);
+        }
+
+        public Task<SecretKeyDto> Handle(FindBySecretKey request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(db.ByKey.TryGetValue(request.Key, out var value) ? value : null);
+        }
+
+        public Task<SecretKeyDto> Handle(FindByCurrentToken request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(db.ByToken.TryGetValue(request.Token, out var value) ? value : null);
         }
     }
 }

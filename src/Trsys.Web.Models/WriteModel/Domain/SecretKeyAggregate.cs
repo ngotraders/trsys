@@ -77,7 +77,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
             }
         }
 
-        public void GenerateToken()
+        public string GenerateToken()
         {
             if (_connected)
             {
@@ -93,6 +93,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
             }
             var token = Guid.NewGuid().ToString();
             ApplyChange(new SecretKeyTokenGenerated(Id, token));
+            return token;
         }
 
         public void InvalidateToken()

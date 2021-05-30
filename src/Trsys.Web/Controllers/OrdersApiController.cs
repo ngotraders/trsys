@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
 using Trsys.Web.Models.Orders;
-using Trsys.Web.Models.SecretKeys;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
@@ -19,13 +17,11 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly OrderService service;
-        private readonly SecretKeyService secretKeyService;
         private readonly EventService eventService;
 
-        public OrdersApiController(OrderService service, SecretKeyService secretKeyService, EventService eventService)
+        public OrdersApiController(OrderService service, EventService eventService)
         {
             this.service = service;
-            this.secretKeyService = secretKeyService;
             this.eventService = eventService;
         }
 

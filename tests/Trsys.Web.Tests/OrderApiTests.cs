@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +12,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
+using Trsys.Web.Models;
 using Trsys.Web.Models.Orders;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Tests
@@ -29,13 +31,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -48,13 +49,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -79,13 +79,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -118,13 +117,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var service = server.Services.GetRequiredService<OrderService>();
             await service.UpdateOrdersAsync(new[] {
@@ -177,12 +175,11 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Subscriber, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
@@ -195,13 +192,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -217,13 +213,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -246,13 +241,12 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1:1.2:1@2:EURUSD:1:1.2:2.00:100", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -278,12 +272,11 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
 
-            var keyService = server.Services.GetRequiredService<SecretKeyService>();
-            await keyService.RegisterSecretKeyAsync(VALID_KEY, SecretKeyType.Publisher, null);
-            await keyService.ApproveSecretKeyAsync(VALID_KEY);
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            var result = await keyService.GenerateSecretTokenAsync(VALID_KEY);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", result.Token);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:120.23@2:EURUSD:1:0.0001", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
