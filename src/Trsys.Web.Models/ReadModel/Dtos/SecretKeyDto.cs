@@ -8,9 +8,8 @@ namespace Trsys.Web.Models.ReadModel.Dtos
         public SecretKeyType? KeyType { get; set; }
         public string Key { get; set; }
         public string Description { get; set; }
-        public bool IsValid { get; set; }
+        public bool IsValid => ApprovedAt.HasValue;
         public DateTimeOffset? ApprovedAt { get; set; }
-        public bool IsConnected => LastConnected.HasValue ? DateTimeOffset.UtcNow - LastConnected.Value < TimeSpan.FromSeconds(5) : false;
-        public DateTimeOffset? LastConnected { get; set; }
+        public bool IsConnected { get; set; }
     }
 }
