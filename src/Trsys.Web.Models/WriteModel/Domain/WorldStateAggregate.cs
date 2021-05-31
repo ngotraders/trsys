@@ -5,7 +5,7 @@ using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
 {
-    public class WorldStateAggregate: AggregateRoot
+    public class WorldStateAggregate : AggregateRoot
     {
         public static Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
 
@@ -21,6 +21,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         private Dictionary<string, Guid> _secretKeys = new Dictionary<string, Guid>();
         public void Apply(WorldStateSecretKeyIdGenerated e) => _secretKeys.Add(e.Key, e.SecretKeyId);
+        public void Apply(WorldStateSecretKeyDeleted e) => _secretKeys.Remove(e.Key);
 
         public bool GenerateSecretKeyIdIfNotExists(string key, out Guid id)
         {
@@ -31,6 +32,17 @@ namespace Trsys.Web.Models.WriteModel.Domain
             id = Guid.NewGuid();
             ApplyChange(new WorldStateSecretKeyIdGenerated(Id, key, id));
             return true;
+        }
+
+        public void DeleteSecretKey(string key, Guid idToDelete)
+        {
+            if (_secretKeys.TryGetValue(key, out var id))
+            {
+                if (id == idToDelete)
+                {
+                    ApplyChange(new WorldStateSecretKeyDeleted(Id, key));
+                }
+            }
         }
     }
 }

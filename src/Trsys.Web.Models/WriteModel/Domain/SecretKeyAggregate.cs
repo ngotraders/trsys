@@ -6,6 +6,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 {
     public class SecretKeyAggregate : AggregateRoot
     {
+        private string _key;
         private bool _approved;
         private SecretKeyType? _keyType;
         private string _description;
@@ -14,7 +15,9 @@ namespace Trsys.Web.Models.WriteModel.Domain
         private bool _deleted;
 
         public bool IsApproved => _approved;
+        public string Key => _key;
 
+        public void Apply(SecretKeyCreated e) => _key = e.Key;
         public void Apply(SecretKeyApproved e) => _approved = true;
         public void Apply(SecretKeyRevoked e) => _approved = false;
         public void Apply(SecretKeyKeyTypeChanged e) => _keyType = e.KeyType;

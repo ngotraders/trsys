@@ -9,7 +9,7 @@ using Trsys.Web.Models.WriteModel.Extensions;
 
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
-    public class SecretKeyCommandHandlers : 
+    public class SecretKeyCommandHandlers :
         IRequestHandler<CreateSecretKeyCommand, Guid>,
         IRequestHandler<UpdateSecretKeyCommand>,
         IRequestHandler<GenerateSecretTokenCommand, string>,
@@ -105,9 +105,13 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
         {
-            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            var state = await session.GetWorldState();
+            var item = await session.Get<SecretKeyAggregate>(request.Id, null, cancellationToken);
+            state.DeleteSecretKey(item.Key, item.Id);
             item.Delete();
-            await repository.Save(item, item.Version, cancellationToken);
+            await session.Add(state, cancellationToken);
+            await session.Add(item, cancellationToken);
+            await session.Commit(cancellationToken);
             return Unit.Value;
         }
     }

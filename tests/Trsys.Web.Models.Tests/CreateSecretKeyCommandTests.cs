@@ -17,7 +17,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_Key_and_Description_specified_Then_creation_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
 
@@ -36,7 +36,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_is_specified_and_approve_is_true_Then_creation_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
 
@@ -54,7 +54,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_is_not_specified_and_approve_is_true_Then_creation_fails()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, null, null, true)));
         }
@@ -62,7 +62,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_Key_and_Description_is_not_specified_Then_creation_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
 
@@ -77,7 +77,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_Key_already_exists_Then_no_event_created()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null));
             Assert.AreEqual(id, await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null)));

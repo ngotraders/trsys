@@ -17,7 +17,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_approved_Then_deletion_fails()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new DeleteSecretKeyCommand(id)));
@@ -36,7 +36,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_not_approved_Then_deletion_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
             await mediator.Send(new DeleteSecretKeyCommand(id));

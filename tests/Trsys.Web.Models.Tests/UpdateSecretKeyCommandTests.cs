@@ -17,7 +17,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_and_Description_not_specified_Then_modification_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
             await mediator.Send(new UpdateSecretKeyCommand(id, null, null));
@@ -33,7 +33,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_Key_and_Description_is_specified_Then_modification_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
             await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, "description"));
@@ -53,7 +53,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task When_KeyType_is_specified_and_approve_is_true_Then_modification_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
             await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, true));
@@ -72,7 +72,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_approved_When_KeyType_not_specified_Then_modification_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
             await mediator.Send(new UpdateSecretKeyCommand(id, null, "description", null));
@@ -93,7 +93,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_approved_When_KeyType_changing_Then_modification_fails()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Subscriber, null, true)));
@@ -112,7 +112,7 @@ namespace Trsys.Web.Models.Tests
         [TestMethod]
         public async Task Given_approved_When_approve_is_false_Then_modification_succeeds()
         {
-            using var services = new ServiceCollection().AddInfrastructure().BuildServiceProvider();
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
             await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, false));

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trsys.Web.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class InMemoryEventStore : IEventStore
     {
