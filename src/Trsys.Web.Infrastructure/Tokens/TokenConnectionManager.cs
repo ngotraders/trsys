@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -8,11 +9,11 @@ namespace Trsys.Web.Infrastructure.Tokens
     public class TokenConnectionManager : IDisposable
     {
         private readonly ConcurrentDictionary<string, TokenConnectionReporter> _reporters = new();
-        private readonly IMediator mediator;
+        private readonly IServiceScopeFactory serviceScopeFactory;
 
-        public TokenConnectionManager(IMediator mediator)
+        public TokenConnectionManager(IServiceScopeFactory serviceScopeFactory)
         {
-            this.mediator = mediator;
+            this.serviceScopeFactory = serviceScopeFactory;
         }
 
         public void Touch(string token)
@@ -27,7 +28,7 @@ namespace Trsys.Web.Infrastructure.Tokens
         {
             _reporters.GetOrAdd(token, (_) =>
             {
-                var reporter = new TokenConnectionReporter(id);
+                var reporter = new TokenConnectionReporter(id, token);
                 reporter.Connected += OnConnected;
                 reporter.Disconnected += OnDisconnected;
                 return reporter;
@@ -46,12 +47,16 @@ namespace Trsys.Web.Infrastructure.Tokens
 
         private void OnDisconnected(object sender, TokenConnectionEventArgs e)
         {
-            mediator.Send(new DisconnectSecretKeyCommand(e.Id));
+            using var scope = serviceScopeFactory.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            mediator.Send(new DisconnectSecretKeyCommand(e.Id, e.Token));
         }
 
         private void OnConnected(object sender, TokenConnectionEventArgs e)
         {
-            mediator.Send(new ConnectSecretKeyCommand(e.Id));
+            using var scope = serviceScopeFactory.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            mediator.Send(new ConnectSecretKeyCommand(e.Id, e.Token));
         }
 
         public void Dispose()

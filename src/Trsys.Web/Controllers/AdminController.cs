@@ -126,8 +126,13 @@ namespace Trsys.Web.Controllers
 
             try
             {
-                await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, true));
                 var result = await mediator.Send(new GetSecretKey(id));
+                if (result == null)
+                {
+                    model.ErrorMessage = $"シークレットキーを変更できません。";
+                    return SaveModelAndRedirectToIndex(model);
+                }
+                await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, true));
                 await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyApproved", new { Id = id, SecretKey = result.Key });
                 model.SuccessMessage = $"シークレットキー: {result.Key} を有効化しました。";
                 return SaveModelAndRedirectToIndex(model);
@@ -152,6 +157,11 @@ namespace Trsys.Web.Controllers
             try
             {
                 var result = await mediator.Send(new GetSecretKey(id));
+                if (result == null)
+                {
+                    model.ErrorMessage = $"シークレットキーを変更できません。";
+                    return SaveModelAndRedirectToIndex(model);
+                }
                 var token = result.Token;
                 await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, false));
                 if (!string.IsNullOrEmpty(token))
@@ -182,6 +192,11 @@ namespace Trsys.Web.Controllers
             try
             {
                 var result = await mediator.Send(new GetSecretKey(id));
+                if (result == null)
+                {
+                    model.ErrorMessage = $"シークレットキーを変更できません。";
+                    return SaveModelAndRedirectToIndex(model);
+                }
                 await mediator.Send(new DeleteSecretKeyCommand(id));
                 await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { Id = id, SecretKey = result.Key });
                 model.SuccessMessage = $"シークレットキー: {result.Key} を削除しました。";

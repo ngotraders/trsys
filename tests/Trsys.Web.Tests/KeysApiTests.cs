@@ -53,10 +53,10 @@ namespace Trsys.Web.Tests
                 Description = default(string),
             }), Encoding.UTF8, "application/json"));
             Assert.AreEqual(HttpStatusCode.Created, res.StatusCode);
-            var id = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("id").Value;
-            Assert.IsNotNull(id);
+            var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
+            Assert.IsNotNull(key);
 
-            var keyRes = await client.GetAsync($"/api/keys/{id}");
+            var keyRes = await client.GetAsync($"/api/keys/{key}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(false, retObj.Property("isApproved").Value);
@@ -76,10 +76,10 @@ namespace Trsys.Web.Tests
                 IsApproved = true,
             }), Encoding.UTF8, "application/json"));
             Assert.AreEqual(HttpStatusCode.Created, res.StatusCode);
-            var id = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("id").Value;
-            Assert.IsNotNull(id);
+            var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
+            Assert.IsNotNull(key);
 
-            var keyRes = await client.GetAsync($"/api/keys/{id}");
+            var keyRes = await client.GetAsync($"/api/keys/{key}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(true, retObj.Property("isApproved").Value);
@@ -95,7 +95,7 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null , null));
             var key = await mediator.Send(new GetSecretKey(id));
 
-            var res = await client.GetAsync($"/api/keys/{id}");
+            var res = await client.GetAsync($"/api/keys/{key.Key}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
         }

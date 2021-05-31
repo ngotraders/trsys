@@ -7,15 +7,16 @@ namespace Trsys.Web.Infrastructure.Tokens
     {
         public event EventHandler<TokenConnectionEventArgs> Connected;
         public event EventHandler<TokenConnectionEventArgs> Disconnected;
-        private SynchronizationContext context = new SynchronizationContext();
         private readonly Guid id;
+        private readonly string token;
         private readonly Timer timer;
         private DateTime? lastAccessed;
 
-        public TokenConnectionReporter(Guid id)
+        public TokenConnectionReporter(Guid id, string token)
         {
             this.id = id;
-            timer = new Timer(OnTick, null, 3000, 3000);
+            this.token = token;
+            timer = new Timer(OnTick, null, 1000, 1000);
         }
 
         private void OnTick(object state)
@@ -25,7 +26,7 @@ namespace Trsys.Web.Infrastructure.Tokens
                 if (lastAccessed.HasValue && DateTime.UtcNow - lastAccessed.Value > TimeSpan.FromSeconds(5))
                 {
                     lastAccessed = null;
-                    context.Post((_) => OnDisconnected(new TokenConnectionEventArgs(id)), null);
+                    OnDisconnected(new TokenConnectionEventArgs(id, token));
                 }
             }
         }
@@ -44,8 +45,15 @@ namespace Trsys.Web.Infrastructure.Tokens
         {
             lock (this)
             {
-                lastAccessed = DateTime.UtcNow;
-                context.Post((_) => OnConnected(new TokenConnectionEventArgs(id)), null);
+                if (!lastAccessed.HasValue)
+                {
+                    lastAccessed = DateTime.UtcNow;
+                    OnConnected(new TokenConnectionEventArgs(id, token));
+                }
+                else
+                {
+                    lastAccessed = DateTime.UtcNow;
+                }
             }
         }
 

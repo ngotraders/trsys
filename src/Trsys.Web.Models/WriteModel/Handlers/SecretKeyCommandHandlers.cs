@@ -91,7 +91,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(ConnectSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            item.Connect();
+            item.Connect(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
             return Unit.Value;
         }
@@ -99,7 +99,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(DisconnectSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            item.Disconnect();
+            item.Disconnect(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
             return Unit.Value;
         }

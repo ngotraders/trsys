@@ -5,7 +5,7 @@ using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Infrastructure.Tokens
 {
-    class TokenConnectionEventHandler :
+    public class TokenConnectionEventHandler :
         INotificationHandler<SecretKeyTokenGenerated>,
         INotificationHandler<SecretKeyTokenInvalidated>,
         INotificationHandler<TokenTouched>

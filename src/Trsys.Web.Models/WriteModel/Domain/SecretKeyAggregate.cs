@@ -76,6 +76,10 @@ namespace Trsys.Web.Models.WriteModel.Domain
         {
             if (_approved)
             {
+                if (!string.IsNullOrEmpty(_token))
+                {
+                    InvalidateToken();
+                }
                 ApplyChange(new SecretKeyRevoked(Id));
             }
         }
@@ -105,19 +109,24 @@ namespace Trsys.Web.Models.WriteModel.Domain
             {
                 throw new InvalidOperationException("Token is not generated yet.");
             }
+            if (_connected)
+            {
+                ApplyChange(new SecretKeyEaDisconnected(Id));
+            }
+
             ApplyChange(new SecretKeyTokenInvalidated(Id, _token));
         }
 
-        public void Connect()
+        public void Connect(string token)
         {
-            if (!_connected)
+            if (!_connected && _token == token)
             {
                 ApplyChange(new SecretKeyEaConnected(Id));
             }
         }
-        public void Disconnect()
+        public void Disconnect(string token)
         {
-            if (_connected)
+            if (_connected && _token == token)
             {
                 ApplyChange(new SecretKeyEaDisconnected(Id));
             }
