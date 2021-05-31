@@ -41,7 +41,7 @@ namespace Trsys.Web.Controllers
                     await eventService.RegisterSystemEventAsync("token", "NewEaAccessed", new { SecretKey = key });
                     return BadRequest("InvalidSecretKey");
                 }
-                else if (secretKey.IsValid)
+                else if (!secretKey.IsValid)
                 {
                     return BadRequest("InvalidSecretKey");
                 }

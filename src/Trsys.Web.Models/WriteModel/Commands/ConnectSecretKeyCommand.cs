@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class TouchSecretTokenCommand : IRequest
+    public class ConnectSecretKeyCommand : IRequest
     {
-        public TouchSecretTokenCommand(Guid id)
+        public ConnectSecretKeyCommand(Guid id)
         {
             Id = id;
         }

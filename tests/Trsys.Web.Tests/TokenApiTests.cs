@@ -90,7 +90,7 @@ namespace Trsys.Web.Tests
                 var mediator = server.Services.GetRequiredService<IMediator>();
                 var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
                 await mediator.Send(new GenerateSecretTokenCommand(id));
-                await mediator.Send(new TouchSecretTokenCommand(id));
+                await mediator.Send(new ConnectSecretKeyCommand(id));
             }
 
             var res = await client.PostAsync("/api/token", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
@@ -111,7 +111,7 @@ namespace Trsys.Web.Tests
                 var mediator = server.Services.GetRequiredService<IMediator>();
                 var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
                 token = await mediator.Send(new GenerateSecretTokenCommand(id));
-                await mediator.Send(new TouchSecretTokenCommand(id));
+                await mediator.Send(new ConnectSecretKeyCommand(id));
             }
 
             var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));

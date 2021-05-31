@@ -73,6 +73,7 @@
                     <col />
                     <col />
                     <col style="width: 4em" />
+                    <col style="width: 4em" />
                     <col style="width: 16em" />
                 </colgroup>
                 <thead>
@@ -80,6 +81,7 @@
                         <th>種類</th>
                         <th>シークレットキー</th>
                         <th>説明</th>
+                        <th>接続</th>
                         <th>状態</th>
                         <th></th>
                     </tr>
@@ -119,6 +121,7 @@
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
                             </td>
                             <td class="secret-key"><input type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
+                            <td>@(key.IsConnected ? "○" : "-")</td>
                             <td>@(key.IsValid ? "有効" : "無効")</td>
                             <td>
                                 <div class="d-flex justify-content-between">

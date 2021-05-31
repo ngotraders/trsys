@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,50 +34,43 @@ namespace LoadTesting
 
         public async Task<IEnumerable<string>> GetSecretKeysAsync()
         {
-            var secretKeys = new List<string>();
-            var adminRes = await client.GetAsync("/admin");
-            var html = await adminRes.Content.ReadAsStringAsync();
-            var index = html.IndexOf("<table");
-            if (index >= 0)
-            {
-                index = html.IndexOf("<span class=\"secret-key\"", index);
-            }
-            while (index >= 0)
-            {
-                var endIndex = html.IndexOf("</span>", index);
-                if (endIndex < 0)
-                {
-                    break;
-                }
-                var secretKey = html.Substring(index + 25, endIndex - (index + 25));
-                secretKeys.Add(secretKey);
-                index = html.IndexOf("<span class=\"secret-key\">", index + 1);
-            }
-            return secretKeys;
+            var response = await client.GetAsync("/api/keys");
+            var arr = JArray.Parse(await response.Content.ReadAsStringAsync());
+            return arr.Select(e => e.Value<string>("key"));
         }
 
-        public async Task CreateKeyAsync(string secretKey = default)
+        public async Task<string> CreateKeyAsync(string secretKey = default)
         {
-            await client.PostAsync("/admin/keys/new", new FormUrlEncodedContent(
-                new KeyValuePair<string, string>[] {
-                    KeyValuePair.Create("Key", secretKey),
-                    KeyValuePair.Create("KeyType", "3"),
-                }));
+            var response = await client.PostAsync("/api/keys", new StringContent(JsonConvert.SerializeObject(new
+            {
+                Key = secretKey,
+                KeyType = 3,
+            }), Encoding.UTF8, "application/json"));
+            var obj = JObject.Parse(await response.Content.ReadAsStringAsync());
+            return obj.Property("key").Value.ToString();
         }
 
         public async Task ApproveSecretKeyAsync(string secretKey)
         {
-            await client.PostAsync($"/admin/keys/{secretKey}/approve", new StringContent("", Encoding.UTF8, "text/plain"));
+            await client.PutAsync($"/api/keys/{secretKey}", new StringContent(JsonConvert.SerializeObject(new
+            {
+                KeyType = 3,
+                IsApproved = true,
+            }), Encoding.UTF8, "application/json"));
         }
 
         public async Task RevokeSecretKeyAsync(string secretKey)
         {
-            await client.PostAsync($"/admin/keys/{secretKey}/revoke", new StringContent("", Encoding.UTF8, "text/plain"));
+            await client.PutAsync($"/api/keys/{secretKey}", new StringContent(JsonConvert.SerializeObject(new
+            {
+                KeyType = 3,
+                IsApproved = false,
+            }), Encoding.UTF8, "application/json"));
         }
 
         public async Task DeleteSecretKeyAsync(string secretKey)
         {
-            await client.PostAsync($"/admin/keys/{secretKey}/delete", new StringContent("", Encoding.UTF8, "text/plain"));
+            await client.DeleteAsync($"/api/keys/{secretKey}");
         }
     }
 }

@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Trsys.Web.Infrastructure.InMemory;
+using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models;
 
 namespace Trsys.Web.Infrastructure
@@ -14,7 +15,7 @@ namespace Trsys.Web.Infrastructure
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             // MediatR dependencies
-            services.AddMediatR(Assembly.Load("Trsys.Web.Models"));
+            services.AddMediatR(Assembly.Load("Trsys.Web.Models"), Assembly.Load("Trsys.Web.Infrastructure"));
 
             // Cqrs services without IEventStore
             services.AddSingleton<ICache, MemoryCache>();
@@ -23,6 +24,9 @@ namespace Trsys.Web.Infrastructure
 
             // Database
             services.AddSingleton<SecretKeyInMemoryDatabase>();
+
+            // Token management
+            services.AddSingleton<TokenConnectionManager>();
 
             return services;
         }

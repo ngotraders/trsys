@@ -89,7 +89,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/update")]
         public async Task<IActionResult> PostKeyUpdate(Guid id, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Id == id);
+            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
             if (updateRequest == null || !updateRequest.KeyType.HasValue)
             {
                 model.ErrorMessage = $"シークレットキーを変更できません。";
@@ -117,7 +117,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/approve")]
         public async Task<IActionResult> PostKeyApprove(Guid id, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Id == id);
+            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
             if (updateRequest == null)
             {
                 model.ErrorMessage = $"シークレットキーを変更できません。";
@@ -142,7 +142,7 @@ namespace Trsys.Web.Controllers
         [HttpPost("keys/{id}/revoke")]
         public async Task<IActionResult> PostKeyRevoke(Guid id, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Id == id);
+            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
             if (updateRequest == null)
             {
                 model.ErrorMessage = $"シークレットキーを変更できません。";
