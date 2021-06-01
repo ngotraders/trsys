@@ -19,7 +19,7 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateUserCommand("name", "username", "pass"));
+            var id = await mediator.Send(new CreateUserCommand("name", "username", "pass", "Administrator"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -37,8 +37,8 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateUserCommand("name", "username", "pass"));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateUserCommand("name", "username", "pass")));
+            var id = await mediator.Send(new CreateUserCommand("name", "username", "pass", "Administrator"));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateUserCommand("name", "username", "pass", "Administrator")));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

@@ -28,7 +28,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var state = await session.GetWorldState();
             if (state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
             {
-                var item = new UserAggregate(userId, request.Name, request.Username);
+                var item = new UserAggregate(userId, request.Name, request.Username, request.Role);
                 item.ChangePasswordHash(request.PasswordHash);
                 await session.Add(state, cancellationToken);
                 await session.Add(item, cancellationToken);
@@ -46,7 +46,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             {
                 throw new InvalidOperationException("user name already exists.");
             }
-            var item = new UserAggregate(userId, request.Name, request.Username);
+            var item = new UserAggregate(userId, request.Name, request.Username, request.Role);
             item.ChangePasswordHash(request.PasswordHash);
             await session.Add(state, cancellationToken);
             await session.Add(item, cancellationToken);

@@ -28,6 +28,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
                 Id = notification.Id,
                 Name = notification.Name,
                 Username = notification.Username,
+                Role = notification.Role,
             });
 
             return Task.CompletedTask;

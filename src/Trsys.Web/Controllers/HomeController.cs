@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Services;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers
@@ -14,12 +16,12 @@ namespace Trsys.Web.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly UserService userService;
+        private readonly IMediator mediator;
         private readonly PasswordHasher passwordHasher;
 
-        public HomeController(UserService userService, PasswordHasher passwordHasher)
+        public HomeController(IMediator mediator, PasswordHasher passwordHasher)
         {
-            this.userService = userService;
+            this.mediator = mediator;
             this.passwordHasher = passwordHasher;
         }
 
@@ -50,8 +52,8 @@ namespace Trsys.Web.Controllers
                 return View("Login", model);
             }
 
-            var user = await userService.FindByUsernameAsync(model.Username);
-            if (user == null || user.Password != passwordHasher.Hash(model.Password))
+            var user = await mediator.Send(new FindByUsername(model.Username));
+            if (user == null || user.PasswordHash != passwordHasher.Hash(model.Password))
             {
                 model.ErrorMessage = "ユーザー名またはパスワードが違います。";
                 return View("Login", model);
@@ -90,7 +92,13 @@ namespace Trsys.Web.Controllers
                 return View("ChangePassword", model);
             }
 
-            await userService.ChangePasswordAsync(User.Identity.Name, passwordHasher.Hash(model.NewPassword));
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            if (user == null)
+            {
+                model.ErrorMessage = "予期せぬエラーが発生しました。";
+                return View("ChangePassword", model);
+            }
+            await mediator.Send(new ChangePasswordHashCommand(user.Id, passwordHasher.Hash(model.NewPassword)));
             return Redirect("/");
         }
 

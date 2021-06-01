@@ -13,10 +13,10 @@ namespace Trsys.Web.Models.WriteModel.Domain
         {
         }
 
-        public UserAggregate(Guid id, string name, string username)
+        public UserAggregate(Guid id, string name, string username, string role)
         {
             Id = id;
-            ApplyChange(new UserCreated(id, name, username));
+            ApplyChange(new UserCreated(id, name, username, role));
         }
 
         public void ChangePasswordHash(string passwordHash)

@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using MediatR;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Models.Users;
+using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Data
@@ -37,17 +38,9 @@ namespace Trsys.Web.Data
                         retryCount++;
                     }
                 }
-                if (!await db.Users.AnyAsync())
-                {
-                    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-                    db.Users.Add(new User()
-                    {
-                        Username = "admin",
-                        Password = passwordHasher.Hash("P@ssw0rd"),
-                        Role = "Administrator",
-                    });
-                    await db.SaveChangesAsync();
-                }
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+                await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
                 var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
                 await orderService.RefreshOrderTextAsync();
             }

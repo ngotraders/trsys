@@ -24,6 +24,7 @@ namespace Trsys.Web.Infrastructure
 
             // Database
             services.AddSingleton<SecretKeyInMemoryDatabase>();
+            services.AddSingleton<UserInMemoryDatabase>();
 
             // Token management
             services.AddSingleton<TokenConnectionManager>();

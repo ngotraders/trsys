@@ -9,7 +9,6 @@ using Trsys.Web.Infrastructure.Generic;
 using Trsys.Web.Infrastructure.SQLite;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Orders;
-using Trsys.Web.Models.Users;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Infrastructure
@@ -48,7 +47,6 @@ namespace Trsys.Web.Infrastructure
         public static IServiceCollection AddSQLiteRepositories(this IServiceCollection services)
         {
             services.AddSingleton<TrsysContextProcessor>();
-            services.AddTransient<IUserRepository, SQLiteUserRepository>();
             services.AddTransient<IOrderRepository, SQLiteOrderRepository>();
             services.AddTransient<IEventRepository, SQLiteEventRepository>();
             return services;
@@ -56,7 +54,6 @@ namespace Trsys.Web.Infrastructure
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddTransient<IEventRepository, EventRepository>();
             return services;
