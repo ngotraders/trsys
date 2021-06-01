@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Events;
+using Trsys.Web.Models.ReadModel.Infrastructure;
 using Trsys.Web.Models.ReadModel.Queries;
 
 namespace Trsys.Web.Models.ReadModel.Handlers

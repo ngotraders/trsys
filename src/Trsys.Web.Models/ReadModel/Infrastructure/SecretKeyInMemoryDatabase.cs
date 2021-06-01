@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Trsys.Web.Models.ReadModel.Dtos;
 
-namespace Trsys.Web.Models
+namespace Trsys.Web.Models.ReadModel.Infrastructure
 {
     public class SecretKeyInMemoryDatabase
     {

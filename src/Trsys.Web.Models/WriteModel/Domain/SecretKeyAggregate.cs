@@ -1,5 +1,7 @@
 ﻿using CQRSlite.Domain;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
@@ -17,6 +19,9 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public bool IsApproved => _approved;
         public string Key => _key;
 
+        private HashSet<int> _publishedOrderTickets = new HashSet<int>();
+        private HashSet<int> _subscribedOrderTickets = new HashSet<int>();
+
         public void Apply(SecretKeyCreated e) => _key = e.Key;
         public void Apply(SecretKeyApproved e) => _approved = true;
         public void Apply(SecretKeyRevoked e) => _approved = false;
@@ -27,6 +32,11 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public void Apply(SecretKeyEaConnected e) => _connected = true;
         public void Apply(SecretKeyEaDisconnected e) => _connected = false;
         public void Apply(SecretKeyDeleted e) => _deleted = true;
+
+        public void Apply(OrderPublisherOpenedOrder e) => _publishedOrderTickets.Add(e.Order.TicketNo);
+        public void Apply(OrderPublisherClosedOrder e) => _publishedOrderTickets.Remove(e.TicketNo);
+        public void Apply(OrderSubscriberOpenedOrder e) => _subscribedOrderTickets.Add(e.TicketNo);
+        public void Apply(OrderSubscriberClosedOrder e) => _subscribedOrderTickets.Remove(e.TicketNo);
 
         public SecretKeyAggregate()
         {
@@ -140,6 +150,42 @@ namespace Trsys.Web.Models.WriteModel.Domain
                     throw new InvalidOperationException("Cannot delete secret key if approved.");
                 }
                 ApplyChange(new SecretKeyDeleted(Id));
+            }
+        }
+
+        public void Publish(IEnumerable<PublishedOrder> orders)
+        {
+            var tickets = orders.Select(o => o.TicketNo).ToList();
+            var added = tickets.Except(_publishedOrderTickets);
+            var removed = _publishedOrderTickets.Except(tickets);
+
+            if (added.Any())
+            {
+                var ordersDictionary = orders.ToDictionary(o => o.TicketNo, o => o);
+                foreach (var ticket in added)
+                {
+                    ApplyChange(new OrderPublisherOpenedOrder(Id, ordersDictionary[ticket]));
+                }
+            }
+            foreach (var ticket in removed)
+            {
+                ApplyChange(new OrderPublisherClosedOrder(Id, ticket));
+            }
+        }
+
+        public void Subscribed(int[] tickets)
+        {
+            var added = tickets.Except(_subscribedOrderTickets);
+            var removed = _subscribedOrderTickets.Except(tickets);
+
+            foreach (var ticket in added)
+            {
+                ApplyChange(new OrderSubscriberOpenedOrder(Id, ticket));
+            }
+
+            foreach (var ticket in removed)
+            {
+                ApplyChange(new OrderSubscriberClosedOrder(Id, ticket));
             }
         }
     }

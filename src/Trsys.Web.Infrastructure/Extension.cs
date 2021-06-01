@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Infrastructure.Tokens;
-using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure
 {
@@ -23,6 +23,7 @@ namespace Trsys.Web.Infrastructure
             services.AddScoped<ISession, Session>();
 
             // Database
+            services.AddSingleton<OrderInMemoryDatabase>();
             services.AddSingleton<SecretKeyInMemoryDatabase>();
             services.AddSingleton<UserInMemoryDatabase>();
 

@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Data
 {
@@ -41,8 +40,6 @@ namespace Trsys.Web.Data
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
                 await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
-                var orderService = scope.ServiceProvider.GetRequiredService<OrderService>();
-                await orderService.RefreshOrderTextAsync();
             }
         }
     }

@@ -13,12 +13,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.Caching;
-using Trsys.Web.Infrastructure.Caching.InMemory;
 using Trsys.Web.Models;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Tests
 {

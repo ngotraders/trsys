@@ -18,16 +18,13 @@ namespace Trsys.Web.Controllers
     public class AdminController : Controller
     {
         private readonly IMediator mediator;
-        private readonly OrderService orderService;
         private readonly EventService eventService;
 
         public AdminController(
             IMediator mediator,
-            OrderService orderService,
             EventService eventService)
         {
             this.mediator = mediator;
-            this.orderService = orderService;
             this.eventService = eventService;
         }
 
@@ -40,7 +37,7 @@ namespace Trsys.Web.Controllers
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
             }
 
-            var order = await orderService.GetOrderTextEntryAsync();
+            var order = await mediator.Send(new GetOrderTextEntry());
             model.CacheOrderText = order?.Text;
 
             model.SecretKeys = (await mediator.Send(new GetSecretKeys()))
@@ -54,7 +51,11 @@ namespace Trsys.Web.Controllers
         [HttpPost("orders/clear")]
         public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
         {
-            await orderService.ClearOrdersAsync();
+            var orders = await mediator.Send(new GetOrders());
+            foreach (var id in orders.Select(o => o.SecretKeyId).Distinct())
+            {
+                await mediator.Send(new ClearOrdersCommand(id));
+            }
             await eventService.RegisterUserEventAsync(User.Identity.Name, "OrderCleared");
             return SaveModelAndRedirectToIndex(model);
         }

@@ -20,10 +20,13 @@ namespace Trsys.Web.Filters
             .Select(key => Tuple.Create(Enum.GetName(typeof(SecretKeyType), key), key))
             .ToArray();
 
-        public static ClaimsPrincipal Create(string key, SecretKeyType keyType)
+        public static ClaimsPrincipal Create(Guid id, string key, SecretKeyType keyType)
         {
             var principal = new ClaimsPrincipal();
-            var claims = new List<Claim>() { new Claim(ClaimsIdentity.DefaultNameClaimType, key) };
+            var claims = new List<Claim>() {
+                new Claim(ClaimTypes.NameIdentifier, id.ToString()),
+                new Claim(ClaimsIdentity.DefaultNameClaimType, key)
+            };
             foreach (var elem in secretKeyTypes)
             {
                 if (keyType.HasFlag(elem.Item2))
@@ -72,7 +75,7 @@ namespace Trsys.Web.Filters
                 return;
             }
             await mediator.Publish(new TokenTouched(token));
-            context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(result.Key, result.KeyType.Value);
+            context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(result.Id, result.Key, result.KeyType.Value);
             await base.OnActionExecutionAsync(context, next);
         }
     }

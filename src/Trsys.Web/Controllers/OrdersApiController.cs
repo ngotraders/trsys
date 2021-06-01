@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
-using Trsys.Web.Models.Orders;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
@@ -16,12 +19,12 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class OrdersApiController : ControllerBase
     {
-        private readonly OrderService service;
+        private readonly IMediator mediator;
         private readonly EventService eventService;
 
-        public OrdersApiController(OrderService service, EventService eventService)
+        public OrdersApiController(IMediator mediator, EventService eventService)
         {
-            this.service = service;
+            this.mediator = mediator;
             this.eventService = eventService;
         }
 
@@ -30,11 +33,10 @@ namespace Trsys.Web.Controllers
         [RequireToken("Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
-            var cacheEntry = await service.GetOrderTextEntryAsync();
+            var cacheEntry = await mediator.Send(new GetOrderTextEntry());
             if (cacheEntry == null)
             {
                 await eventService.RegisterSystemEventAsync("order", "CacheNotFound");
-                await service.RefreshOrderTextAsync();
                 throw new InvalidOperationException("Cache entry not found.");
             }
             var etags = HttpContext.Request.Headers["If-None-Match"];
@@ -49,6 +51,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
+            await mediator.Send(new FetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets));
             await eventService.RegisterSystemEventAsync("order", "OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text });
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
@@ -59,46 +62,24 @@ namespace Trsys.Web.Controllers
         [RequireToken("Publisher")]
         public async Task<IActionResult> PostOrder([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
-            var orders = new List<Order>();
+            var orders = new List<PublishedOrder>();
             if (!string.IsNullOrEmpty(text))
             {
                 foreach (var item in text.Split("@"))
                 {
-                    if (!Regex.IsMatch(item, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+"))
+                    var publishedOrder = PublishedOrder.Parse(item);
+                    if (publishedOrder == null)
                     {
                         await eventService.RegisterSystemEventAsync("order", "OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text });
                         return BadRequest();
                     }
-                    var splitted = item.Split(":");
-                    var ticketNo = splitted[0];
-                    var symbol = splitted[1];
-                    var orderType = (OrderType)int.Parse(splitted[2]);
-                    var price = splitted[3];
-                    var lots = splitted[4];
-                    var time = splitted[5];
-                    orders.Add(new Order()
-                    {
-                        TicketNo = int.Parse(ticketNo),
-                        Symbol = symbol,
-                        OrderType = orderType,
-                        Price = decimal.Parse(price).Normalize(),
-                        Lots = decimal.Parse(lots).Normalize(),
-                        Time = long.Parse(time),
-                    });
+                    orders.Add(publishedOrder);
                 }
             }
 
-            await service.UpdateOrdersAsync(orders);
+            await mediator.Send(new PublishOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
             await eventService.RegisterSystemEventAsync("order", "OrderUpdated", new { SecretKey = User.Identity.Name, Text = text });
             return Ok();
-        }
-    }
-
-    static class DecimalExtension
-    {
-        public static decimal Normalize(this decimal value)
-        {
-            return value / 1.000000000000000000000000000000000m;
         }
     }
 }

@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using Trsys.Web.Configurations;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
@@ -58,25 +56,7 @@ namespace Trsys.Web
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
                 services.AddSQLiteRepositories();
             }
-            var redisConnection = Configuration.GetConnectionString("RedisConnection");
-            if (string.IsNullOrEmpty(redisConnection))
-            {
-                services.AddInMemoryStores();
-            }
-            else
-            {
-                var redis = ConnectionMultiplexer.Connect(redisConnection);
-                services.AddDataProtection()
-                    .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
-                    .SetApplicationName("Trsys.Web");
-                services.AddRedisStores(options =>
-                {
-                    options.Configuration = redisConnection;
-                    options.InstanceName = "Trsys.Web/";
-                });
-            }
             services.AddEventProcessor();
-            services.AddTransient<OrderService>();
             services.AddTransient<EventService>();
         }
 
@@ -91,15 +71,6 @@ namespace Trsys.Web
             else
             {
                 logger.LogInformation("Using sqlite connection.");
-            }
-            var redisConnection = Configuration.GetConnectionString("RedisConnection");
-            if (string.IsNullOrEmpty(redisConnection))
-            {
-                logger.LogInformation("Using in memory implementation for key-value stores.");
-            }
-            else
-            {
-                logger.LogInformation("Using redis implementation for key-value stores.");
             }
             logger.LogInformation("Database initializing.");
             DatabaseInitializer.InitializeAsync(app).Wait();

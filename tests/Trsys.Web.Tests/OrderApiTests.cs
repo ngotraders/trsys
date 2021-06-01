@@ -13,9 +13,8 @@ using System.Threading.Tasks;
 using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
 using Trsys.Web.Models;
-using Trsys.Web.Models.Orders;
+using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Tests
 {
@@ -56,17 +55,16 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var service = server.Services.GetRequiredService<OrderService>();
-            await service.UpdateOrdersAsync(new[] {
-                new Order() {
+            await mediator.Send(new PublishOrderCommand(id, new[] {
+                new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY,
+                    OrderType = OrderType.Buy,
                     Price = 1,
                     Lots = 2,
                     Time = 1617271883,
                 }
-            });
+            }));
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -86,25 +84,24 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var service = server.Services.GetRequiredService<OrderService>();
-            await service.UpdateOrdersAsync(new[] {
-                new Order() {
+            await mediator.Send(new PublishOrderCommand(id, new[] {
+                new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY,
+                    OrderType = OrderType.Buy,
                     Price = 1.2m,
                     Lots = 2.2m,
                     Time = 1617271883,
                 },
-                new Order() {
+                new PublishedOrder() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
-                    OrderType = OrderType.SELL,
+                    OrderType = OrderType.Sell,
                     Price = 0,
                     Lots = 0,
                     Time = 1617271884,
                 }
-            });
+            }));
 
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -124,25 +121,24 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var service = server.Services.GetRequiredService<OrderService>();
-            await service.UpdateOrdersAsync(new[] {
-                new Order() {
+            await mediator.Send(new PublishOrderCommand(id, new[] {
+                new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
-                    OrderType = OrderType.BUY,
+                    OrderType = OrderType.Buy,
                     Price = 1,
                     Lots = 2,
                     Time = 1617271872,
                 },
-                new Order() {
+                new PublishedOrder() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
-                    OrderType = OrderType.SELL,
+                    OrderType = OrderType.Sell,
                     Price = 180,
                     Lots = 20,
                     Time = 1617271873,
                 }
-            });
+            }));
 
             var res1 = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
@@ -202,8 +198,7 @@ namespace Trsys.Web.Tests
             var res = await client.PostAsync("/api/orders", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.SearchAllAsync();
+            var orders = await mediator.Send(new GetPublishedOrders());
             Assert.AreEqual(0, orders.Count);
         }
 
@@ -223,13 +218,12 @@ namespace Trsys.Web.Tests
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.SearchAllAsync();
+            var orders = await mediator.Send(new GetPublishedOrders());
 
             Assert.AreEqual(1, orders.Count);
             Assert.AreEqual(1, orders[0].TicketNo);
             Assert.AreEqual("USDJPY", orders[0].Symbol);
-            Assert.AreEqual(OrderType.BUY, orders[0].OrderType);
+            Assert.AreEqual(OrderType.Buy, orders[0].OrderType);
             Assert.AreEqual(1, orders[0].Price);
             Assert.AreEqual(2, orders[0].Lots);
             Assert.AreEqual(3, orders[0].Time);
@@ -251,8 +245,7 @@ namespace Trsys.Web.Tests
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1:1.2:1@2:EURUSD:1:1.2:2.00:100", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
-            var repository = server.Services.GetRequiredService<IOrderRepository>();
-            var orders = await repository.SearchAllAsync();
+            var orders = await mediator.Send(new GetPublishedOrders());
             Assert.AreEqual(2, orders.Count);
         }
 
