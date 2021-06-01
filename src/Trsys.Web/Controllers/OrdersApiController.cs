@@ -8,9 +8,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
 using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
@@ -20,12 +20,10 @@ namespace Trsys.Web.Controllers
     public class OrdersApiController : ControllerBase
     {
         private readonly IMediator mediator;
-        private readonly EventService eventService;
 
-        public OrdersApiController(IMediator mediator, EventService eventService)
+        public OrdersApiController(IMediator mediator)
         {
             this.mediator = mediator;
-            this.eventService = eventService;
         }
 
         [HttpGet]
@@ -36,7 +34,7 @@ namespace Trsys.Web.Controllers
             var cacheEntry = await mediator.Send(new GetOrderTextEntry());
             if (cacheEntry == null)
             {
-                await eventService.RegisterSystemEventAsync("order", "CacheNotFound");
+                await mediator.Publish(new SystemEventNotification("order", "CacheNotFound"));
                 throw new InvalidOperationException("Cache entry not found.");
             }
             var etags = HttpContext.Request.Headers["If-None-Match"];
@@ -52,7 +50,7 @@ namespace Trsys.Web.Controllers
             }
 
             await mediator.Send(new FetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets));
-            await eventService.RegisterSystemEventAsync("order", "OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text });
+            await mediator.Publish(new SystemEventNotification("order", "OrderFetched", new { SecretKey = User.Identity.Name, Text = cacheEntry.Text }));
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -70,7 +68,7 @@ namespace Trsys.Web.Controllers
                     var publishedOrder = PublishedOrder.Parse(item);
                     if (publishedOrder == null)
                     {
-                        await eventService.RegisterSystemEventAsync("order", "OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text });
+                        await mediator.Publish(new SystemEventNotification("order", "OrderUpdateFailed", new { SecretKey = User.Identity.Name, Text = text }));
                         return BadRequest();
                     }
                     orders.Add(publishedOrder);
@@ -78,7 +76,7 @@ namespace Trsys.Web.Controllers
             }
 
             await mediator.Send(new PublishOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
-            await eventService.RegisterSystemEventAsync("order", "OrderUpdated", new { SecretKey = User.Identity.Name, Text = text });
+            await mediator.Publish(new SystemEventNotification("order", "OrderUpdated", new { SecretKey = User.Identity.Name, Text = text }));
             return Ok();
         }
     }

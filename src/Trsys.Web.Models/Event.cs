@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace Trsys.Web.Models.Events
+namespace Trsys.Web.Models
 {
     public class Event
     {

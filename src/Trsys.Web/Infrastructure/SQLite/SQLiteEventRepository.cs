@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure.Generic;
-using Trsys.Web.Models.Events;
+using Trsys.Web.Models;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Infrastructure.SQLite
 {

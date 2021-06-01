@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Queries;
-using Trsys.Web.Services;
 using Trsys.Web.ViewModels.Events;
 
 namespace Trsys.Web.Controllers
@@ -13,12 +12,10 @@ namespace Trsys.Web.Controllers
     public class EventsController : Controller
     {
         private readonly IMediator mediator;
-        private readonly EventService eventService;
 
-        public EventsController(IMediator mediator, EventService eventService)
+        public EventsController(IMediator mediator)
         {
             this.mediator = mediator;
-            this.eventService = eventService;
         }
 
         [HttpGet]
@@ -32,7 +29,7 @@ namespace Trsys.Web.Controllers
                 SecretKeys = await mediator.Send(new GetSecretKeys()),
             };
 
-            model.Events = await eventService.SearchAsync(source, model.Page, model.PerPage);
+            model.Events = await mediator.Send(new GetEvents(source, model.Page, model.PerPage));
             return View(model);
         }
     }

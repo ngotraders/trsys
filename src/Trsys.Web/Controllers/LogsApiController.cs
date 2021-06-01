@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
-using Trsys.Web.Services;
+using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Controllers
 {
@@ -13,11 +13,11 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class LogsApiController : Controller
     {
-        private readonly EventService service;
+        private readonly IMediator mediator;
 
-        public LogsApiController(EventService service)
+        public LogsApiController(IMediator mediator)
         {
-            this.service = service;
+            this.mediator = mediator;
         }
 
         [HttpPost]
@@ -32,7 +32,7 @@ namespace Trsys.Web.Controllers
 
             foreach (var line in text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                await service.RegisterEaEventAsync(User.Identity.Name, "Log", line);
+                await mediator.Publish(new EaEventNotification( User.Identity.Name, "Log", line));
             }
             return Accepted();
         }

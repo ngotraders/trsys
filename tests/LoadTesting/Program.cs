@@ -17,8 +17,9 @@ namespace LoadTesting
 
         static void Main(string[] args)
         {
-            using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
-            server.StartAsync().Wait();
+            //using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
+            //server.StartAsync().Wait();
+            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Trsys.Web.Models.Events;
+using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.ViewModels.Events

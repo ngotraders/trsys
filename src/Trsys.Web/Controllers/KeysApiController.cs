@@ -5,9 +5,9 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
@@ -16,12 +16,10 @@ namespace Trsys.Web.Controllers
     public class KeysApiController : Controller
     {
         private readonly IMediator mediator;
-        private readonly EventService eventService;
 
-        public KeysApiController(IMediator mediator, EventService eventService)
+        public KeysApiController(IMediator mediator)
         {
             this.mediator = mediator;
-            this.eventService = eventService;
         }
 
         [HttpGet]
@@ -55,7 +53,7 @@ namespace Trsys.Web.Controllers
             {
                 var id = await mediator.Send(new CreateSecretKeyCommand(request.KeyType, request.Key, request.Description, request.IsApproved));
                 var result = await mediator.Send(new GetSecretKey(id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyCreated", new { Id = id, SecretKey = result.Key, request.KeyType, request.Description, request.IsApproved });
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyCreated", new { Id = id, SecretKey = result.Key, request.KeyType, request.Description, request.IsApproved }));
                 return CreatedAtAction("GetKey", new { key = result.Key }, new { key = result.Key });
             }
             catch (Exception e)
@@ -110,7 +108,7 @@ namespace Trsys.Web.Controllers
             {
                 await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, request.KeyType, request.Description, request.IsApproved));
                 var result = await mediator.Send(new GetSecretKey(secretKey.Id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyUpdated", new { Id = secretKey.Id, SecretKey = secretKey.Key, request.KeyType, request.Description, request.IsApproved });
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyUpdated", new { Id = secretKey.Id, SecretKey = secretKey.Key, request.KeyType, request.Description, request.IsApproved }));
                 return Ok();
             }
             catch (Exception e)
@@ -135,7 +133,7 @@ namespace Trsys.Web.Controllers
             try
             {
                 await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { Id = secretKey.Id, SecretKey = secretKey.Key });
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyDeleted", new { Id = secretKey.Id, SecretKey = secretKey.Key }));
                 return Ok();
             }
             catch (Exception e)

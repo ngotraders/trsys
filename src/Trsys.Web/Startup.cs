@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -42,6 +43,7 @@ namespace Trsys.Web
                     options.ReturnUrlParameter = "returnUrl";
                 });
 
+            services.AddMediatR(typeof(Startup).Assembly);
             services.AddInMemoryInfrastructure();
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
@@ -56,7 +58,6 @@ namespace Trsys.Web
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
                 services.AddSQLiteRepositories();
             }
-            services.AddEventProcessor();
             services.AddTransient<EventService>();
         }
 

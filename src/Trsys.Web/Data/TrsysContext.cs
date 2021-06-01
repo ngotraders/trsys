@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
-using Trsys.Web.Models.Events;
+using Trsys.Web.Models;
 
 namespace Trsys.Web.Data
 {

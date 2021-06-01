@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
+using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Services;
@@ -15,12 +16,10 @@ namespace Trsys.Web.Controllers
     {
 
         private readonly IMediator mediator;
-        private readonly EventService eventService;
 
-        public TokenApiController(IMediator mediator, EventService eventService)
+        public TokenApiController(IMediator mediator)
         {
             this.mediator = mediator;
-            this.eventService = eventService;
         }
 
         [HttpPost]
@@ -38,7 +37,7 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     await mediator.Send(new CreateSecretKeyCommand(null, key, null));
-                    await eventService.RegisterSystemEventAsync("token", "NewEaAccessed", new { SecretKey = key });
+                    await mediator.Publish(new SystemEventNotification("token", "NewEaAccessed", new { SecretKey = key }));
                     return BadRequest("InvalidSecretKey");
                 }
                 else if (!secretKey.IsValid)
@@ -46,7 +45,7 @@ namespace Trsys.Web.Controllers
                     return BadRequest("InvalidSecretKey");
                 }
                 var token = await mediator.Send(new GenerateSecretTokenCommand(secretKey.Id));
-                await eventService.RegisterSystemEventAsync("token", "TokenGenerated", new { SecretKey = key, SecretToken = token });
+                await mediator.Publish(new SystemEventNotification("token", "TokenGenerated", new { SecretKey = key, SecretToken = token }));
                 return Ok(token);
             }
             catch
@@ -65,7 +64,7 @@ namespace Trsys.Web.Controllers
                 return BadRequest("InvalidToken");
             }
             await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id));
-            await eventService.RegisterSystemEventAsync("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token });
+            await mediator.Publish(new SystemEventNotification("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token }));
             return Ok(token);
         }
     }

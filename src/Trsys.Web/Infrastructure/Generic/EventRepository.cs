@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Data;
-using Trsys.Web.Models.Events;
+using Trsys.Web.Models;
+using Trsys.Web.Services;
 
 namespace Trsys.Web.Infrastructure.Generic
 {
