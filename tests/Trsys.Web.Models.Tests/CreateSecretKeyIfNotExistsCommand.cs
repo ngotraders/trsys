@@ -12,14 +12,14 @@ using Trsys.Web.Models.WriteModel.Commands;
 namespace Trsys.Web.Models.Tests
 {
     [TestClass]
-    public class CreateSecretKeyCommandTests
+    public class CreateSecretKeyIfNotExistsCommandTests
     {
         [TestMethod]
         public async Task When_KeyType_Key_and_Description_specified_Then_creation_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
+            var id = await mediator.Send(new CreateSecretKeyIfNotExistsCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -38,7 +38,7 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
+            var id = await mediator.Send(new CreateSecretKeyIfNotExistsCommand(SecretKeyType.Publisher, null, null, true));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -56,7 +56,7 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, null, null, true)));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, null, null, true)));
         }
 
         [TestMethod]
@@ -64,7 +64,7 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
+            var id = await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, null, null));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -79,8 +79,8 @@ namespace Trsys.Web.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null)));
+            var id = await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, "TEST_KEY", null));
+            Assert.AreEqual(id, await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, "TEST_KEY", null)));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

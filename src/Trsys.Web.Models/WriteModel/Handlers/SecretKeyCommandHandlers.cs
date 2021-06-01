@@ -11,6 +11,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 {
     public class SecretKeyCommandHandlers :
         IRequestHandler<CreateSecretKeyCommand, Guid>,
+        IRequestHandler<CreateSecretKeyIfNotExistsCommand, Guid>,
         IRequestHandler<UpdateSecretKeyCommand>,
         IRequestHandler<GenerateSecretTokenCommand, string>,
         IRequestHandler<InvalidateSecretTokenCommand>,
@@ -27,7 +28,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             this.repository = repository;
         }
 
-        public async Task<Guid> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
+        public async Task<Guid> Handle(CreateSecretKeyIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
             var state = await session.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
@@ -51,6 +52,33 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 await session.Commit(cancellationToken);
                 return secretKeyId;
             }
+            return secretKeyId;
+        }
+
+        public async Task<Guid> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
+        {
+            var state = await session.GetWorldState();
+            var key = request.Key ?? Guid.NewGuid().ToString();
+            if (!state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
+            {
+                throw new InvalidOperationException("specified key already exists.");
+            }
+            var item = new SecretKeyAggregate(secretKeyId, key);
+            if (request.KeyType.HasValue)
+            {
+                item.ChangeKeyType(request.KeyType.Value);
+            }
+            item.ChangeDescription(request.Description);
+            if (request.Approve.HasValue)
+            {
+                if (request.Approve.Value)
+                {
+                    item.Approve();
+                }
+            }
+            await session.Add(state, cancellationToken);
+            await session.Add(item, cancellationToken);
+            await session.Commit(cancellationToken);
             return secretKeyId;
         }
 
