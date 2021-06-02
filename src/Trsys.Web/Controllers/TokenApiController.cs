@@ -63,7 +63,7 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest("InvalidToken");
             }
-            await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id));
+            await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id, token));
             await mediator.Publish(new SystemEventNotification("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token }));
             return Ok(token);
         }

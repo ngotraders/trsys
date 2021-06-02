@@ -88,7 +88,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
             {
                 if (!string.IsNullOrEmpty(_token))
                 {
-                    InvalidateToken();
+                    InvalidateToken(_token);
                 }
                 ApplyChange(new SecretKeyRevoked(Id));
             }
@@ -113,11 +113,15 @@ namespace Trsys.Web.Models.WriteModel.Domain
             return token;
         }
 
-        public void InvalidateToken()
+        public void InvalidateToken(string token)
         {
             if (string.IsNullOrEmpty(_token))
             {
                 throw new InvalidOperationException("Token is not generated yet.");
+            }
+            if (token != _token)
+            {
+                throw new InvalidOperationException("The token is not valid.");
             }
             if (_connected)
             {

@@ -135,7 +135,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(InvalidateSecretTokenCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            item.InvalidateToken();
+            item.InvalidateToken(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
             return Unit.Value;
         }
