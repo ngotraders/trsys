@@ -44,17 +44,18 @@ namespace Trsys.Web
                 });
 
             services.AddMediatR(typeof(Startup).Assembly);
-            services.AddInMemoryInfrastructure();
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
             if (string.IsNullOrEmpty(sqliteConnection))
             {
+                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"));
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
                 services.AddRepositories();
             }
             else
             {
+                services.AddInMemoryInfrastructure();
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
                 services.AddSQLiteRepositories();
             }

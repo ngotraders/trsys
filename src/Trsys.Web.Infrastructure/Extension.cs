@@ -3,6 +3,7 @@ using CQRSlite.Domain;
 using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using SqlStreamStore;
 using System.Reflection;
 using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Infrastructure.Tokens;
@@ -36,6 +37,16 @@ namespace Trsys.Web.Infrastructure
         public static IServiceCollection AddInMemoryInfrastructure(this IServiceCollection services)
         {
             return services.AddInfrastructure().AddSingleton<IEventStore, InMemoryEventStore>();
+        }
+
+        public static IServiceCollection AddSqlServerInfrastructure(this IServiceCollection services, string connectionString)
+        {
+            services.AddInfrastructure();
+            services.AddSingleton<IEventStore, SqlStreamStoreEventStore>();
+            services.AddSingleton<IStreamStore, InMemoryStreamStore>();
+            //services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
+            //services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
+            return services;
         }
     }
 }

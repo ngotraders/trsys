@@ -4,16 +4,16 @@ using System;
 
 namespace Trsys.Web.Models.ReadModel.Events
 {
-    public class WorldStateSecretKeyDeleted : INotification, IEvent
+    public class WorldStateUserDeleted : INotification, IEvent
     {
-        public WorldStateSecretKeyDeleted(Guid id, string key)
+        public WorldStateUserDeleted(Guid id, string username)
         {
             Id = id;
-            Key = key;
+            Username = username;
         }
 
         public Guid Id { get; set; }
-        public string Key { get; set; }
+        public string Username { get; set; }
         public int Version { get; set; }
         public DateTimeOffset TimeStamp { get; set; }
     }

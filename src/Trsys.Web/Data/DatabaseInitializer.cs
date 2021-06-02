@@ -27,7 +27,7 @@ namespace Trsys.Web.Data
                         }
                         else
                         {
-                            db.Database.EnsureCreated();
+                            await db.Database.EnsureCreatedAsync();
                         }
                         break;
                     }
