@@ -163,17 +163,17 @@ namespace Trsys.Web.Models.WriteModel.Domain
             var added = tickets.Except(_publishedOrderTickets);
             var removed = _publishedOrderTickets.Except(tickets);
 
+            foreach (var ticket in removed.OrderBy(e => e))
+            {
+                ApplyChange(new OrderPublisherClosedOrder(Id, ticket));
+            }
             if (added.Any())
             {
                 var ordersDictionary = orders.ToDictionary(o => o.TicketNo, o => o);
-                foreach (var ticket in added)
+                foreach (var ticket in added.OrderBy(e => e))
                 {
                     ApplyChange(new OrderPublisherOpenedOrder(Id, ordersDictionary[ticket]));
                 }
-            }
-            foreach (var ticket in removed)
-            {
-                ApplyChange(new OrderPublisherClosedOrder(Id, ticket));
             }
         }
 
@@ -182,14 +182,14 @@ namespace Trsys.Web.Models.WriteModel.Domain
             var added = tickets.Except(_subscribedOrderTickets);
             var removed = _subscribedOrderTickets.Except(tickets);
 
-            foreach (var ticket in added)
-            {
-                ApplyChange(new OrderSubscriberOpenedOrder(Id, ticket));
-            }
-
-            foreach (var ticket in removed)
+            foreach (var ticket in removed.OrderBy(e => e))
             {
                 ApplyChange(new OrderSubscriberClosedOrder(Id, ticket));
+            }
+
+            foreach (var ticket in added.OrderBy(e => e))
+            {
+                ApplyChange(new OrderSubscriberOpenedOrder(Id, ticket));
             }
         }
     }
