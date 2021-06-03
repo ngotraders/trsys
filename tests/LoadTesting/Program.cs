@@ -4,6 +4,7 @@ using NBomber.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LoadTesting
@@ -17,11 +18,11 @@ namespace LoadTesting
 
         static void Main(string[] args)
         {
-            //using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
-            //server.StartAsync().Wait();
+            // using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
+            // server.StartAsync().Wait();
             using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
-            var secretKeys = GenerateSecretKeys(COUNT_OF_CLIENTS + 1).Result;
+            var secretKeys = WithRetry(() => GenerateSecretKeys(COUNT_OF_CLIENTS + 1)).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
             var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
             var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First())).ToList();
@@ -62,6 +63,26 @@ namespace LoadTesting
                 .RegisterScenarios(scenario1, scenario2)
                 .Run();
 
+        }
+
+        private static async Task<T> WithRetry<T>(Func<Task<T>> func)
+        {
+            int retryCount = 0;
+            Exception lastException = null;
+            while (retryCount < 10)
+            {
+                try
+                {
+                    return await Task.Run(async () => await func());
+                }
+                catch (Exception e)
+                {
+                    lastException = e;
+                    Thread.Sleep(1000);
+                    retryCount++;
+                }
+            }
+            throw new Exception("Failed to execute.", lastException);
         }
 
         private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)
