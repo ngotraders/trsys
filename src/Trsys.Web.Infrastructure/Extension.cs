@@ -27,6 +27,7 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<OrderInMemoryDatabase>();
             services.AddSingleton<SecretKeyInMemoryDatabase>();
             services.AddSingleton<UserInMemoryDatabase>();
+            services.AddSingleton<EventInMemoryDatabase>();
 
             // Token management
             services.AddSingleton<TokenConnectionManager>();
@@ -43,9 +44,9 @@ namespace Trsys.Web.Infrastructure
         {
             services.AddInfrastructure();
             services.AddSingleton<IEventStore, SqlStreamStoreEventStore>();
-            services.AddSingleton<IStreamStore, InMemoryStreamStore>();
-            //services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
-            //services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
+            // services.AddSingleton<IStreamStore, InMemoryStreamStore>();
+            services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
+            services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
             return services;
         }
     }

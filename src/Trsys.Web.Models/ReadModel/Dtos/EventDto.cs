@@ -1,17 +1,17 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 
-namespace Trsys.Web.Models
+namespace Trsys.Web.Models.ReadModel.Dtos
 {
-    public class Event
+    public class EventDto
     {
-        public Event()
+        public EventDto()
         {
             Id = Guid.Empty.ToString();
             Timestamp = DateTimeOffset.MinValue;
         }
 
-        public Event(string source, string eventType, string data)
+        public EventDto(string source, string eventType, string data)
         {
             Id = Guid.NewGuid().ToString();
             Timestamp = DateTimeOffset.UtcNow;
@@ -26,9 +26,9 @@ namespace Trsys.Web.Models
         public string EventType { get; set; }
         public string Data { get; set; }
 
-        public static Event Create<T>(string source, string eventType, T data)
+        public static EventDto Create(string source, string eventType, object data)
         {
-            return new Event(source, eventType, SerializeData(data));
+            return new EventDto(source, eventType, SerializeData(data));
         }
 
         private static string SerializeData(object data)

@@ -1,3 +1,4 @@
+using CQRSlite.Events;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -10,8 +11,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
-using Trsys.Web.Infrastructure;
+using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -148,7 +148,7 @@ namespace Trsys.Web.Tests
                             })
                             .ConfigureTestServices(services =>
                             {
-                                services.AddRepositories();
+                                services.AddSingleton<IEventStore, InMemoryEventStore>();
                             }));
         }
     }

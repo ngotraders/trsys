@@ -8,9 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trsys.Web.Configurations;
-using Trsys.Web.Data;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Services;
+using Trsys.Web.Models;
 
 namespace Trsys.Web
 {
@@ -51,15 +50,12 @@ namespace Trsys.Web
             {
                 services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"));
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-                services.AddRepositories();
             }
             else
             {
                 services.AddInMemoryInfrastructure();
                 services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
-                services.AddSQLiteRepositories();
             }
-            services.AddTransient<EventService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

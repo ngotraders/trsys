@@ -5,7 +5,6 @@ using Trsys.Web.Filters;
 using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {

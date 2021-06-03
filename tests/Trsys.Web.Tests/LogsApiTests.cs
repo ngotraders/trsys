@@ -1,3 +1,4 @@
+using CQRSlite.Events;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -11,11 +12,10 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
-using Trsys.Web.Infrastructure;
+using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Tests
 {
@@ -42,8 +42,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
             await Task.Delay(1);
-            var repository = server.Services.GetRequiredService<IEventRepository>();
-            var events = await repository.SearchAllAsync();
+            var events = await mediator.Send(new GetEvents());
             Assert.AreEqual(0, events.Count);
         }
         [TestMethod]
@@ -62,8 +61,7 @@ namespace Trsys.Web.Tests
             var res = await client.PostAsync("/api/logs", new StringContent("NonEmpty", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
-            var repository = server.Services.GetRequiredService<IEventRepository>();
-            var events = await repository.SearchAllAsync();
+            var events = await mediator.Send(new GetEvents());
             Assert.AreEqual(1, events.Count);
             Assert.AreEqual($"ea/{VALID_KEY}", events.First().Source);
             Assert.AreEqual("Log", events.First().EventType);
@@ -83,7 +81,7 @@ namespace Trsys.Web.Tests
                             })
                             .ConfigureTestServices(services =>
                             {
-                                services.AddRepositories();
+                                services.AddSingleton<IEventStore, InMemoryEventStore>();
                             }));
         }
     }

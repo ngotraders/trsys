@@ -1,3 +1,4 @@
+using CQRSlite.Events;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -14,8 +15,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
-using Trsys.Web.Infrastructure;
+using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -92,7 +92,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             await client.LoginAsync();
             var mediator = server.Services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null , null));
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null));
             var key = await mediator.Send(new GetSecretKey(id));
 
             var res = await client.GetAsync($"/api/keys/{key.Key}");
@@ -113,7 +113,7 @@ namespace Trsys.Web.Tests
                             })
                             .ConfigureTestServices(services =>
                             {
-                                services.AddRepositories();
+                                services.AddSingleton<IEventStore, InMemoryEventStore>();
                             }));
 
         }

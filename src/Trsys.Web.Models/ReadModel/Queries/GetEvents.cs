@@ -1,10 +1,15 @@
 ﻿using MediatR;
 using System.Collections.Generic;
+using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.Models.ReadModel.Queries
 {
-    public class GetEvents : IRequest<List<Event>>
+    public class GetEvents : IRequest<List<EventDto>>
     {
+        public GetEvents() : this(null, 0, 0)
+        {
+        }
+
         public GetEvents(string source, int page, int perPage)
         {
             Source = source;
