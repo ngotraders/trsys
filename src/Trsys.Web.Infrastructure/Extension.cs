@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
 using System.Reflection;
 using Trsys.Web.Infrastructure.InMemory;
+using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 
