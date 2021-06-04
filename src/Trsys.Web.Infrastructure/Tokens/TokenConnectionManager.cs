@@ -31,6 +31,7 @@ namespace Trsys.Web.Infrastructure.Tokens
                 var reporter = new TokenConnectionReporter(id, token);
                 reporter.Connected += OnConnected;
                 reporter.Disconnected += OnDisconnected;
+                OnDisconnected(this, new TokenConnectionEventArgs(id, token));
                 return reporter;
             });
         }

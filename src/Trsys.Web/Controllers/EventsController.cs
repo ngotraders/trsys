@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.ViewModels.Events;
@@ -29,7 +30,7 @@ namespace Trsys.Web.Controllers
                 SecretKeys = await mediator.Send(new GetSecretKeys()),
             };
 
-            model.Events = await mediator.Send(new GetEvents(source, model.Page, model.PerPage));
+            model.Events = (await mediator.Send(new GetEvents(source, model.Page, model.PerPage))).ToList();
             return View(model);
         }
     }

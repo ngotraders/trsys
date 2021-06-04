@@ -4,7 +4,7 @@ using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.Models.ReadModel.Queries
 {
-    public class GetEvents : IRequest<List<EventDto>>
+    public class GetEvents : IRequest<IEnumerable<EventDto>>
     {
         public GetEvents() : this(null, 0, 0)
         {

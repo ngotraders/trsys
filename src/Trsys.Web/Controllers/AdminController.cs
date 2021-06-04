@@ -83,22 +83,23 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{id}/update")]
-        public async Task<IActionResult> PostKeyUpdate(Guid id, IndexViewModel model)
+        [HttpPost("keys/{key}/update")]
+        public async Task<IActionResult> PostKeyUpdate([FromRoute] string key, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
-            if (updateRequest == null || !updateRequest.KeyType.HasValue)
-            {
-                model.ErrorMessage = $"シークレットキーを変更できません。";
-                return SaveModelAndRedirectToIndex(model);
-            }
 
             try
             {
-                await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType.Value, updateRequest.Description));
-                var result = await mediator.Send(new GetSecretKey(id));
-                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyUpdated", new { Id = id, SecretKey = result.Key, result.KeyType, result.Description }));
-                model.SuccessMessage = $"シークレットキー: {result.Key} を変更しました。";
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
+                {
+                    model.ErrorMessage = $"シークレットキーを変更できません。";
+                    return SaveModelAndRedirectToIndex(model);
+                }
+                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
+                var result = await mediator.Send(new GetSecretKey(secretKey.Id));
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyUpdated", new { SecretKey = key, result.KeyType, result.Description }));
+                model.SuccessMessage = $"シークレットキー: {key} を変更しました。";
                 model.KeyType = null;
                 model.Key = null;
                 model.Description = null;
@@ -111,27 +112,21 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{id}/approve")]
-        public async Task<IActionResult> PostKeyApprove(Guid id, IndexViewModel model)
+        [HttpPost("keys/{key}/approve")]
+        public async Task<IActionResult> PostKeyApprove([FromRoute] string key, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
-            if (updateRequest == null)
-            {
-                model.ErrorMessage = $"シークレットキーを変更できません。";
-                return SaveModelAndRedirectToIndex(model);
-            }
-
             try
             {
-                var result = await mediator.Send(new GetSecretKey(id));
-                if (result == null)
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, true));
-                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyApproved", new { Id = id, SecretKey = result.Key }));
-                model.SuccessMessage = $"シークレットキー: {result.Key} を有効化しました。";
+                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, true));
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyApproved", new { SecretKey = key }));
+                model.SuccessMessage = $"シークレットキー: {key} を有効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
@@ -141,32 +136,26 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{id}/revoke")]
-        public async Task<IActionResult> PostKeyRevoke(Guid id, IndexViewModel model)
+        [HttpPost("keys/{key}/revoke")]
+        public async Task<IActionResult> PostKeyRevoke([FromRoute] string key, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
-            if (updateRequest == null)
-            {
-                model.ErrorMessage = $"シークレットキーを変更できません。";
-                return SaveModelAndRedirectToIndex(model);
-            }
-
             try
             {
-                var result = await mediator.Send(new GetSecretKey(id));
-                if (result == null)
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                var token = result.Token;
-                await mediator.Send(new UpdateSecretKeyCommand(id, updateRequest.KeyType, updateRequest.Description, false));
+                var token = secretKey.Token;
+                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, false));
                 if (!string.IsNullOrEmpty(token))
                 {
-                    await mediator.Publish(new UserEventNotification(User.Identity.Name, "TokenInvalidated", new { Id = id, SecretKey = result.Key, Token = token }));
+                    await mediator.Publish(new UserEventNotification(User.Identity.Name, "TokenInvalidated", new { SecretKey = key, Token = token }));
                 }
-                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyRevoked", new { Id = id, SecretKey = result.Key }));
-                model.SuccessMessage = $"シークレットキー: {result.Key} を無効化しました。";
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = key }));
+                model.SuccessMessage = $"シークレットキー: {key} を無効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
@@ -176,27 +165,20 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{id}/delete")]
-        public async Task<IActionResult> PostKeyDelete(Guid id, IndexViewModel model)
+        [HttpPost("keys/{key}/delete")]
+        public async Task<IActionResult> PostKeyDelete([FromRoute] string key, IndexViewModel model)
         {
-            var updateRequest = model.SecretKeys.FirstOrDefault(sk => sk.Id == id);
-            if (updateRequest == null)
-            {
-                model.ErrorMessage = $"シークレットキーを削除できません。";
-                return SaveModelAndRedirectToIndex(model);
-            }
-
             try
             {
-                var result = await mediator.Send(new GetSecretKey(id));
-                if (result == null)
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                await mediator.Send(new DeleteSecretKeyCommand(id));
-                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyDeleted", new { Id = id, SecretKey = result.Key }));
-                model.SuccessMessage = $"シークレットキー: {result.Key} を削除しました。";
+                await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
+                await mediator.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = key }));
+                model.SuccessMessage = $"シークレットキー: {key} を削除しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)

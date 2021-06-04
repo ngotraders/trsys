@@ -40,7 +40,7 @@ namespace Trsys.Web.Tests
 
             await Task.Delay(1);
             var events = await mediator.Send(new GetEvents());
-            Assert.AreEqual(0, events.Count);
+            Assert.AreEqual(0, events.Count());
         }
         [TestMethod]
         public async Task PostLog_should_return_ok_given_non_empty_string()
@@ -59,7 +59,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
             var events = await mediator.Send(new GetEvents());
-            Assert.AreEqual(1, events.Count);
+            Assert.AreEqual(1, events.Count());
             Assert.AreEqual($"ea/{VALID_KEY}", events.First().Source);
             Assert.AreEqual("Log", events.First().EventType);
             Assert.AreEqual("NonEmpty", events.First().Data);

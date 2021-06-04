@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Infrastructure;
@@ -16,7 +15,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         INotificationHandler<SystemEventNotification>,
         INotificationHandler<UserEventNotification>,
         INotificationHandler<EaEventNotification>,
-        IRequestHandler<GetEvents, List<EventDto>>
+        IRequestHandler<GetEvents, IEnumerable<EventDto>>
     {
         private readonly EventInMemoryDatabase db;
 
@@ -24,12 +23,18 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         {
             this.db = db;
         }
-        public Task<List<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
+        public Task<IEnumerable<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
         {
-            var events = string.IsNullOrEmpty(request.Source) ? db.All : db.BySource[request.Source];
+            var events = (string.IsNullOrEmpty(request.Source)
+                ? db.All
+                : db.BySource.TryGetValue(request.Source, out var list) 
+                ? list 
+                : new List<EventDto>())
+                .AsEnumerable()
+                .Reverse();
             if (request.PerPage > 0)
             {
-                return Task.FromResult(events.Skip((request.Page - 1) * request.PerPage).Take(request.PerPage).ToList());
+                return Task.FromResult(events.Skip((request.Page - 1) * request.PerPage).Take(request.PerPage));
             }
             return Task.FromResult(events);
         }

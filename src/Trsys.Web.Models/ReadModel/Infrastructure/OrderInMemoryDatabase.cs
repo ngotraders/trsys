@@ -42,6 +42,7 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
                 {
                     list.Remove(item);
                 }
+                Entry = OrdersTextEntry.Create(List);
             }
         }
 
@@ -56,6 +57,7 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
                     All.Remove(item);
                     ByTicketNo.Remove(item.Order.TicketNo);
                 }
+                Entry = OrdersTextEntry.Create(List);
             }
         }
     }
