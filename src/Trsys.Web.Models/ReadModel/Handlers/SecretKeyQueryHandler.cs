@@ -56,7 +56,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task Handle(SecretKeyApproved notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].ApprovedAt = notification.TimeStamp;
+            db.ById[notification.Id].IsApproved = true;
             return Task.CompletedTask;
         }
 
@@ -78,7 +78,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task Handle(SecretKeyRevoked notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].ApprovedAt = null;
+            db.ById[notification.Id].IsApproved = false;
             return Task.CompletedTask;
         }
 

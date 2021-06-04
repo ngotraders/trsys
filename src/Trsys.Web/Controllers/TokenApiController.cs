@@ -39,7 +39,7 @@ namespace Trsys.Web.Controllers
                     await mediator.Publish(new SystemEventNotification("token", "NewEaAccessed", new { SecretKey = key }));
                     return BadRequest("InvalidSecretKey");
                 }
-                else if (!secretKey.IsValid)
+                else if (!secretKey.IsApproved)
                 {
                     return BadRequest("InvalidSecretKey");
                 }

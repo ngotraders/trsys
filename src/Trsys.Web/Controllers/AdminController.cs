@@ -37,7 +37,7 @@ namespace Trsys.Web.Controllers
             model.CacheOrderText = order?.Text;
 
             model.SecretKeys = (await mediator.Send(new GetSecretKeys()))
-                .OrderBy(e => e.IsValid)
+                .OrderBy(e => e.IsApproved)
                 .ThenBy(e => e.KeyType)
                 .ThenBy(e => e.Id)
                 .ToList();

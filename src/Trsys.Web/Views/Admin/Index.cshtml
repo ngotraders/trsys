@@ -93,7 +93,7 @@
                         <tr>
                             <td>
                                 <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
-                                @if (key.IsValid)
+                                @if (key.IsApproved)
                                 {
                                     @key.KeyType
                                     <input type="hidden" name="SecretKeys[@i].KeyType" value="@key.KeyType" />
@@ -122,13 +122,13 @@
                             </td>
                             <td class="secret-key"><input type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
                             <td>@(key.IsConnected ? "○" : "-")</td>
-                            <td>@(key.IsValid ? "有効" : "無効")</td>
+                            <td>@(key.IsApproved ? "有効" : "無効")</td>
                             <td>
                                 <div class="d-flex justify-content-between">
                                     <div class="flex-grow-1 pr-1">
                                         <button class="d-block w-full" formaction="/admin/keys/@key.Id/update">変更</button>
                                     </div>
-                                    @if (key.IsValid)
+                                    @if (key.IsApproved)
                                     {
                                         <div class="flex-grow-1 pr-1">
                                             <button class="d-block w-full" formaction="/admin/keys/@key.Id/revoke">無効化</button>

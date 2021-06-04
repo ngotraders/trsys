@@ -82,7 +82,7 @@ namespace Trsys.Web.Controllers
                     Key = secretKey.Key,
                     KeyType = secretKey.KeyType,
                     Description = secretKey.Description,
-                    IsApproved = secretKey.IsValid,
+                    IsApproved = secretKey.IsApproved,
                 });
             }
             catch (Exception e)
