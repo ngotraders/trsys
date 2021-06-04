@@ -75,10 +75,6 @@ namespace Trsys.Web.Models
 
                 entity.Property(e => e.Version).HasDefaultValueSql("((-1))");
             });
-
-            OnModelCreatingPartial(modelBuilder);
         }
-
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
