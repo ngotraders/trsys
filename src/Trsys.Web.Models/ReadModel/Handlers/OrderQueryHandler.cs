@@ -12,6 +12,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
     public class OrderQueryHandler :
         INotificationHandler<OrderPublisherOpenedOrder>,
         INotificationHandler<OrderPublisherClosedOrder>,
+        INotificationHandler<SecretKeyDeleted>,
         IRequestHandler<GetOrderTextEntry, OrdersTextEntry>,
         IRequestHandler<GetOrders, List<OrderDto>>,
         IRequestHandler<GetPublishedOrders, List<PublishedOrder>>
@@ -28,7 +29,8 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             db.Add(new OrderDto()
             {
                 Id = $"{notification.Id}:{notification.Order.TicketNo}",
-                Order = notification.Order
+                Order = notification.Order,
+                SecretKeyId = notification.Id,
             });
             return Task.CompletedTask;
         }
@@ -36,6 +38,12 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         public Task Handle(OrderPublisherClosedOrder notification, CancellationToken cancellationToken = default)
         {
             db.Remove($"{notification.Id}:{notification.TicketNo}");
+            return Task.CompletedTask;
+        }
+
+        public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
+        {
+            db.RemoveBySecretKey(notification.Id);
             return Task.CompletedTask;
         }
 
