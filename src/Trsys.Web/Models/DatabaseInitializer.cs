@@ -55,14 +55,18 @@ namespace Trsys.Web.Models
 
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var page = await store.ReadAllForwards(0, 100, true);
-            do
+            while (true)
             {
                 foreach (var message in page.Messages)
                 {
                     await mediator.Publish(await StreamMessageConverter.ConvertToNotification(message));
                 }
+                if (page.IsEnd)
+                {
+                    break;
+                }
                 page = await page.ReadNext();
-            } while (!page.IsEnd);
+            }
         }
 
         public static async Task SeedDataAsync(IApplicationBuilder app)

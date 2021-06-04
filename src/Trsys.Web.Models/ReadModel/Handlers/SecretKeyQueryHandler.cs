@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,10 +27,12 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<FindByCurrentToken, SecretKeyDto>
     {
         private readonly SecretKeyInMemoryDatabase db;
+        private readonly ILogger<SecretKeyQueryHandler> logger;
 
-        public SecretKeyQueryHandler(SecretKeyInMemoryDatabase db)
+        public SecretKeyQueryHandler(SecretKeyInMemoryDatabase db, ILogger<SecretKeyQueryHandler> logger)
         {
             this.db = db;
+            this.logger = logger;
         }
         public Task Handle(SecretKeyCreated notification, CancellationToken cancellationToken = default)
         {
@@ -44,53 +47,107 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task Handle(SecretKeyKeyTypeChanged notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].KeyType = notification.KeyType;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.KeyType = notification.KeyType;
+            }
+            else
+            {
+                logger.LogError("SecretKeyKeyTypeChanged:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyDescriptionChanged notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].Description = notification.Description;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.Description = notification.Description;
+            }
+            else
+            {
+                logger.LogError("SecretKeyDescriptionChanged:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyApproved notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsApproved = true;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.IsApproved = true;
+            }
+            else
+            {
+                logger.LogError("SecretKeyApproved:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyTokenGenerated notification, CancellationToken cancellationToken = default)
         {
-            var item = db.ById[notification.Id];
-            item.Token = notification.Token;
-            db.ByToken.Add(item.Token, item);
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.Token = notification.Token;
+                db.ByToken.Add(item.Token, item);
+            }
+            else
+            {
+                logger.LogError("SecretKeyTokenGenerated:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyTokenInvalidated notification, CancellationToken cancellationToken = default)
         {
-            var item = db.ById[notification.Id];
-            db.ByToken.Remove(item.Token);
-            item.Token = null;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                db.ByToken.Remove(item.Token);
+                item.Token = null;
+            }
+            else
+            {
+                logger.LogError("SecretKeyTokenInvalidated:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyRevoked notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsApproved = false;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.IsApproved = false;
+            }
+            else
+            {
+                logger.LogError("SecretKeyRevoked:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyEaConnected notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsConnected = true;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.IsConnected = true;
+            }
+            else
+            {
+                logger.LogError("SecretKeyEaConnected:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyEaDisconnected notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsConnected = false;
+            if (db.ById.TryGetValue(notification.Id, out var item))
+            {
+                item.IsConnected = false;
+            }
+            else
+            {
+                logger.LogError("SecretKeyEaDisconnected:secret key not found. {0}", notification.Id);
+            }
             return Task.CompletedTask;
         }
 

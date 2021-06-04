@@ -48,7 +48,7 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
         {
             var orders = await mediator.Send(new GetOrders());
-            foreach (var id in orders.Select(o => o.SecretKeyId).Distinct())
+            foreach (var id in orders.Select(o => o.SecretKeyId).Distinct().ToList())
             {
                 await mediator.Send(new ClearOrdersCommand(id));
             }

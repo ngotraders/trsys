@@ -65,7 +65,8 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
         }
         public static async Task<INotification> ConvertToNotification(StreamMessage message)
         {
-            return (INotification)JsonConvert.DeserializeObject(await message.GetJsonData(), strToType(message.Type));
+            var obj = (INotification)JsonConvert.DeserializeObject(await message.GetJsonData(), strToType(message.Type));
+            return obj;
         }
         public static NewStreamMessage ConvertFromEvent(IEvent notification)
         {

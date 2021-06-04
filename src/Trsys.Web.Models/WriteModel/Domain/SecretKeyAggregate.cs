@@ -50,6 +50,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void ChangeKeyType(SecretKeyType keyType)
         {
+            EnsureNotDeleted();
             if (_keyType.HasValue && _keyType == keyType)
             {
                 return;
@@ -63,6 +64,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void ChangeDescription(string description)
         {
+            EnsureNotDeleted();
             if (_description == description)
             {
                 return;
@@ -72,6 +74,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void Approve()
         {
+            EnsureNotDeleted();
             if (!_keyType.HasValue)
             {
                 throw new InvalidOperationException("Cannot approve if key type is not set.");
@@ -84,6 +87,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void Revoke()
         {
+            EnsureNotDeleted();
             if (_approved)
             {
                 if (!string.IsNullOrEmpty(_token))
@@ -96,6 +100,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public string GenerateToken()
         {
+            EnsureNotDeleted();
             if (_connected)
             {
                 throw new InvalidOperationException("Ea is already connected.");
@@ -115,6 +120,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void InvalidateToken(string token)
         {
+            EnsureNotDeleted();
             if (string.IsNullOrEmpty(_token))
             {
                 throw new InvalidOperationException("Token is not generated yet.");
@@ -133,6 +139,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void Connect(string token)
         {
+            EnsureNotDeleted();
             if (!_connected && _token == token)
             {
                 ApplyChange(new SecretKeyEaConnected(Id));
@@ -140,6 +147,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
         }
         public void Disconnect(string token)
         {
+            EnsureNotDeleted();
             if (_connected && _token == token)
             {
                 ApplyChange(new SecretKeyEaDisconnected(Id));
@@ -147,18 +155,25 @@ namespace Trsys.Web.Models.WriteModel.Domain
         }
         public void Delete()
         {
-            if (!_deleted)
+            EnsureNotDeleted();
+            if (_approved)
             {
-                if (_approved)
-                {
-                    throw new InvalidOperationException("Cannot delete secret key if approved.");
-                }
-                ApplyChange(new SecretKeyDeleted(Id));
+                throw new InvalidOperationException("Cannot delete secret key if approved.");
+            }
+            ApplyChange(new SecretKeyDeleted(Id));
+        }
+
+        private void EnsureNotDeleted()
+        {
+            if (_deleted)
+            {
+                throw new InvalidOperationException("This data has already deleted.");
             }
         }
 
         public void Publish(IEnumerable<PublishedOrder> orders)
         {
+            EnsureNotDeleted();
             var tickets = orders.Select(o => o.TicketNo).ToList();
             var added = tickets.Except(_publishedOrderTickets).ToList();
             var removed = _publishedOrderTickets.Except(tickets).ToList();
@@ -179,6 +194,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void Subscribed(int[] tickets)
         {
+            EnsureNotDeleted();
             var added = tickets.Except(_subscribedOrderTickets).ToList();
             var removed = _subscribedOrderTickets.Except(tickets).ToList();
 
