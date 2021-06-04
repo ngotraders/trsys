@@ -160,8 +160,8 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public void Publish(IEnumerable<PublishedOrder> orders)
         {
             var tickets = orders.Select(o => o.TicketNo).ToList();
-            var added = tickets.Except(_publishedOrderTickets);
-            var removed = _publishedOrderTickets.Except(tickets);
+            var added = tickets.Except(_publishedOrderTickets).ToList();
+            var removed = _publishedOrderTickets.Except(tickets).ToList();
 
             foreach (var ticket in removed.OrderBy(e => e))
             {
@@ -179,8 +179,8 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public void Subscribed(int[] tickets)
         {
-            var added = tickets.Except(_subscribedOrderTickets);
-            var removed = _subscribedOrderTickets.Except(tickets);
+            var added = tickets.Except(_subscribedOrderTickets).ToList();
+            var removed = _subscribedOrderTickets.Except(tickets).ToList();
 
             foreach (var ticket in removed.OrderBy(e => e))
             {

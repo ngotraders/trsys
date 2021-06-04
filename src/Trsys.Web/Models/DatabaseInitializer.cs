@@ -63,8 +63,16 @@ namespace Trsys.Web.Models
                 }
                 page = await page.ReadNext();
             } while (!page.IsEnd);
-            var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-            await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
+        }
+
+        public static async Task SeedDataAsync(IApplicationBuilder app)
+        {
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+                await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
+            }
         }
     }
 }

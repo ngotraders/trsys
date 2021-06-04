@@ -1,17 +1,14 @@
-using CQRSlite.Events;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -138,18 +135,12 @@ namespace Trsys.Web.Tests
 
         private static TestServer CreateTestServer()
         {
-            var databaseName = Guid.NewGuid().ToString();
             return new TestServer(new WebHostBuilder()
-                            .UseConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.json").Build())
-                            .UseStartup<Startup>()
-                            .ConfigureServices(services =>
-                            {
-                                services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
-                            })
-                            .ConfigureTestServices(services =>
-                            {
-                                services.AddSingleton<IEventStore, InMemoryEventStore>();
-                            }));
+                .UseConfiguration(
+                    new ConfigurationBuilder()
+                    .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
+                 )
+                .UseStartup<Startup>());
         }
     }
 }

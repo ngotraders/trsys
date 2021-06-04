@@ -33,20 +33,28 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
 
         public void Remove(string id)
         {
-            var item = ById[id];
-            ById.Remove(item.Id);
-            All.RemoveAt(All.IndexOf(item));
-            ByTicketNo.Remove(item.Order.TicketNo);
-            BySecretKey.Remove(item.SecretKeyId);
+            if (ById.TryGetValue(id, out var item))
+            {
+                ById.Remove(item.Id);
+                All.Remove(item);
+                ByTicketNo.Remove(item.Order.TicketNo);
+                if (BySecretKey.TryGetValue(item.SecretKeyId, out var list))
+                {
+                    list.Remove(item);
+                }
+            }
         }
 
         public void RemoveBySecretKey(Guid id)
         {
             if (BySecretKey.TryGetValue(id, out var list))
             {
-                foreach (var item in list)
+                BySecretKey.Remove(id);
+                foreach (var item in list.ToList())
                 {
-                    Remove(item.Id);
+                    ById.Remove(item.Id);
+                    All.Remove(item);
+                    ByTicketNo.Remove(item.Order.TicketNo);
                 }
             }
         }

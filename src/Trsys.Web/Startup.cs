@@ -45,34 +45,34 @@ namespace Trsys.Web
             services.AddMediatR(typeof(Startup).Assembly);
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
-            if (string.IsNullOrEmpty(sqliteConnection))
+            var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(sqlserverConnection))
             {
-                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"));
-                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                services.AddInMemoryInfrastructure();
             }
             else
             {
-                services.AddInMemoryInfrastructure();
-                services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
+                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"));
+                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
-            var sqliteConnection = Configuration.GetConnectionString("SqliteConnection");
-            if (string.IsNullOrEmpty(sqliteConnection))
+            var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrEmpty(sqlserverConnection))
             {
-                logger.LogInformation("Using sql server connection.");
+                logger.LogInformation("Using in-memory implementation.");
             }
             else
             {
-                logger.LogInformation("Using sqlite connection.");
+                logger.LogInformation("Using sql server connection.");
+                logger.LogInformation("Database initializing.");
+                DatabaseInitializer.InitializeAsync(app).Wait();
+                logger.LogInformation("Database initialized.");
             }
-            logger.LogInformation("Database initializing.");
-            DatabaseInitializer.InitializeAsync(app).Wait();
-            logger.LogInformation("Database initialized.");
+            DatabaseInitializer.SeedDataAsync(app).Wait();
 
             if (env.IsDevelopment())
             {
