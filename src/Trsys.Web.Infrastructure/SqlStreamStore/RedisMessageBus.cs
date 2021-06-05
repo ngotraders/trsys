@@ -27,7 +27,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
 
         private async void OnMessage(RedisChannel channel, RedisValue value)
         {
-            var notification = MessageConverter.ConvertToEvent(JsonConvert.DeserializeObject<PublishedMessage>(value.ToString()));
+            var notification = MessageConverter.ConvertToNotification(JsonConvert.DeserializeObject<PublishedMessage>(value.ToString()));
             await mediator.Publish(notification);
         }
 

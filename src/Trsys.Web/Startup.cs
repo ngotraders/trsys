@@ -1,12 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using Trsys.Web.Configurations;
 using Trsys.Web.Infrastructure;
 using Trsys.Web.Models;
@@ -52,8 +54,16 @@ namespace Trsys.Web
             }
             else
             {
-                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"), Configuration.GetConnectionString("RedisConnection"));
-                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                var redisConnection = Configuration.GetConnectionString("RedisConnection");
+                if (!string.IsNullOrEmpty(redisConnection))
+                {
+                    var redis = ConnectionMultiplexer.Connect(redisConnection);
+                    services.AddDataProtection()
+                        .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
+                        .SetApplicationName("Trsys.Web");
+                }
+                services.AddSqlServerInfrastructure(sqlserverConnection, redisConnection);
+                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
             }
         }
 
