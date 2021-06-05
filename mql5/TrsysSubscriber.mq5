@@ -1178,6 +1178,21 @@ class TrsysClient {
 #endif
    };
    
+   string m_generate_header(string method, bool useToken = false) {
+      string header = "Version: 20210331";
+      if (useToken) {
+         string secret_token = m_get_secret_token();
+         if (secret_token == NULL) {
+            return NULL;
+         }
+         header += "\r\nX-Secret-Token: " + secret_token;
+      }
+      if (method == "POST") {
+         header += "\r\nContent-Type: text/plain; charset=UTF-8;";
+      }
+      return header;
+   };
+   
    string m_get_secret_token() {
       if (m_secret_token != NULL) {
          return m_secret_token;
@@ -1200,7 +1215,7 @@ class TrsysClient {
 
    int m_post_secret_key()
    {
-      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331";
+      string request_headers = m_generate_header("POST", false);
       string request_data = m_secret_key;
       string response_headers;
       string response_data;
@@ -1218,7 +1233,7 @@ class TrsysClient {
    
    int m_post_token_release()
    {
-      string request_headers = "X-Ea-Version: 20210331\r\nContent-Type: text/plain; charset=UTF-8";
+      string request_headers = m_generate_header("POST", false);
       string request_data;
       string response_headers;
       string response_data;
@@ -1290,12 +1305,10 @@ public:
    
    int GetOrders(string &response)
    {
-      string secret_token = m_get_secret_token();
-      if (secret_token == NULL) {
+      string request_headers = m_generate_header("GET", true);
+      if (request_headers == NULL) {
          return -1;
-      }
-   
-      string request_headers = "X-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
+      }   
       string request_data;
       string response_headers;
       string response_data;
@@ -1339,12 +1352,10 @@ public:
    
    int PostOrders(string data)
    {
-      string secret_token = m_get_secret_token();
-      if (secret_token == NULL) {
+      string request_headers = m_generate_header("POST", true);
+      if (request_headers == NULL) {
          return -1;
       }
-   
-      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
       string request_data = data;
       string response_headers;
       string response_data;
@@ -1363,17 +1374,15 @@ public:
       if (m_post_log_status.GetLastStatus() == 404) {
          return 0;
       }
-      string secret_token = m_get_secret_token();
-      if (secret_token == NULL) {
-         return -1;
-      }
       string logs[];
       int peak = q.Peak(logs, 10);
       if (peak == 0) {
          return 0;
       }
-
-      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
+      string request_headers = m_generate_header("POST", false);
+      if (request_headers == NULL) {
+         return -1;
+      }
       string request_data = "";
       string response_headers;
       string response_data;
