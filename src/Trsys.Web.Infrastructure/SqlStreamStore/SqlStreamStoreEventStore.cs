@@ -1,4 +1,5 @@
-﻿using CQRSlite.Events;
+﻿using CQRSlite.Caching;
+using CQRSlite.Events;
 using MediatR;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
@@ -14,28 +15,41 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
     {
         private readonly IMediator mediator;
         private readonly IStreamStore store;
+        private readonly ICache cache;
 
-        public SqlStreamStoreEventStore(IMediator mediator, IStreamStore store)
+        public SqlStreamStoreEventStore(IMediator mediator, IStreamStore store, ICache cache)
         {
             this.mediator = mediator;
             this.store = store;
+            this.cache = cache;
         }
 
         public async Task Save(IEnumerable<IEvent> events, CancellationToken cancellationToken = default)
         {
-            foreach (var lookup in events.ToLookup(e => e.Id))
+            var lookups = events.ToLookup(e => e.Id);
+            try
             {
-                var e = lookup.OrderBy(e => e.Version).ToList();
-                var first = e.First();
-                await store.AppendToStream(
-                    new StreamId(first.Id.ToString()),
-                    first.Version == 1 ? ExpectedVersion.NoStream : first.Version - 2,
-                    e.Select(i => StreamMessageConverter.ConvertFromEvent(i)).ToArray(),
-                    cancellationToken);
+                foreach (var lookup in lookups)
+                {
+                    var e = lookup.OrderBy(e => e.Version).ToList();
+                    var first = e.First();
+                    await store.AppendToStream(
+                        new StreamId(first.Id.ToString()),
+                        first.Version == 1 ? ExpectedVersion.NoStream : first.Version - 2,
+                        e.Select(i => StreamMessageConverter.ConvertFromEvent(i)).ToArray(),
+                        cancellationToken);
+                }
+                foreach (var @event in events)
+                {
+                    await mediator.Publish(@event, cancellationToken);
+                }
             }
-            foreach (var @event in events)
+            catch
             {
-                await mediator.Publish(@event, cancellationToken);
+                foreach (var id in lookups.Select(e => e.First().Id))
+                {
+                    await cache.Remove(id);
+                }
             }
         }
 

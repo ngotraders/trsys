@@ -30,7 +30,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Guid> Handle(CreateSecretKeyIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
-            var state = await session.GetWorldState();
+            var state = await repository.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
             if (state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
@@ -47,9 +47,8 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                         item.Approve();
                     }
                 }
-                await session.Add(state, cancellationToken);
-                await session.Add(item, cancellationToken);
-                await session.Commit(cancellationToken);
+                await repository.Save(item, item.Version, cancellationToken);
+                await repository.Save(state, null, cancellationToken);
                 return secretKeyId;
             }
             return secretKeyId;
@@ -57,7 +56,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Guid> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
         {
-            var state = await session.GetWorldState();
+            var state = await repository.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
             if (!state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
@@ -76,9 +75,8 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                     item.Approve();
                 }
             }
-            await session.Add(state, cancellationToken);
-            await session.Add(item, cancellationToken);
-            await session.Commit(cancellationToken);
+            await repository.Save(item, item.Version, cancellationToken);
+            await repository.Save(state, null, cancellationToken);
             return secretKeyId;
         }
 
@@ -142,13 +140,12 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
         {
-            var state = await session.GetWorldState();
+            var state = await repository.GetWorldState();
             var item = await session.Get<SecretKeyAggregate>(request.Id, null, cancellationToken);
             state.DeleteSecretKey(item.Key, item.Id);
             item.Delete();
-            await session.Add(state, cancellationToken);
-            await session.Add(item, cancellationToken);
-            await session.Commit(cancellationToken);
+            await repository.Save(item, item.Version, cancellationToken);
+            await repository.Save(state, null, cancellationToken);
             return Unit.Value;
         }
     }

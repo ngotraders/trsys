@@ -35,7 +35,7 @@ namespace Trsys.Web.Controllers
                 var secretKey = await mediator.Send(new FindBySecretKey(key));
                 if (secretKey == null)
                 {
-                    await mediator.Send(new CreateSecretKeyCommand(null, key, null));
+                    await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
                     await mediator.Publish(new SystemEventNotification("token", "NewEaAccessed", new { SecretKey = key }));
                     return BadRequest("InvalidSecretKey");
                 }

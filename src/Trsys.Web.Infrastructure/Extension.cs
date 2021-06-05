@@ -17,7 +17,7 @@ namespace Trsys.Web.Infrastructure
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             // MediatR dependencies
-            services.AddMediatR(Assembly.Load("Trsys.Web.Models"), Assembly.Load("Trsys.Web.Infrastructure"));
+            services.AddMediatR(config => { config.AsSingleton(); }, Assembly.Load("Trsys.Web.Models"), Assembly.Load("Trsys.Web.Infrastructure"));
 
             // Cqrs services without IEventStore
             services.AddSingleton<ICache, MemoryCache>();

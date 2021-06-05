@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<GetOrders, List<OrderDto>>,
         IRequestHandler<GetPublishedOrders, List<PublishedOrder>>
     {
+        private static readonly TaskQueue quque = new();
         private readonly OrderInMemoryDatabase db;
 
         public OrderQueryHandler(OrderInMemoryDatabase db)
@@ -26,25 +28,31 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task Handle(OrderPublisherOpenedOrder notification, CancellationToken cancellationToken = default)
         {
-            db.Add(new OrderDto()
+            return quque.Enqueue(() =>
             {
-                Id = $"{notification.Id}:{notification.Order.TicketNo}",
-                Order = notification.Order,
-                SecretKeyId = notification.Id,
+                db.Add(new OrderDto()
+                {
+                    Id = $"{notification.Id}:{notification.Order.TicketNo}",
+                    Order = notification.Order,
+                    SecretKeyId = notification.Id,
+                });
             });
-            return Task.CompletedTask;
         }
 
         public Task Handle(OrderPublisherClosedOrder notification, CancellationToken cancellationToken = default)
         {
-            db.Remove($"{notification.Id}:{notification.TicketNo}");
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.Remove($"{notification.Id}:{notification.TicketNo}");
+            });
         }
 
         public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
         {
-            db.RemoveBySecretKey(notification.Id);
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.RemoveBySecretKey(notification.Id);
+            });
         }
 
         public Task<OrdersTextEntry> Handle(GetOrderTextEntry request, CancellationToken cancellationToken = default)

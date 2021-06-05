@@ -14,25 +14,22 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         IRequestHandler<CreateUserCommand, Guid>,
         IRequestHandler<ChangePasswordHashCommand>
     {
-        private readonly ISession session;
         private readonly IRepository repository;
 
-        public UserCommandHandlers(ISession session, IRepository repository)
+        public UserCommandHandlers(IRepository repository)
         {
-            this.session = session;
             this.repository = repository;
         }
 
         public async Task<Guid> Handle(CreateUserIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
-            var state = await session.GetWorldState();
+            var state = await repository.GetWorldState();
             if (state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
             {
                 var item = new UserAggregate(userId, request.Name, request.Username, request.Role);
                 item.ChangePasswordHash(request.PasswordHash);
-                await session.Add(state, cancellationToken);
-                await session.Add(item, cancellationToken);
-                await session.Commit(cancellationToken);
+                await repository.Save(item, item.Version, cancellationToken);
+                await repository.Save(state, null, cancellationToken);
                 return userId;
             }
             return userId;
@@ -41,16 +38,15 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken = default)
         {
-            var state = await session.GetWorldState();
+            var state = await repository.GetWorldState();
             if (!state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
             {
                 throw new InvalidOperationException("user name already exists.");
             }
             var item = new UserAggregate(userId, request.Name, request.Username, request.Role);
             item.ChangePasswordHash(request.PasswordHash);
-            await session.Add(state, cancellationToken);
-            await session.Add(item, cancellationToken);
-            await session.Commit(cancellationToken);
+            await repository.Save(item, item.Version, cancellationToken);
+            await repository.Save(state, null, cancellationToken);
             return userId;
         }
 

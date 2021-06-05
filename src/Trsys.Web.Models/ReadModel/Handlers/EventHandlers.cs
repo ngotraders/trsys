@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using SqlStreamStore.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,18 +18,42 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         INotificationHandler<EaEventNotification>,
         IRequestHandler<GetEvents, IEnumerable<EventDto>>
     {
+        private static readonly TaskQueue quque = new();
         private readonly EventInMemoryDatabase db;
 
         public EventHandlers(EventInMemoryDatabase db)
         {
             this.db = db;
         }
+
+        public Task Handle(SystemEventNotification notification, CancellationToken cancellationToken)
+        {
+            return quque.Enqueue(() =>
+            {
+                db.Add(EventDto.Create($"system/{notification.Category}", notification.EventType, notification.Data));
+            });
+        }
+        public Task Handle(UserEventNotification notification, CancellationToken cancellationToken)
+        {
+            return quque.Enqueue(() =>
+            {
+                db.Add(EventDto.Create($"user/{notification.Username}", notification.EventType, notification.Data));
+            });
+        }
+        public Task Handle(EaEventNotification notification, CancellationToken cancellationToken)
+        {
+            return quque.Enqueue(() =>
+            {
+                db.Add(EventDto.Create($"ea/{notification.Key}", notification.EventType, notification.Data));
+            });
+        }
+
         public Task<IEnumerable<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
         {
             var events = (string.IsNullOrEmpty(request.Source)
                 ? db.All
-                : db.BySource.TryGetValue(request.Source, out var list) 
-                ? list 
+                : db.BySource.TryGetValue(request.Source, out var list)
+                ? list
                 : new List<EventDto>())
                 .AsEnumerable()
                 .Reverse();
@@ -38,22 +63,5 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             }
             return Task.FromResult(events);
         }
-
-        public Task Handle(SystemEventNotification notification, CancellationToken cancellationToken)
-        {
-            db.Add(EventDto.Create($"system/{notification.Category}", notification.EventType, notification.Data));
-            return Task.CompletedTask;
-        }
-        public Task Handle(UserEventNotification notification, CancellationToken cancellationToken)
-        {
-            db.Add(EventDto.Create($"user/{notification.Username}", notification.EventType, notification.Data));
-            return Task.CompletedTask;
-        }
-        public Task Handle(EaEventNotification notification, CancellationToken cancellationToken)
-        {
-            db.Add(EventDto.Create($"ea/{notification.Key}", notification.EventType, notification.Data));
-            return Task.CompletedTask;
-        }
-
     }
 }

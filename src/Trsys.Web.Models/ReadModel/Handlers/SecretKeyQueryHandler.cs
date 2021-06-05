@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<FindBySecretKey, SecretKeyDto>,
         IRequestHandler<FindByCurrentToken, SecretKeyDto>
     {
+        private static readonly TaskQueue quque = new();
         private readonly SecretKeyInMemoryDatabase db;
 
         public SecretKeyQueryHandler(SecretKeyInMemoryDatabase db)
@@ -33,71 +35,90 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         }
         public Task Handle(SecretKeyCreated notification, CancellationToken cancellationToken = default)
         {
-            db.Add(new SecretKeyDto()
+            return quque.Enqueue(() =>
             {
-                Id = notification.Id,
-                Key = notification.Key
+                db.Add(new SecretKeyDto()
+                {
+                    Id = notification.Id,
+                    Key = notification.Key
+                });
             });
-
-            return Task.CompletedTask;
         }
 
         public Task Handle(SecretKeyKeyTypeChanged notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].KeyType = notification.KeyType;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].KeyType = notification.KeyType;
+            });
         }
 
         public Task Handle(SecretKeyDescriptionChanged notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].Description = notification.Description;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].Description = notification.Description;
+            });
         }
 
         public Task Handle(SecretKeyApproved notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsApproved = true;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].IsApproved = true;
+            });
         }
 
         public Task Handle(SecretKeyTokenGenerated notification, CancellationToken cancellationToken = default)
         {
-            var item = db.ById[notification.Id];
-            item.Token = notification.Token;
-            db.ByToken.Add(item.Token, item);
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                var item = db.ById[notification.Id];
+                item.Token = notification.Token;
+                db.ByToken.Add(item.Token, item);
+            });
         }
 
         public Task Handle(SecretKeyTokenInvalidated notification, CancellationToken cancellationToken = default)
         {
-            var item = db.ById[notification.Id];
-            db.ByToken.Remove(item.Token);
-            item.Token = null;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                var item = db.ById[notification.Id];
+                db.ByToken.Remove(item.Token);
+                item.Token = null;
+            });
         }
 
         public Task Handle(SecretKeyRevoked notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsApproved = false;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].IsApproved = false;
+            });
         }
 
         public Task Handle(SecretKeyEaConnected notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsConnected = true;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].IsConnected = true;
+            });
         }
 
         public Task Handle(SecretKeyEaDisconnected notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].IsConnected = false;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].IsConnected = false;
+            });
         }
 
         public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
         {
-            db.Remove(notification.Id);
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.Remove(notification.Id);
+            });
         }
 
         public Task<List<SecretKeyDto>> Handle(GetSecretKeys message, CancellationToken token = default)

@@ -1,4 +1,5 @@
 using MediatR;
+using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<GetUser, UserDto>,
         IRequestHandler<FindByUsername, UserDto>
     {
+        private static readonly TaskQueue quque = new();
         private readonly UserInMemoryDatabase db;
 
         public UserQueryHandler(UserInMemoryDatabase db)
@@ -24,21 +26,24 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         }
         public Task Handle(UserCreated notification, CancellationToken cancellationToken = default)
         {
-            db.Add(new UserDto()
+            return quque.Enqueue(() =>
             {
-                Id = notification.Id,
-                Name = notification.Name,
-                Username = notification.Username,
-                Role = notification.Role,
+                db.Add(new UserDto()
+                {
+                    Id = notification.Id,
+                    Name = notification.Name,
+                    Username = notification.Username,
+                    Role = notification.Role,
+                });
             });
-
-            return Task.CompletedTask;
         }
 
         public Task Handle(UserPasswordHashChanged notification, CancellationToken cancellationToken = default)
         {
-            db.ById[notification.Id].PasswordHash = notification.PasswordHash;
-            return Task.CompletedTask;
+            return quque.Enqueue(() =>
+            {
+                db.ById[notification.Id].PasswordHash = notification.PasswordHash;
+            });
         }
 
         public Task<List<UserDto>> Handle(GetUsers message, CancellationToken token = default)
