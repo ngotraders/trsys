@@ -30,7 +30,7 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<OrderInMemoryDatabase>();
             services.AddSingleton<SecretKeyInMemoryDatabase>();
             services.AddSingleton<UserInMemoryDatabase>();
-            services.AddSingleton<EventInMemoryDatabase>();
+            services.AddSingleton<LogInMemoryDatabase>();
 
             // Token management
             services.AddSingleton<TokenConnectionManager>();

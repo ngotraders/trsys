@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Models;
-using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.ViewModels.Admin;
@@ -55,7 +54,6 @@ namespace Trsys.Web.Controllers
             {
                 await mediator.Send(new ClearOrdersCommand(id));
             }
-            await bus.Publish(new UserEventNotification(User.Identity.Name, "OrderCleared"));
             return SaveModelAndRedirectToIndex(model);
         }
 
@@ -72,7 +70,6 @@ namespace Trsys.Web.Controllers
             {
                 var id = await mediator.Send(new CreateSecretKeyCommand(model.KeyType.Value, model.Key, model.Description));
                 var result = await mediator.Send(new GetSecretKey(id));
-                await bus.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyRegistered", new { Id = id, SecretKey = result.Key, result.KeyType, result.Description }));
                 model.SuccessMessage = $"シークレットキー: {result.Key} を作成しました。";
                 model.KeyType = null;
                 model.Key = null;
@@ -86,13 +83,13 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{key}/update")]
-        public async Task<IActionResult> PostKeyUpdate([FromRoute] string key, IndexViewModel model)
+        [HttpPost("keys/{id}/update")]
+        public async Task<IActionResult> PostKeyUpdate([FromRoute] Guid id, IndexViewModel model)
         {
             try
             {
-                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
-                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
+                var secretKey = await mediator.Send(new GetSecretKey(id));
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
@@ -100,8 +97,7 @@ namespace Trsys.Web.Controllers
                 }
                 await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
                 var result = await mediator.Send(new GetSecretKey(secretKey.Id));
-                await bus.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyUpdated", new { SecretKey = key, result.KeyType, result.Description }));
-                model.SuccessMessage = $"シークレットキー: {key} を変更しました。";
+                model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
                 model.KeyType = null;
                 model.Key = null;
                 model.Description = null;
@@ -114,21 +110,20 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{key}/approve")]
-        public async Task<IActionResult> PostKeyApprove([FromRoute] string key, IndexViewModel model)
+        [HttpPost("keys/{id}/approve")]
+        public async Task<IActionResult> PostKeyApprove([FromRoute] Guid id, IndexViewModel model)
         {
             try
             {
-                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
-                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
+                var secretKey = await mediator.Send(new GetSecretKey(id));
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, true));
-                await bus.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyApproved", new { SecretKey = key }));
-                model.SuccessMessage = $"シークレットキー: {key} を有効化しました。";
+                model.SuccessMessage = $"シークレットキー: {secretKey.Key} を有効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
@@ -138,13 +133,13 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{key}/revoke")]
-        public async Task<IActionResult> PostKeyRevoke([FromRoute] string key, IndexViewModel model)
+        [HttpPost("keys/{id}/revoke")]
+        public async Task<IActionResult> PostKeyRevoke([FromRoute] Guid id, IndexViewModel model)
         {
             try
             {
-                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Key == key);
-                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                var updateRequest = model.SecretKeys?.FirstOrDefault(sk => sk.Id == id);
+                var secretKey = await mediator.Send(new GetSecretKey(id));
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
@@ -152,12 +147,7 @@ namespace Trsys.Web.Controllers
                 }
                 var token = secretKey.Token;
                 await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, false));
-                if (!string.IsNullOrEmpty(token))
-                {
-                    await bus.Publish(new UserEventNotification(User.Identity.Name, "TokenInvalidated", new { SecretKey = key, Token = token }));
-                }
-                await bus.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyRevoked", new { SecretKey = key }));
-                model.SuccessMessage = $"シークレットキー: {key} を無効化しました。";
+                model.SuccessMessage = $"シークレットキー: {secretKey.Key} を無効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
@@ -167,20 +157,19 @@ namespace Trsys.Web.Controllers
             }
         }
 
-        [HttpPost("keys/{key}/delete")]
-        public async Task<IActionResult> PostKeyDelete([FromRoute] string key, IndexViewModel model)
+        [HttpPost("keys/{id}/delete")]
+        public async Task<IActionResult> PostKeyDelete([FromRoute] Guid id, IndexViewModel model)
         {
             try
             {
-                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                var secretKey = await mediator.Send(new GetSecretKey(id));
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
-                await bus.Publish(new UserEventNotification(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = key }));
-                model.SuccessMessage = $"シークレットキー: {key} を削除しました。";
+                model.SuccessMessage = $"シークレットキー: {secretKey.Key} を削除しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)

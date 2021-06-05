@@ -13,7 +13,6 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
 
         private static Type[] types = new[]
         {
-            typeof(EaEventNotification),
             typeof(OrderPublisherClosedOrder),
             typeof(OrderPublisherOpenedOrder),
             typeof(OrderPublisherRegistered),
@@ -30,9 +29,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
             typeof(SecretKeyRevoked),
             typeof(SecretKeyTokenGenerated),
             typeof(SecretKeyTokenInvalidated),
-            typeof(SystemEventNotification),
             typeof(UserCreated),
-            typeof(UserEventNotification),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),
             typeof(WorldStateSecretKeyDeleted),

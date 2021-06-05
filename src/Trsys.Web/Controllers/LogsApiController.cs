@@ -30,10 +30,7 @@ namespace Trsys.Web.Controllers
                 return Accepted();
             }
 
-            foreach (var line in text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                await bus.Publish(new EaEventNotification( User.Identity.Name, "Log", line));
-            }
+            await bus.Publish(new LogNotification(User.Identity.Name, text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
             return Accepted();
         }
     }

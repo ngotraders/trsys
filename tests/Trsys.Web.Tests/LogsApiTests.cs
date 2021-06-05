@@ -39,7 +39,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
             await Task.Delay(1);
-            var events = await mediator.Send(new GetEvents());
+            var events = await mediator.Send(new GetLogs());
             Assert.AreEqual(0, events.Count());
         }
         [TestMethod]
@@ -55,13 +55,13 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/logs", new StringContent("NonEmpty", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
-            var events = await mediator.Send(new GetEvents());
+            var events = await mediator.Send(new GetLogs());
             Assert.AreEqual(1, events.Count());
-            Assert.AreEqual($"ea/{VALID_KEY}", events.First().AggregateId);
-            Assert.AreEqual("Log", events.First().EventType);
+            Assert.AreEqual(VALID_KEY, events.First().Key);
+            Assert.AreEqual("DEBUG", events.First().LogType);
             Assert.AreEqual("NonEmpty", events.First().Data);
         }
 
