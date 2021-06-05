@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.ViewModels.Events;
 

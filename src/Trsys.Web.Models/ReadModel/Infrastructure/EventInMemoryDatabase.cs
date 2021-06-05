@@ -13,10 +13,10 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
         {
             All.Add(e);
             ById.Add(e.Id, e);
-            if (!BySource.TryGetValue(e.Source, out var list))
+            if (!BySource.TryGetValue(e.AggregateId, out var list))
             {
                 list = new();
-                BySource.Add(e.Source, list);
+                BySource.Add(e.AggregateId, list);
             }
             list.Add(e);
         }

@@ -60,7 +60,7 @@ namespace Trsys.Web.Tests
 
             var events = await mediator.Send(new GetEvents());
             Assert.AreEqual(1, events.Count());
-            Assert.AreEqual($"ea/{VALID_KEY}", events.First().Source);
+            Assert.AreEqual($"ea/{VALID_KEY}", events.First().AggregateId);
             Assert.AreEqual("Log", events.First().EventType);
             Assert.AreEqual("NonEmpty", events.First().Data);
         }

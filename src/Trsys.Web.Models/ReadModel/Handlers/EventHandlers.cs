@@ -1,67 +1,67 @@
 ﻿using MediatR;
-using SqlStreamStore.Infrastructure;
+using Newtonsoft.Json.Linq;
+using SqlStreamStore;
+using SqlStreamStore.Streams;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Dtos;
-using Trsys.Web.Models.ReadModel.Events;
-using Trsys.Web.Models.ReadModel.Infrastructure;
 using Trsys.Web.Models.ReadModel.Queries;
 
 namespace Trsys.Web.Models.ReadModel.Handlers
 {
-    public class EventHandlers :
-        INotificationHandler<SystemEventNotification>,
-        INotificationHandler<UserEventNotification>,
-        INotificationHandler<EaEventNotification>,
-        IRequestHandler<GetEvents, IEnumerable<EventDto>>
+    public class EventHandlers : IRequestHandler<GetEvents, IEnumerable<EventDto>>
     {
-        private static readonly TaskQueue quque = new();
-        private readonly EventInMemoryDatabase db;
+        private readonly IStreamStore store;
 
-        public EventHandlers(EventInMemoryDatabase db)
+        public EventHandlers(IStreamStore store)
         {
-            this.db = db;
-        }
-
-        public Task Handle(SystemEventNotification notification, CancellationToken cancellationToken)
-        {
-            return quque.Enqueue(() =>
-            {
-                db.Add(EventDto.Create($"system/{notification.Category}", notification.EventType, notification.Data));
-            });
-        }
-        public Task Handle(UserEventNotification notification, CancellationToken cancellationToken)
-        {
-            return quque.Enqueue(() =>
-            {
-                db.Add(EventDto.Create($"user/{notification.Username}", notification.EventType, notification.Data));
-            });
-        }
-        public Task Handle(EaEventNotification notification, CancellationToken cancellationToken)
-        {
-            return quque.Enqueue(() =>
-            {
-                db.Add(EventDto.Create($"ea/{notification.Key}", notification.EventType, notification.Data));
-            });
+            this.store = store;
         }
 
-        public Task<IEnumerable<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
+        public async Task<IEnumerable<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
         {
-            var events = (string.IsNullOrEmpty(request.Source)
-                ? db.All
-                : db.BySource.TryGetValue(request.Source, out var list)
-                ? list
-                : new List<EventDto>())
-                .AsEnumerable()
-                .Reverse();
-            if (request.PerPage > 0)
+            if (string.IsNullOrEmpty(request.Source))
             {
-                return Task.FromResult(events.Skip((request.Page - 1) * request.PerPage).Take(request.PerPage));
+                var fromPosition = await store.ReadHeadPosition() - (request.Page - 1) * request.PerPage;
+                if (fromPosition < 0)
+                {
+                    return Array.Empty<EventDto>();
+                }
+                var messages = await store.ReadAllBackwards(fromPosition, request.PerPage, true, cancellationToken);
+                return messages.Messages.Select(ConvertToEvent).ToList();
             }
-            return Task.FromResult(events);
+            else
+            {
+                var fromVersion = (await store.ReadStreamHeadVersion(new StreamId(request.Source)) - (request.Page - 1) * request.PerPage);
+                if (fromVersion < 0)
+                {
+                    return Array.Empty<EventDto>();
+                }
+                var messages = await store.ReadStreamBackwards(new StreamId(request.Source), fromVersion, request.PerPage, true, cancellationToken);
+                return messages.Messages.Select(ConvertToEvent).ToList();
+            }
+        }
+
+        private static EventDto ConvertToEvent(StreamMessage message)
+        {
+            var obj = JObject.Parse(message.GetJsonData().Result);
+            var timestamp = DateTimeOffset.Parse(obj.Property("TimeStamp").Value.ToString());
+            var version = int.Parse(obj.Property("Version").Value.ToString());
+            obj.Remove("Id");
+            obj.Remove("Version");
+            obj.Remove("TimeStamp");
+            return new EventDto()
+            {
+                Id = message.MessageId.ToString(),
+                Timestamp = timestamp,
+                EventType = message.Type.Replace("Trsys.Web.Models.ReadModel.Events.", ""),
+                AggregateId = message.StreamId,
+                Version = version,
+                Data = obj.ToString(),
+            };
         }
     }
 }
