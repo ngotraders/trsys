@@ -61,6 +61,11 @@ namespace Trsys.Web
                     services.AddDataProtection()
                         .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
                         .SetApplicationName("Trsys.Web");
+                    //Add distributed cache service backed by Redis cache
+                    services.AddStackExchangeRedisCache(o =>
+                    {
+                        o.Configuration = redisConnection;
+                    });
                 }
                 services.AddSqlServerInfrastructure(sqlserverConnection, redisConnection);
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
