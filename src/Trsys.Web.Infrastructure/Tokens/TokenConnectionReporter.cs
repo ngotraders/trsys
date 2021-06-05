@@ -11,11 +11,13 @@ namespace Trsys.Web.Infrastructure.Tokens
         private readonly string token;
         private readonly Timer timer;
         private DateTime? lastAccessed;
+        private bool init;
 
         public TokenConnectionReporter(Guid id, string token)
         {
             this.id = id;
             this.token = token;
+            this.init = false;
             timer = new Timer(OnTick, null, 1000, 1000);
         }
 
@@ -23,7 +25,15 @@ namespace Trsys.Web.Infrastructure.Tokens
         {
             lock (this)
             {
-                if (lastAccessed.HasValue && DateTime.UtcNow - lastAccessed.Value > TimeSpan.FromSeconds(5))
+                if (!this.init)
+                {
+                    if (!lastAccessed.HasValue)
+                    {
+                        OnDisconnected(new TokenConnectionEventArgs(id, token));
+                    }
+                    this.init = true;
+                }
+                else if (lastAccessed.HasValue && DateTime.UtcNow - lastAccessed.Value > TimeSpan.FromSeconds(5))
                 {
                     lastAccessed = null;
                     OnDisconnected(new TokenConnectionEventArgs(id, token));
