@@ -5,6 +5,7 @@ bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
+ string Version = "Subscriber:20210602";
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -260,16 +261,16 @@ class PositionManager {
          return 0;
       }
       if (one_lot == 0) {
-         m_logger.WriteLog("WARN", "CalculateVolume: One lot is 0. Symbol = " + symbol);
+         m_logger.WriteLog("ERROR", "CalculateVolume: One lot is 0. Symbol = " + symbol);
          return 0;
       }
       if (step == 0) {
+         step = 1;
          m_logger.WriteLog("WARN", "CalculateVolume: Step is 0. using 1 as lot step, Symbol = " + symbol);
-         return 0;
       }
       double lots = MathFloor(account_free_margin * Percent / 100 / one_lot / step ) * step;
       m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step));
-      m_logger.WriteLog("DEBUG", "CalculateVolume: Account free margin = " + DoubleToString(account_free_margin) + ", Account leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Calculated volume = " + DoubleToString(lots));
+      m_logger.WriteLog("DEBUG", "CalculateVolume: Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(Percent) + ", Calculated volume = " + DoubleToString(lots));
       return lots;
    };
 #ifdef __MQL5__
@@ -1199,7 +1200,7 @@ class TrsysClient {
 
    int m_post_secret_key()
    {
-      string request_headers = "Version: 20210331\r\nContent-Type: text/plain; charset=UTF-8";
+      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331";
       string request_data = m_secret_key;
       string response_headers;
       string response_data;
@@ -1217,7 +1218,7 @@ class TrsysClient {
    
    int m_post_token_release()
    {
-      string request_headers = "Version: 20210331\r\nContent-Type: text/plain; charset=UTF-8";
+      string request_headers = "X-Ea-Version: 20210331\r\nContent-Type: text/plain; charset=UTF-8";
       string request_data;
       string response_headers;
       string response_data;
@@ -1294,7 +1295,7 @@ public:
          return -1;
       }
    
-      string request_headers = "Version: 20210331\r\nX-Secret-Token: " + secret_token;
+      string request_headers = "X-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
       string request_data;
       string response_headers;
       string response_data;
@@ -1343,7 +1344,7 @@ public:
          return -1;
       }
    
-      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + secret_token;
+      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
       string request_data = data;
       string response_headers;
       string response_data;
@@ -1372,7 +1373,7 @@ public:
          return 0;
       }
 
-      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nVersion: 20210331\r\nX-Secret-Token: " + secret_token;
+      string request_headers = "Content-Type: text/plain; charset=UTF-8\r\nX-Ea-Version: 20210331\r\nX-Secret-Token: " + secret_token;
       string request_data = "";
       string response_headers;
       string response_data;
