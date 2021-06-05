@@ -29,13 +29,16 @@ class Admin:
                                 })
 
     def activateKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/approve")
+        return self.client.post(f"/admin/keys/{key}/approve",
+                                name="/admin/keys/[key]/approve")
 
     def deactivateKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/revoke")
+        return self.client.post(f"/admin/keys/{key}/revoke",
+                                name="/admin/keys/[key]/revoke")
 
     def deleteKey(self, key: str):
-        return self.client.post(f"/admin/keys/{key}/delete")
+        return self.client.post(f"/admin/keys/{key}/delete",
+                                name="/admin/keys/[key]/delete")
 
 
 class Subscriber(HttpUser):
@@ -44,14 +47,13 @@ class Subscriber(HttpUser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client.verify = False
-        self.secretKey = ''
         self.token = ''
         self.etag = ''
 
     def fetch_secret_key(self):
         self.client.headers = {}
         self.client.headers['Content-Type'] = 'text/plain'
-        self.client.headers['Version'] = '20210331'
+        self.client.headers['X-Ea-Version'] = '20210331'
         res = self.client.post("/api/token", data=self.secretKey)
         if res.status_code == 200:
             self.token = res.text
@@ -79,7 +81,7 @@ class Subscriber(HttpUser):
             self.client.cookies.clear()
             self.client.headers = {}
             self.client.headers['Content-Type'] = 'text/plain'
-            self.client.headers['Version'] = '20210331'
+            self.client.headers['X-Ea-Version'] = '20210331'
             self.client.headers['X-Secret-Token'] = self.token
 
         if self.etag != '':
