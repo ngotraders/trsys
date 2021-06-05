@@ -62,7 +62,7 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(1, events.Count());
             Assert.AreEqual(VALID_KEY, events.First().Key);
             Assert.AreEqual("DEBUG", events.First().LogType);
-            Assert.AreEqual("NonEmpty", events.First().Data);
+            Assert.AreEqual("1:DEBUG:NonEmpty", events.First().Data);
         }
 
         private static TestServer CreateTestServer()

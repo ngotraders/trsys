@@ -30,6 +30,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
             typeof(SecretKeyTokenGenerated),
             typeof(SecretKeyTokenInvalidated),
             typeof(UserCreated),
+            typeof(LogNotification),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),
             typeof(WorldStateSecretKeyDeleted),
