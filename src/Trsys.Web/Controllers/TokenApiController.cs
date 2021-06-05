@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
+using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -15,10 +16,12 @@ namespace Trsys.Web.Controllers
     {
 
         private readonly IMediator mediator;
+        private readonly IMessageBus bus;
 
-        public TokenApiController(IMediator mediator)
+        public TokenApiController(IMediator mediator, IMessageBus bus)
         {
             this.mediator = mediator;
+            this.bus = bus;
         }
 
         [HttpPost]
@@ -36,7 +39,7 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
-                    await mediator.Publish(new SystemEventNotification("token", "NewEaAccessed", new { SecretKey = key }));
+                    await bus.Publish(new SystemEventNotification("token", "NewEaAccessed", new { SecretKey = key }));
                     return BadRequest("InvalidSecretKey");
                 }
                 else if (!secretKey.IsApproved)
@@ -44,7 +47,7 @@ namespace Trsys.Web.Controllers
                     return BadRequest("InvalidSecretKey");
                 }
                 var token = await mediator.Send(new GenerateSecretTokenCommand(secretKey.Id));
-                await mediator.Publish(new SystemEventNotification("token", "TokenGenerated", new { SecretKey = key, SecretToken = token }));
+                await bus.Publish(new SystemEventNotification("token", "TokenGenerated", new { SecretKey = key, SecretToken = token }));
                 return Ok(token);
             }
             catch
@@ -63,7 +66,7 @@ namespace Trsys.Web.Controllers
                 return BadRequest("InvalidToken");
             }
             await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id, token));
-            await mediator.Publish(new SystemEventNotification("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token }));
+            await bus.Publish(new SystemEventNotification("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token }));
             return Ok(token);
         }
     }

@@ -52,7 +52,7 @@ namespace Trsys.Web
             }
             else
             {
-                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"));
+                services.AddSqlServerInfrastructure(Configuration.GetConnectionString("DefaultConnection"), Configuration.GetConnectionString("RedisConnection"));
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             }
         }

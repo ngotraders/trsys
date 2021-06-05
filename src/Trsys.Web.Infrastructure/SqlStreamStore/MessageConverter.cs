@@ -1,16 +1,14 @@
 ﻿using CQRSlite.Events;
 using MediatR;
 using Newtonsoft.Json;
-using SqlStreamStore.Streams;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Infrastructure.SqlStreamStore
 {
-    public static class StreamMessageConverter
+    public static class MessageConverter
     {
 
         private static Type[] types = new[]
@@ -59,18 +57,31 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
         }).ToArray();
         private static Func<object, Type> objToType = o => objToTypes.Select(ott => ott(o)).First(t => t != null);
         private static Func<string, Type> strToType = str => types.First(t => t.FullName == str);
-        public static async Task<IEvent> ConvertToEvent(StreamMessage message)
+        public static IEvent ConvertToEvent(PublishedMessage message)
         {
-            return (IEvent)JsonConvert.DeserializeObject(await message.GetJsonData(), strToType(message.Type));
+            return (IEvent)JsonConvert.DeserializeObject(message.Data, strToType(message.Type));
         }
-        public static async Task<INotification> ConvertToNotification(StreamMessage message)
+        public static PublishedMessage ConvertFromEvent(IEvent @event)
         {
-            var obj = (INotification)JsonConvert.DeserializeObject(await message.GetJsonData(), strToType(message.Type));
-            return obj;
+            return new PublishedMessage()
+            {
+                Id = Guid.NewGuid(),
+                Type = objToType(@event).FullName,
+                Data = JsonConvert.SerializeObject(@event)
+            };
         }
-        public static NewStreamMessage ConvertFromEvent(IEvent notification)
+        public static INotification ConvertToNotification(PublishedMessage message)
         {
-            return new NewStreamMessage(Guid.NewGuid(), objToType(notification).FullName, JsonConvert.SerializeObject(notification));
+            return (INotification)JsonConvert.DeserializeObject(message.Data, strToType(message.Type));
+        }
+        public static PublishedMessage ConvertFromNotification(INotification notification)
+        {
+            return new PublishedMessage()
+            {
+                Id = Guid.NewGuid(),
+                Type = objToType(notification).FullName,
+                Data = JsonConvert.SerializeObject(notification)
+            };
         }
     }
 }

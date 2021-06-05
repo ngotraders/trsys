@@ -59,7 +59,12 @@ namespace Trsys.Web.Models
             {
                 foreach (var message in page.Messages)
                 {
-                    await mediator.Publish(await StreamMessageConverter.ConvertToNotification(message));
+                    await mediator.Publish(MessageConverter.ConvertToNotification(new PublishedMessage()
+                    {
+                        Id = message.MessageId,
+                        Type = message.Type,
+                        Data = await message.GetJsonData()
+                    }));
                 }
                 if (page.IsEnd)
                 {
@@ -67,6 +72,7 @@ namespace Trsys.Web.Models
                 }
                 page = await page.ReadNext();
             }
+            scope.ServiceProvider.GetRequiredService<IMessageBus>();
         }
 
         public static async Task SeedDataAsync(IApplicationBuilder app)

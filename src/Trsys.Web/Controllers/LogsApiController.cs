@@ -1,9 +1,9 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
+using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Controllers
@@ -13,11 +13,11 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class LogsApiController : Controller
     {
-        private readonly IMediator mediator;
+        private readonly IMessageBus bus;
 
-        public LogsApiController(IMediator mediator)
+        public LogsApiController(IMessageBus bus)
         {
-            this.mediator = mediator;
+            this.bus = bus;
         }
 
         [HttpPost]
@@ -32,7 +32,7 @@ namespace Trsys.Web.Controllers
 
             foreach (var line in text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
-                await mediator.Publish(new EaEventNotification( User.Identity.Name, "Log", line));
+                await bus.Publish(new EaEventNotification( User.Identity.Name, "Log", line));
             }
             return Accepted();
         }

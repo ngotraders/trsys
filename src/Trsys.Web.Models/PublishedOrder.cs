@@ -7,8 +7,17 @@ namespace Trsys.Web.Models
         public int TicketNo { get; set; }
         public string Symbol { get; set; }
         public OrderType OrderType { get; set; }
-        public decimal Price { get; set; }
-        public decimal Lots { get; set; }
+        private decimal _Price;
+        public decimal Price { 
+            get { return _Price; }
+            set { _Price = value.Normalize(); }
+        }
+        private decimal _Lots;
+        public decimal Lots
+        {
+            get { return _Lots; }
+            set { _Lots = value.Normalize(); }
+        }
         public long Time { get; set; }
 
         public static PublishedOrder Parse(string orderText)
@@ -29,8 +38,8 @@ namespace Trsys.Web.Models
                 TicketNo = int.Parse(ticketNo),
                 Symbol = symbol,
                 OrderType = orderType,
-                Price = decimal.Parse(price).Normalize(),
-                Lots = decimal.Parse(lots).Normalize(),
+                Price = decimal.Parse(price),
+                Lots = decimal.Parse(lots),
                 Time = long.Parse(time),
             };
         }
