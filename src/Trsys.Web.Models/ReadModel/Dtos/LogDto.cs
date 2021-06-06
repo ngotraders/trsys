@@ -40,7 +40,7 @@ namespace Trsys.Web.Models.ReadModel.Dtos
                 Key = key,
                 Version = version,
                 Received = received,
-                Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(tick),
+                Timestamp = DateTimeOffset.FromUnixTimeSeconds(tick),
                 LogType = splitted[1],
                 Data = line,
             };

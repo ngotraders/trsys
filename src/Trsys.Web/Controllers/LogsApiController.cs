@@ -9,7 +9,8 @@ using Trsys.Web.Models.ReadModel.Events;
 namespace Trsys.Web.Controllers
 {
     [Route("api/logs")]
-    [EaVersion("20210331")]
+    [EaEndpoint]
+    [MinimumEaVersion("20210331")]
     [ApiController]
     public class LogsApiController : Controller
     {
@@ -22,7 +23,7 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
-        [RequireToken()]
+        [RequireToken]
         public async Task<IActionResult> PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             if (string.IsNullOrEmpty(text))

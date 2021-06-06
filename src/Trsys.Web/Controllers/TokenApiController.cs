@@ -8,7 +8,8 @@ using Trsys.Web.Models.WriteModel.Commands;
 namespace Trsys.Web.Controllers
 {
     [Route("api/token")]
-    [EaVersion("20210331")]
+    [EaEndpoint]
+    [MinimumEaVersion("20210331")]
     [ApiController]
     public class TokenApiController : ControllerBase
     {

@@ -158,6 +158,7 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", "InvalidToken");
             var res = await client.GetAsync("/api/orders");
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
         }
@@ -172,6 +173,7 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
+            client.DefaultRequestHeaders.Add("Version", "20210330");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.GetAsync("/api/orders");
@@ -252,6 +254,7 @@ namespace Trsys.Web.Tests
             var server = CreateTestServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", "InvalidToken");
             var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:2@2:EURUSD:1:0.023", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
         }
