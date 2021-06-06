@@ -5,7 +5,8 @@ bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
- string Version = "Publisher:20210602";
+string Type = "Publisher";
+string Version = "20210606";
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -121,18 +122,18 @@ class EaState {
    long m_start_time;
    void m_update_comment() {
       if (!m_ea_enabled) {
-         Comment("TrsysSubscriber: 自動売買が無効です");
+         Comment("Trsys" + Type + ": 自動売買が無効です");
          return;
       }
       if (!m_has_server_connection) {
-         Comment("TrsysSubscriber: サーバーと通信できません。");
+         Comment("Trsys" + Type + ": サーバーと通信できません。");
          return;
       }
       if (!m_key_is_valid) {
-         Comment("TrsysSubscriber: シークレットキーが異常です。");
+         Comment("Trsys" + Type + ": シークレットキーが異常です。");
          return;
       }
-      Comment("TrsysSubscriber: 正常");
+      Comment("Trsys" + Type + ": 正常");
    };
 public:
    EaState() {
@@ -1179,7 +1180,7 @@ class TrsysClient {
    };
    
    string m_generate_header(string method, bool useToken = false) {
-      string header = "Version: 20210331";
+      string header = "X-Ea-Id: " + m_generate_secret_key() + "\r\nX-Ea-Type: " + Type + "\r\nX-Ea-Version: " + Version;
       if (useToken) {
          string secret_token = m_get_secret_token();
          if (secret_token == NULL) {
@@ -1379,7 +1380,7 @@ public:
       if (peak == 0) {
          return 0;
       }
-      string request_headers = m_generate_header("POST", false);
+      string request_headers = m_generate_header("POST", true);
       if (request_headers == NULL) {
          return -1;
       }
