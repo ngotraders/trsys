@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Queries;
 using Trsys.Web.Models.WriteModel.Commands;
@@ -18,12 +17,10 @@ namespace Trsys.Web.Controllers
     public class AdminController : Controller
     {
         private readonly IMediator mediator;
-        private readonly IMessageBus bus;
 
-        public AdminController(IMediator mediator, IMessageBus bus)
+        public AdminController(IMediator mediator)
         {
             this.mediator = mediator;
-            this.bus = bus;
         }
 
         [HttpGet]

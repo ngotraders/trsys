@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
+using Trsys.Web.Models.ReadModel.Infrastructure;
 
-namespace Trsys.Web.Models.ReadModel.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class OrderInMemoryDatabase : IOrderDatabase
     {

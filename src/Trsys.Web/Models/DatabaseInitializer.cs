@@ -59,7 +59,7 @@ namespace Trsys.Web.Models
             {
                 foreach (var message in page.Messages)
                 {
-                    await mediator.Publish(MessageConverter.ConvertToNotification(new PublishedMessage()
+                    await mediator.Publish(MessageConverter.ConvertToNotification(new PublishingMessage()
                     {
                         Id = message.MessageId,
                         Type = message.Type,
@@ -72,7 +72,6 @@ namespace Trsys.Web.Models
                 }
                 page = await page.ReadNext();
             }
-            scope.ServiceProvider.GetRequiredService<IMessageBus>();
         }
 
         public static async Task SeedDataAsync(IApplicationBuilder app)

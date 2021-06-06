@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Threading.Tasks;
@@ -14,11 +15,11 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class LogsApiController : Controller
     {
-        private readonly IMessageBus bus;
+        private readonly IMediator mediator;
 
-        public LogsApiController(IMessageBus bus)
+        public LogsApiController(IMediator mediator)
         {
-            this.bus = bus;
+            this.mediator = mediator;
         }
 
         [HttpPost]
@@ -31,7 +32,7 @@ namespace Trsys.Web.Controllers
             }
 
             var version = (string)HttpContext.Request.Headers["X-Ea-Version"] ?? (string)HttpContext.Request.Headers["Version"];
-            await bus.Publish(new LogNotification(HttpContext.TraceIdentifier, User.Identity.Name, version ?? "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
+            await mediator.Publish(new LogNotification(HttpContext.TraceIdentifier, User.Identity.Name, version ?? "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
             return Accepted();
         }
     }

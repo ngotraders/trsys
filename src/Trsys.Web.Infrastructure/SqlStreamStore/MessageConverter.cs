@@ -55,26 +55,26 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
         }).ToArray();
         private static Func<object, Type> objToType = o => objToTypes.Select(ott => ott(o)).First(t => t != null);
         private static Func<string, Type> strToType = str => types.First(t => t.FullName == str);
-        public static IEvent ConvertToEvent(PublishedMessage message)
+        public static IEvent ConvertToEvent(PublishingMessage message)
         {
             return (IEvent)JsonConvert.DeserializeObject(message.Data, strToType(message.Type));
         }
-        public static PublishedMessage ConvertFromEvent(IEvent @event)
+        public static PublishingMessage ConvertFromEvent(IEvent @event)
         {
-            return new PublishedMessage()
+            return new PublishingMessage()
             {
                 Id = Guid.NewGuid(),
                 Type = objToType(@event).FullName,
                 Data = JsonConvert.SerializeObject(@event)
             };
         }
-        public static INotification ConvertToNotification(PublishedMessage message)
+        public static INotification ConvertToNotification(PublishingMessage message)
         {
             return (INotification)JsonConvert.DeserializeObject(message.Data, strToType(message.Type));
         }
-        public static PublishedMessage ConvertFromNotification(INotification notification)
+        public static PublishingMessage ConvertFromNotification(INotification notification)
         {
-            return new PublishedMessage()
+            return new PublishingMessage()
             {
                 Id = Guid.NewGuid(),
                 Type = objToType(notification).FullName,

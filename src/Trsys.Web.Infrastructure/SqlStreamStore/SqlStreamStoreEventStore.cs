@@ -1,4 +1,5 @@
 ﻿using CQRSlite.Events;
+using MediatR;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
 using System;
@@ -11,19 +12,19 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
 {
     public class SqlStreamStoreEventStore : IEventStore
     {
-        private readonly IMessageBus bus;
+        private readonly IMediator mediator;
         private readonly IStreamStore store;
 
-        public SqlStreamStoreEventStore(IMessageBus bus, IStreamStore store)
+        public SqlStreamStoreEventStore(IMediator mediator, IStreamStore store)
         {
-            this.bus = bus;
+            this.mediator = mediator;
             this.store = store;
         }
 
         public async Task Save(IEnumerable<IEvent> events, CancellationToken cancellationToken = default)
         {
             var lookups = events.ToLookup(e => e.Id);
-            var messages = new List<PublishedMessage>();
+            var messages = new List<PublishingMessage>();
             foreach (var lookup in lookups)
             {
                 var e = lookup.OrderBy(e => e.Version).ToList();
@@ -36,10 +37,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
                     newMessages.Select(m => new NewStreamMessage(m.Id, m.Type, m.Data)).ToArray(),
                     cancellationToken);
             }
-            foreach (var message in messages)
-            {
-                await bus.Publish(message, cancellationToken);
-            }
+            await mediator.Publish(new PublishingMessageEnvelope(messages), cancellationToken);
         }
 
         public async Task<IEnumerable<IEvent>> Get(Guid aggregateId, int fromVersion, CancellationToken cancellationToken = default)
@@ -48,7 +46,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
             var messages = await store.ReadStreamForwards(new StreamId(aggregateId.ToString()), fromVersion < 0 ? 0 : fromVersion, int.MaxValue, cancellationToken);
             foreach (var message in messages.Messages)
             {
-                events.Add(MessageConverter.ConvertToEvent(new PublishedMessage()
+                events.Add(MessageConverter.ConvertToEvent(new PublishingMessage()
                 {
                     Id = message.MessageId,
                     Type = message.Type,

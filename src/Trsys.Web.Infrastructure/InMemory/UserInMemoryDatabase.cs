@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Web.Models.ReadModel.Dtos;
+using Trsys.Web.Models.ReadModel.Infrastructure;
 
-namespace Trsys.Web.Models.ReadModel.Infrastructure
+namespace Trsys.Web.Infrastructure.InMemory
 {
     public class UserInMemoryDatabase : IUserDatabase
     {
