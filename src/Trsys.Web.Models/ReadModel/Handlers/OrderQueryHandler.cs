@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,56 +17,46 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<GetOrders, List<OrderDto>>,
         IRequestHandler<GetPublishedOrders, List<PublishedOrder>>
     {
-        private static readonly TaskQueue quque = new();
-        private readonly OrderInMemoryDatabase db;
+        private readonly IOrderDatabase db;
 
-        public OrderQueryHandler(OrderInMemoryDatabase db)
+        public OrderQueryHandler(IOrderDatabase db)
         {
             this.db = db;
         }
 
         public Task Handle(OrderPublisherOpenedOrder notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
+            return db.AddAsync(new OrderDto()
             {
-                db.Add(new OrderDto()
-                {
-                    Id = $"{notification.Id}:{notification.Order.TicketNo}",
-                    Order = notification.Order,
-                    SecretKeyId = notification.Id,
-                });
+                Id = $"{notification.Id}:{notification.Order.TicketNo}",
+                Order = notification.Order,
+                SecretKeyId = notification.Id,
             });
         }
 
         public Task Handle(OrderPublisherClosedOrder notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.Remove($"{notification.Id}:{notification.TicketNo}");
-            });
+            return db.RemoveAsync($"{notification.Id}:{notification.TicketNo}");
         }
 
         public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
         {
-            return quque.Enqueue(() =>
-            {
-                db.RemoveBySecretKey(notification.Id);
-            });
+            return db.RemoveBySecretKeyAsync(notification.Id);
         }
 
         public Task<OrdersTextEntry> Handle(GetOrderTextEntry request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(db.Entry);
+            return db.FindEntryAsync();
         }
 
         public Task<List<OrderDto>> Handle(GetOrders request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(db.All);
+            return db.SearchAsync();
         }
 
         public Task<List<PublishedOrder>> Handle(GetPublishedOrders request, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(db.List);
+            return db.SearchPublishedOrderAsync();
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,119 +25,85 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<FindBySecretKey, SecretKeyDto>,
         IRequestHandler<FindByCurrentToken, SecretKeyDto>
     {
-        private static readonly TaskQueue quque = new();
-        private readonly SecretKeyInMemoryDatabase db;
+        private readonly ISecretKeyDatabase db;
 
-        public SecretKeyQueryHandler(SecretKeyInMemoryDatabase db)
+        public SecretKeyQueryHandler(ISecretKeyDatabase db)
         {
             this.db = db;
         }
+
         public Task Handle(SecretKeyCreated notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
+            return db.AddAsync(new SecretKeyDto()
             {
-                db.Add(new SecretKeyDto()
-                {
-                    Id = notification.Id,
-                    Key = notification.Key
-                });
+                Id = notification.Id,
+                Key = notification.Key
             });
         }
 
         public Task Handle(SecretKeyKeyTypeChanged notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].KeyType = notification.KeyType;
-            });
+            return db.UpdateKeyTypeAsync(notification.Id, notification.KeyType);
         }
 
         public Task Handle(SecretKeyDescriptionChanged notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].Description = notification.Description;
-            });
+            return db.UpdateDescriptionAsync(notification.Id, notification.Description);
         }
 
         public Task Handle(SecretKeyApproved notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].IsApproved = true;
-            });
+            return db.UpdateIsApprovedAsync(notification.Id, true);
         }
 
         public Task Handle(SecretKeyTokenGenerated notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                var item = db.ById[notification.Id];
-                item.Token = notification.Token;
-                db.ByToken.Add(item.Token, item);
-            });
+            return db.UpdateTokenAsync(notification.Id, notification.Token);
         }
 
         public Task Handle(SecretKeyTokenInvalidated notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                var item = db.ById[notification.Id];
-                db.ByToken.Remove(item.Token);
-                item.Token = null;
-            });
+            return db.UpdateTokenAsync(notification.Id, null);
         }
 
         public Task Handle(SecretKeyRevoked notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].IsApproved = false;
-            });
+            return db.UpdateIsApprovedAsync(notification.Id, false);
         }
 
         public Task Handle(SecretKeyEaConnected notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].IsConnected = true;
-            });
+            return db.UpdateIsConnectedAsync(notification.Id, true);
         }
 
         public Task Handle(SecretKeyEaDisconnected notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].IsConnected = false;
-            });
+            return db.UpdateIsConnectedAsync(notification.Id, false);
         }
 
         public Task Handle(SecretKeyDeleted notification, CancellationToken cancellationToken)
         {
-            return quque.Enqueue(() =>
-            {
-                db.Remove(notification.Id);
-            });
+            return db.RemoveAsync(notification.Id);
         }
 
         public Task<List<SecretKeyDto>> Handle(GetSecretKeys message, CancellationToken token = default)
         {
-            return Task.FromResult(db.List);
+            return db.SearchAsync();
         }
 
         public Task<SecretKeyDto> Handle(GetSecretKey request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(db.ById.TryGetValue(request.Id, out var value) ? value : null);
+            return db.FindByIdAsync(request.Id);
         }
 
         public Task<SecretKeyDto> Handle(FindBySecretKey request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(db.ByKey.TryGetValue(request.Key, out var value) ? value : null);
+            return db.FindByKeyAsync(request.Key);
         }
 
         public Task<SecretKeyDto> Handle(FindByCurrentToken request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(db.ByToken.TryGetValue(request.Token, out var value) ? value : null);
+            return db.FindByTokenAsync(request.Token);
         }
     }
 }

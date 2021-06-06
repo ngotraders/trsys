@@ -1,5 +1,4 @@
 using MediatR;
-using SqlStreamStore.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,48 +16,41 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         IRequestHandler<GetUser, UserDto>,
         IRequestHandler<FindByUsername, UserDto>
     {
-        private static readonly TaskQueue quque = new();
-        private readonly UserInMemoryDatabase db;
+        private readonly IUserDatabase db;
 
-        public UserQueryHandler(UserInMemoryDatabase db)
+        public UserQueryHandler(IUserDatabase db)
         {
             this.db = db;
         }
         public Task Handle(UserCreated notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
+            return db.AddAsync(new UserDto()
             {
-                db.Add(new UserDto()
-                {
-                    Id = notification.Id,
-                    Name = notification.Name,
-                    Username = notification.Username,
-                    Role = notification.Role,
-                });
+                Id = notification.Id,
+                Name = notification.Name,
+                Username = notification.Username,
+                Role = notification.Role,
             });
         }
 
         public Task Handle(UserPasswordHashChanged notification, CancellationToken cancellationToken = default)
         {
-            return quque.Enqueue(() =>
-            {
-                db.ById[notification.Id].PasswordHash = notification.PasswordHash;
-            });
+            return db.UpdatePasswordHashAsync(notification.Id, notification.PasswordHash);
         }
 
         public Task<List<UserDto>> Handle(GetUsers message, CancellationToken token = default)
         {
-            return Task.FromResult(db.List);
+            return db.SearchAsync();
         }
 
         public Task<UserDto> Handle(GetUser request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(db.ById.TryGetValue(request.Id, out var value) ? value : null);
+            return db.FindByIdAsync(request.Id);
         }
 
         public Task<UserDto> Handle(FindByUsername request, CancellationToken cancellationToken)
         {
-            return Task.FromResult(db.ByUsername.TryGetValue(request.Username, out var value) ? value : null);
+            return db.FindByUsernameAsync(request.Username);
         }
     }
 }

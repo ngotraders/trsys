@@ -27,10 +27,10 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IEventStore, SqlStreamStoreEventStore>();
 
             // Database
-            services.AddSingleton<OrderInMemoryDatabase>();
-            services.AddSingleton<SecretKeyInMemoryDatabase>();
-            services.AddSingleton<UserInMemoryDatabase>();
-            services.AddSingleton<LogInMemoryDatabase>();
+            services.AddSingleton<ILogDatabase, LogInMemoryDatabase>();
+            services.AddSingleton<IOrderDatabase, OrderInMemoryDatabase>();
+            services.AddSingleton<ISecretKeyDatabase, SecretKeyInMemoryDatabase>();
+            services.AddSingleton<IUserDatabase, UserInMemoryDatabase>();
 
             // Token management
             services.AddSingleton<TokenConnectionManager>();
