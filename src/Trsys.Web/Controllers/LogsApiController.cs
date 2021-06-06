@@ -23,7 +23,6 @@ namespace Trsys.Web.Controllers
 
         [HttpPost]
         [Consumes("text/plain")]
-        [RequireToken]
         public async Task<IActionResult> PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             if (string.IsNullOrEmpty(text))
@@ -31,7 +30,8 @@ namespace Trsys.Web.Controllers
                 return Accepted();
             }
 
-            await bus.Publish(new LogNotification(User.Identity.Name, "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
+            var version = (string)HttpContext.Request.Headers["X-Ea-Version"] ?? (string)HttpContext.Request.Headers["Version"];
+            await bus.Publish(new LogNotification(HttpContext.TraceIdentifier, User.Identity.Name, version ?? "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
             return Accepted();
         }
     }

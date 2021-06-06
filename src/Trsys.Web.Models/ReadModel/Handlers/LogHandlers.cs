@@ -29,7 +29,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             {
                 foreach (var line in notification.Lines)
                 {
-                    db.Add(LogDto.Create(notification.Key, notification.Version, notification.Timestamp, line));
+                    db.Add(LogDto.Create(notification.RequestId, notification.Timestamp, notification.Key, notification.Version, line));
                 }
             });
         }

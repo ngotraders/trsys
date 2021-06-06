@@ -12,15 +12,15 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 65;
+        const int COUNT_OF_CLIENTS = 30;
         const double LENGTH_OF_TEST_MINUTES = 3;
-        const string ENDPOINT_URL = "https://localhost:5001";
+        const string ENDPOINT_URL = "https://trsys-server.azurewebsites.net";
 
         static void Main(string[] args)
         {
-            // using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
-            // server.StartAsync().Wait();
-            using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
+            //// using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
+            //// server.StartAsync().Wait();
+            //using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretKeys = WithRetry(() => GenerateSecretKeys(COUNT_OF_CLIENTS + 1)).Result;
             var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
@@ -90,7 +90,9 @@ namespace LoadTesting
             var admin = new Admin(ENDPOINT_URL, "admin", "P@ssw0rd");
             await admin.LoginAsync();
 
-            var secretKeys = await admin.GetSecretKeysAsync();
+            var secretKeys = (await admin.GetSecretKeysAsync())
+                .Where(k => Guid.TryParse(k, out var _))
+                .ToList();
             foreach (var secretKey in secretKeys)
             {
                 await admin.RevokeSecretKeyAsync(secretKey);
@@ -102,7 +104,9 @@ namespace LoadTesting
                 await admin.CreateKeyAsync();
             }
 
-            secretKeys = await admin.GetSecretKeysAsync();
+            secretKeys = (await admin.GetSecretKeysAsync())
+                .Where(k => Guid.TryParse(k, out var _))
+                .ToList();
             foreach (var secretKey in secretKeys)
             {
                 await admin.ApproveSecretKeyAsync(secretKey);
