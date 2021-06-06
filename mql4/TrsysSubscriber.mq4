@@ -103,7 +103,7 @@ public:
 class Logger : public LogQueue {
 public:
    void WriteLog(string logType, string message) {
-      string text = IntegerToString(GetTickCount()) + ":" + logType + ":" + message;
+      string text = IntegerToString(TimeCurrent()) + ":" + logType + ":" + message;
       if (logType == "DEBUG") {
          if (DEBUG) {
             Print(message);
@@ -2056,6 +2056,8 @@ int OnInit()
    positionManager = new PositionManager(logger);
    remoteOrders = new RemoteOrderState(positionManager);
    localOrders = new LocalOrderState(positionManager);
+   logger.WriteLog("DEBUG", "Init");
+   client.PostLog(logger);
 //---
    return(INIT_SUCCEEDED);
 }
@@ -2065,6 +2067,8 @@ int OnInit()
 void OnDeinit(const int reason)
 {
 //--- destroy timer
+   logger.WriteLog("DEBUG", "Deinit. Reason = " + IntegerToString(reason));
+   client.PostLog(logger);
    EventKillTimer();
    delete localOrders;
    delete remoteOrders;
