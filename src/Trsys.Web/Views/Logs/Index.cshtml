@@ -38,16 +38,16 @@
         <table class="table table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
             <colgroup>
                 <col style="width: 15em" />
-                <col style="width: 24em" />
-                <col style="width: 24em" />
+                <col style="width: 28em" />
+                <col style="width: 7em" />
                 <col />
             </colgroup>
             <thead>
                 <tr>
                     <th>時刻</th>
-                    <th>イベント元</th>
-                    <th>イベントタイプ</th>
-                    <th>イベントデータ</th>
+                    <th>ソース (バージョン)</th>
+                    <th>ログタイプ</th>
+                    <th>ログ</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,7 +55,7 @@
                 {
                     <tr>
                         <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", e.Timestamp.ToOffset(TimeSpan.FromHours(9)))</td>
-                        <td><a href="@Url.Action("Index", new { source = e.Key })">@e.Key</a></td>
+                        <td><a href="@Url.Action("Index", new { source = e.Key })">@e.Key (@e.Version)</a></td>
                         <td>@e.LogType</td>
                         <td>@e.Data</td>
                     </tr>

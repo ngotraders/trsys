@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using SqlStreamStore.Infrastructure;
 using System;
 using System.Collections.Generic;
@@ -18,10 +19,12 @@ namespace Trsys.Web.Models.ReadModel.Handlers
     {
         private static readonly TaskQueue quque = new();
         private readonly LogInMemoryDatabase db;
+        private readonly ILogger<LogHandlers> logger;
 
-        public LogHandlers(LogInMemoryDatabase db)
+        public LogHandlers(LogInMemoryDatabase db, ILogger<LogHandlers> logger)
         {
             this.db = db;
+            this.logger = logger;
         }
         public Task Handle(LogNotification notification, CancellationToken cancellationToken)
         {
@@ -29,9 +32,27 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             {
                 foreach (var line in notification.Lines)
                 {
-                    db.Add(LogDto.Create(notification.RequestId, notification.Timestamp, notification.Key, notification.Version, line));
+                    var log = LogDto.Create(notification.RequestId, notification.Timestamp, notification.Key, notification.Version, line);
+                    db.Add(log);
+                    logger.Log(ConvertToLogLevel(log.LogType), $"{notification.Key}:{notification.Version}:{line}");
                 }
             });
+        }
+
+        private LogLevel ConvertToLogLevel(string logType)
+        {
+            switch (logType)
+            {
+                case "DEBUG":
+                    return LogLevel.Debug;
+                case "INFO":
+                    return LogLevel.Information;
+                case "WARN":
+                    return LogLevel.Warning;
+                case "ERROR":
+                    return LogLevel.Error;
+            }
+            return LogLevel.None;
         }
 
         public Task<IEnumerable<LogDto>> Handle(GetLogs request, CancellationToken cancellationToken)
