@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 
-#nullable disable
-
 namespace Trsys.Web.Models
 {
     public partial class TrsysContext : DbContext
