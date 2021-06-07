@@ -1,20 +1,20 @@
-﻿using SqlStreamStore.Infrastructure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
-    public class SecretKeyInMemoryDatabase : ISecretKeyDatabase
+    public class InMemorySecretKeyDatabase : ISecretKeyDatabase, IDisposable
     {
-        private readonly TaskQueue queue = new();
-        public readonly List<SecretKeyDto> List = new();
-        public readonly Dictionary<Guid, SecretKeyDto> ById = new();
-        public readonly Dictionary<string, SecretKeyDto> ByKey = new();
-        public readonly Dictionary<string, SecretKeyDto> ByToken = new();
+        private readonly BlockingTaskQueue queue = new();
+        private readonly List<SecretKeyDto> List = new();
+        private readonly Dictionary<Guid, SecretKeyDto> ById = new();
+        private readonly Dictionary<string, SecretKeyDto> ByKey = new();
+        private readonly Dictionary<string, SecretKeyDto> ByToken = new();
 
         public Task AddAsync(SecretKeyDto secretKey)
         {
@@ -100,6 +100,11 @@ namespace Trsys.Web.Infrastructure.InMemory
         public Task<SecretKeyDto> FindByTokenAsync(string token)
         {
             return Task.FromResult(ByToken.TryGetValue(token, out var value) ? value : null);
+        }
+        public void Dispose()
+        {
+            queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

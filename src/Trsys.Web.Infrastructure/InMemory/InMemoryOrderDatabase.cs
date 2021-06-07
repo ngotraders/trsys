@@ -1,24 +1,24 @@
-﻿using SqlStreamStore.Infrastructure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
-    public class OrderInMemoryDatabase : IOrderDatabase
+    public class InMemoryOrderDatabase : IOrderDatabase, IDisposable
     {
-        private readonly TaskQueue queue = new();
-        public OrdersTextEntry Entry = OrdersTextEntry.Create(new List<PublishedOrder>());
+        private readonly BlockingTaskQueue queue = new();
+        private OrdersTextEntry Entry = OrdersTextEntry.Create(new List<PublishedOrder>());
 
-        public readonly List<OrderDto> All = new();
-        public readonly Dictionary<string, OrderDto> ById = new();
-        public readonly Dictionary<int, OrderDto> ByTicketNo = new();
-        public readonly Dictionary<Guid, List<OrderDto>> BySecretKey = new();
-        public List<PublishedOrder> List => All.Select(o => o.Order).ToList();
+        private readonly List<OrderDto> All = new();
+        private readonly Dictionary<string, OrderDto> ById = new();
+        private readonly Dictionary<int, OrderDto> ByTicketNo = new();
+        private readonly Dictionary<Guid, List<OrderDto>> BySecretKey = new();
+        private List<PublishedOrder> List => All.Select(o => o.Order).ToList();
 
         public Task AddAsync(OrderDto order)
         {
@@ -89,6 +89,11 @@ namespace Trsys.Web.Infrastructure.InMemory
         public Task<List<PublishedOrder>> SearchPublishedOrderAsync()
         {
             return Task.FromResult(List);
+        }
+        public void Dispose()
+        {
+            queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

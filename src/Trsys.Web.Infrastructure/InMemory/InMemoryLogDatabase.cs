@@ -1,17 +1,18 @@
-﻿using SqlStreamStore.Infrastructure;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
-    public class LogInMemoryDatabase : ILogDatabase
+    public class InMemoryLogDatabase : ILogDatabase, IDisposable
     {
-        private TaskQueue queue = new();
-        public readonly List<LogDto> All = new();
-        public readonly Dictionary<string, List<LogDto>> BySource = new();
+        private readonly BlockingTaskQueue queue = new();
+        private readonly List<LogDto> All = new();
+        private readonly Dictionary<string, List<LogDto>> BySource = new();
 
         public Task AddRangeAsync(IEnumerable<LogDto> logs)
         {
@@ -44,6 +45,11 @@ namespace Trsys.Web.Infrastructure.InMemory
                 return Task.FromResult(events.Skip((page - 1) * perPage).Take(perPage));
             }
             return Task.FromResult(events);
+        }
+        public void Dispose()
+        {
+            queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

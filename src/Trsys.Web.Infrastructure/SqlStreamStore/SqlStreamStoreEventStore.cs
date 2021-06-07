@@ -28,6 +28,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
             var lookups = events.ToLookup(e => e.Id);
             var messages = new List<PublishingMessage>();
             var latestVersions = new Dictionary<Guid, int>();
+            var maxPosition = default(long);
             foreach (var lookup in lookups)
             {
                 var e = lookup.OrderBy(e => e.Version).ToList();
@@ -41,18 +42,16 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
                     newMessages.Select(m => new NewStreamMessage(m.Id, m.Type, m.Data)).ToArray(),
                     cancellationToken);
                 latestVersions.Add(last.Id, last.Version);
+                maxPosition = result.CurrentPosition > maxPosition ? result.CurrentPosition : maxPosition;
             }
-            foreach (var latestVersion in latestVersions)
-            {
-                await latestStreamVersionHolder.PutLatestVersionAsync(latestVersion.Key, latestVersion.Value);
-            }
-            await mediator.Publish(new PublishingMessageEnvelope(messages), cancellationToken);
+            await latestStreamVersionHolder.PutAsync(maxPosition, latestVersions);
+            await mediator.Publish(PublishingMessageEnvelope.Create(messages), cancellationToken);
         }
 
         public async Task<IEnumerable<IEvent>> Get(Guid aggregateId, int fromVersion, CancellationToken cancellationToken = default)
         {
             var latestVersion = await latestStreamVersionHolder.GetLatestVersionAsync(aggregateId);
-            if (fromVersion == latestVersion)
+            if (latestVersion > -1 && fromVersion == latestVersion)
             {
                 return Array.Empty<IEvent>();
             }
@@ -66,6 +65,11 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
                     Type = message.Type,
                     Data = await message.GetJsonData()
                 }));
+            }
+            if (events.Any())
+            {
+                var last = events.Last();
+                await latestStreamVersionHolder.PutLatestVersionAsync(last.Id, last.Version);
             }
             return events;
         }

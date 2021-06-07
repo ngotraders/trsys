@@ -19,6 +19,7 @@ namespace Trsys.Web.Models
             using var scope = app.ApplicationServices.CreateScope();
             using var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
             using var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             int retryCount = 0;
             bool success = false;
             Exception lastException = null;
@@ -52,9 +53,22 @@ namespace Trsys.Web.Models
             {
                 throw new Exception("Failed to create SqlStreamStore schema.", lastException);
             }
+            await InitializeReadModelAsync(store, mediator);
+        }
 
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var page = await store.ReadAllForwards(0, 100, true);
+        public static async Task SeedDataAsync(IApplicationBuilder app)
+        {
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+                await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
+            }
+        }
+
+        public static async Task InitializeReadModelAsync(IStreamStore store, IMediator mediator)
+        {
+            var page = await store.ReadAllForwards(0, 1000, true);
             while (true)
             {
                 foreach (var message in page.Messages)
@@ -71,16 +85,6 @@ namespace Trsys.Web.Models
                     break;
                 }
                 page = await page.ReadNext();
-            }
-        }
-
-        public static async Task SeedDataAsync(IApplicationBuilder app)
-        {
-            using (var scope = app.ApplicationServices.CreateScope())
-            {
-                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-                await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
             }
         }
     }

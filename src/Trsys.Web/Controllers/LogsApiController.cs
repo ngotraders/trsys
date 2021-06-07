@@ -32,7 +32,7 @@ namespace Trsys.Web.Controllers
             }
 
             var version = (string)HttpContext.Request.Headers["X-Ea-Version"] ?? (string)HttpContext.Request.Headers["Version"];
-            await mediator.Publish(new LogNotification(HttpContext.TraceIdentifier, User.Identity.Name, version ?? "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)));
+            await mediator.Publish(PublishingMessageEnvelope.Create(new LogNotification(HttpContext.TraceIdentifier, User.Identity.Name, version ?? "UNKNOWN", text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))));
             return Accepted();
         }
     }

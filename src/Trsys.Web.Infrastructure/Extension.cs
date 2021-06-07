@@ -30,6 +30,9 @@ namespace Trsys.Web.Infrastructure
             // Token management
             services.AddSingleton<TokenConnectionManager>();
 
+            // Message synchronization
+            services.AddSingleton<PublishingMessageProcessor>();
+
             return services;
         }
 
@@ -56,10 +59,10 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
 
             // Database
-            services.AddSingleton<ILogDatabase, LogInMemoryDatabase>();
-            services.AddSingleton<IOrderDatabase, OrderInMemoryDatabase>();
-            services.AddSingleton<ISecretKeyDatabase, SecretKeyInMemoryDatabase>();
-            services.AddSingleton<IUserDatabase, UserInMemoryDatabase>();
+            services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
+            services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
+            services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
+            services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
 
             return services;
         }

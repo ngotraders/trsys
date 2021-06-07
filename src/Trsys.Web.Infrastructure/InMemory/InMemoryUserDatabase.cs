@@ -1,22 +1,22 @@
-﻿using SqlStreamStore.Infrastructure;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models.ReadModel.Dtos;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
-    public class UserInMemoryDatabase : IUserDatabase
+    public class InMemoryUserDatabase : IUserDatabase, IDisposable
     {
-        private readonly TaskQueue queueu = new();
-        public readonly List<UserDto> List = new();
-        public readonly Dictionary<Guid, UserDto> ById = new();
-        public readonly Dictionary<string, UserDto> ByUsername = new();
+        private readonly BlockingTaskQueue queue = new();
+        private readonly List<UserDto> List = new();
+        private readonly Dictionary<Guid, UserDto> ById = new();
+        private readonly Dictionary<string, UserDto> ByUsername = new();
 
         public Task AddAsync(UserDto userDto)
         {
-            return queueu.Enqueue(() =>
+            return queue.Enqueue(() =>
             {
                 ById.Add(userDto.Id, userDto);
                 ByUsername.Add(userDto.Username, userDto);
@@ -26,7 +26,7 @@ namespace Trsys.Web.Infrastructure.InMemory
 
         public Task UpdatePasswordHashAsync(Guid id, string passwordHash)
         {
-            return queueu.Enqueue(() =>
+            return queue.Enqueue(() =>
             {
                 ById[id].PasswordHash = passwordHash;
             });
@@ -35,7 +35,7 @@ namespace Trsys.Web.Infrastructure.InMemory
 
         public Task RemoveAsync(Guid id)
         {
-            return queueu.Enqueue(() =>
+            return queue.Enqueue(() =>
             {
                 var item = ById[id];
                 ById.Remove(id);
@@ -57,6 +57,11 @@ namespace Trsys.Web.Infrastructure.InMemory
         public Task<UserDto> FindByUsernameAsync(string username)
         {
             return Task.FromResult(ByUsername.TryGetValue(username, out var value) ? value : null);
+        }
+        public void Dispose()
+        {
+            queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

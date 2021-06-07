@@ -27,33 +27,31 @@ namespace Trsys.Web.Filters
                 var token = (string)context.HttpContext.Request.Headers["X-Secret-Token"];
                 if (string.IsNullOrEmpty(token))
                 {
-                    if (context.HttpContext.Request.Method == "GET")
+                    if (context.HttpContext.Request.Path.StartsWithSegments("/api/token"))
                     {
-                        context.Result = new BadRequestObjectResult("X-Secret-Token is not set.");
-                        return;
+                        if (context.HttpContext.Request.Path.Value.EndsWith("/release"))
+                        {
+                            await base.OnActionExecutionAsync(context, next);
+                            return;
+                        }
+                        var mediator = context.HttpContext.RequestServices.GetRequiredService<IMediator>();
+                        var result = await context.HttpContext.Request.BodyReader.ReadAsync();
+                        context.HttpContext.Request.BodyReader.AdvanceTo(result.Buffer.Start, result.Buffer.End);
+                        var key = Encoding.ASCII.GetString(result.Buffer.ToArray())?.Trim('\0');
+                        var secretKey = await mediator.Send(new FindBySecretKey(key));
+                        if (secretKey == null)
+                        {
+                            await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
+                            context.Result = new BadRequestObjectResult("InvalidSecretKey");
+                            return;
+                        }
+                        else if (!secretKey.IsApproved)
+                        {
+                            context.Result = new BadRequestObjectResult("InvalidSecretKey");
+                            return;
+                        }
+                        context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(secretKey.Id, secretKey.Key, secretKey.KeyType.Value);
                     }
-                    if (context.HttpContext.Request.Path.Value.EndsWith("/release"))
-                    {
-                        await base.OnActionExecutionAsync(context, next);
-                        return;
-                    }
-                    var result = await context.HttpContext.Request.BodyReader.ReadAsync();
-                    context.HttpContext.Request.BodyReader.AdvanceTo(result.Buffer.Start, result.Buffer.End);
-                    var key = Encoding.ASCII.GetString(result.Buffer.ToArray())?.Trim('\0');
-                    var mediator = context.HttpContext.RequestServices.GetRequiredService<IMediator>();
-                    var secretKey = await mediator.Send(new FindBySecretKey(key));
-                    if (secretKey == null)
-                    {
-                        await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
-                        context.Result = new BadRequestObjectResult("InvalidSecretKey");
-                        return;
-                    }
-                    else if (!secretKey.IsApproved)
-                    {
-                        context.Result = new BadRequestObjectResult("InvalidSecretKey");
-                        return;
-                    }
-                    context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(secretKey.Id, secretKey.Key, secretKey.KeyType.Value);
                 }
                 else
                 {

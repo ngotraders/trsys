@@ -48,7 +48,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         private static EventDto ConvertToEvent(StreamMessage message)
         {
             var obj = JObject.Parse(message.GetJsonData().Result);
-            var timestamp = DateTimeOffset.Parse(obj.Property("TimeStamp").Value.ToString());
+            var timestamp = obj.Property("TimeStamp").Value.Value<DateTime>();
             var version = int.Parse(obj.Property("Version").Value.ToString());
             obj.Remove("Id");
             obj.Remove("Version");

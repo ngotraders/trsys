@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models.ReadModel.Events;
 
 namespace Trsys.Web.Infrastructure.SqlStreamStore
@@ -13,6 +14,7 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
 
         private static Type[] types = new[]
         {
+            typeof(LogNotification),
             typeof(OrderPublisherClosedOrder),
             typeof(OrderPublisherOpenedOrder),
             typeof(OrderPublisherRegistered),
@@ -29,8 +31,8 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
             typeof(SecretKeyRevoked),
             typeof(SecretKeyTokenGenerated),
             typeof(SecretKeyTokenInvalidated),
+            typeof(TokenTouched),
             typeof(UserCreated),
-            typeof(LogNotification),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),
             typeof(WorldStateSecretKeyDeleted),
