@@ -52,6 +52,9 @@ namespace Trsys.Web.Infrastructure
                 services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
             }
 
+            // Manage latest version for each stream in StreamStore
+            services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
+
             // Database
             services.AddSingleton<ILogDatabase, LogInMemoryDatabase>();
             services.AddSingleton<IOrderDatabase, OrderInMemoryDatabase>();

@@ -14,21 +14,25 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
     {
         private readonly IMediator mediator;
         private readonly IStreamStore store;
+        private readonly ILatestStreamVersionHolder latestStreamVersionHolder;
 
-        public SqlStreamStoreEventStore(IMediator mediator, IStreamStore store)
+        public SqlStreamStoreEventStore(IMediator mediator, IStreamStore store, ILatestStreamVersionHolder latestStreamVersionHolder)
         {
             this.mediator = mediator;
             this.store = store;
+            this.latestStreamVersionHolder = latestStreamVersionHolder;
         }
 
         public async Task Save(IEnumerable<IEvent> events, CancellationToken cancellationToken = default)
         {
             var lookups = events.ToLookup(e => e.Id);
             var messages = new List<PublishingMessage>();
+            var latestVersions = new Dictionary<Guid, int>();
             foreach (var lookup in lookups)
             {
                 var e = lookup.OrderBy(e => e.Version).ToList();
                 var first = e.First();
+                var last = e.Last();
                 var newMessages = e.Select(i => MessageConverter.ConvertFromEvent(i)).ToArray();
                 messages.AddRange(newMessages);
                 var result = await store.AppendToStream(
@@ -36,12 +40,22 @@ namespace Trsys.Web.Infrastructure.SqlStreamStore
                     first.Version == 1 ? ExpectedVersion.NoStream : first.Version - 2,
                     newMessages.Select(m => new NewStreamMessage(m.Id, m.Type, m.Data)).ToArray(),
                     cancellationToken);
+                latestVersions.Add(last.Id, last.Version);
+            }
+            foreach (var latestVersion in latestVersions)
+            {
+                await latestStreamVersionHolder.PutLatestVersionAsync(latestVersion.Key, latestVersion.Value);
             }
             await mediator.Publish(new PublishingMessageEnvelope(messages), cancellationToken);
         }
 
         public async Task<IEnumerable<IEvent>> Get(Guid aggregateId, int fromVersion, CancellationToken cancellationToken = default)
         {
+            var latestVersion = await latestStreamVersionHolder.GetLatestVersionAsync(aggregateId);
+            if (fromVersion == latestVersion)
+            {
+                return Array.Empty<IEvent>();
+            }
             var events = new List<IEvent>();
             var messages = await store.ReadStreamForwards(new StreamId(aggregateId.ToString()), fromVersion < 0 ? 0 : fromVersion, int.MaxValue, cancellationToken);
             foreach (var message in messages.Messages)
