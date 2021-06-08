@@ -6,7 +6,7 @@ bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string Type = "Publisher";
-string Version = "20210606";
+string Version = "20210609";
 
 input double PercentOfFreeMargin = 98;
 input int Slippage = 10;
@@ -344,17 +344,18 @@ class PositionManager {
       return SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
    };
 
-   int m_send_open_order(long server_ticket_no, string symbol, int order_type, double volume, double price) {
+   int m_send_open_order(long server_ticket_no, string symbol, int order_type, double volume, double price, string &error_message) {
       if (DRY_RUN) {
          Print("m_send_open_order: server_ticket_no = ", server_ticket_no, ", symbol = ", symbol, ", order_type = ", order_type, ", volume = ", volume, ", price = ", price); 
-         return -1;
+         return 1;
       }
       ENUM_ORDER_TYPE mt5_order_type = m_convert_to_local_order_type(order_type);
       if (mt5_order_type < 0) {
+         error_message = "invalid order type: " + IntegerToString(order_type);
          return -1;
       }
       //--- リクエストを準備する
-      MqlTradeRequest request={0};
+      MqlTradeRequest request;
       request.action       = TRADE_ACTION_DEAL; // 取引操作タイプ
       request.symbol       = symbol;            // シンボル
       request.volume       = volume;            // ロットのボリューム
@@ -363,29 +364,30 @@ class PositionManager {
       request.deviation    = Slippage;          // 価格からの許容偏差
       request.magic        = server_ticket_no;  // 注文のMagicNumber
       request.type_filling = ORDER_FILLING_IOC;
-      MqlTradeCheckResult checkResult={0};
+      MqlTradeCheckResult checkResult;
       if (!OrderCheck(request, checkResult)) {
-         Print(__FUNCTION__,":", checkResult.retcode, "/", checkResult.comment);
+         error_message = "OrderCheck fail:" + IntegerToString(checkResult.retcode) + "/" + checkResult.comment;
          return -1;
       }
-      MqlTradeResult result={0};
+      MqlTradeResult result;
       if (!OrderSend(request, result)) {
-         Print(__FUNCTION__,":", result.retcode, "/", result.comment);
+         error_message = "OrderSend fail:" + IntegerToString(result.retcode) + "/" + result.comment;
          return -1;
       }
-      return (int) result.order;
+      return (int)result.order;
    }
    
-   int m_send_close_order(long server_ticket_no, long local_ticket_no, string symbol, int order_type, double volume, double price) {
+   bool m_send_close_order(long server_ticket_no, long local_ticket_no, string symbol, int order_type, double volume, double price, string &error_message) {
       if (DRY_RUN) {
-         Print("m_send_close_order: server_ticket_no = ", server_ticket_no, ", local_ticket_no = ", local_ticket_no, ", symbol = ", symbol, ", order_type = ", order_type, ", volume = ", volume, ", price = ", price); 
-         return -1;
+         Print("m_send_close_order: server_ticket_no = ", server_ticket_no, ", local_ticket_no = ", local_ticket_no, ", symbol = ", symbol, ", order_type = ", order_type, ", volume = ", volume, ", price = ", price);
+         return true;
       }
       ENUM_ORDER_TYPE mt5_order_type = m_convert_to_local_order_type(order_type);
       if (mt5_order_type < 0) {
-         return -1;
+         error_message = "invalid order type" + IntegerToString(order_type);
+         return false;
       }
-      MqlTradeRequest request={0};
+      MqlTradeRequest request;
       request.action       = TRADE_ACTION_DEAL; // - type of trade operation
       request.position     = local_ticket_no;   // - ticket of the position
       request.symbol       = symbol;            // - symbol 
@@ -395,17 +397,17 @@ class PositionManager {
       request.type_filling = ORDER_FILLING_IOC;
       request.price        = price;
       request.type         = mt5_order_type;
-      MqlTradeCheckResult checkResult={0};
+      MqlTradeCheckResult checkResult;
       if (!OrderCheck(request, checkResult)) {
-         Print(__FUNCTION__,",OrderCheck:", checkResult.retcode, "/", checkResult.comment);
-         return -1;
+         error_message = "OrderCheck fail:" + IntegerToString(checkResult.retcode) + "/" + checkResult.comment;
+         return false;
       }
-      MqlTradeResult result={0};
+      MqlTradeResult result;
       if (!OrderSend(request, result)) {
-         Print(__FUNCTION__,",OrderSend:", result.retcode, "/", result.comment);
-         return -1;
+         error_message = "OrderSend fail:" + IntegerToString(result.retcode) + "/" + result.comment;
+         return false;
       }
-      return (int) result.order;
+      return true;
    }
 
    int m_get_positions(PositionInfo &arr_positions[], bool includeAll) {
@@ -553,24 +555,37 @@ class PositionManager {
       return MarketInfo(symbol, MODE_MAXLOT);
    };
 
-   int m_send_open_order(long server_ticket_no, string symbol, int order_type, double volume, double price) {
+   int m_send_open_order(long server_ticket_no, string symbol, int order_type, double volume, double price, string &error_message) {
       if (DRY_RUN) {
          Print("m_send_open_order: server_ticket_no = ", server_ticket_no, ", symbol = ", symbol, ", order_type = ", order_type, ", volume = ", volume, ", price = ", price); 
-         return -1;
+         return 1;
       }
       int mt4_order_type = m_convert_to_local_order_type(order_type);
       if (mt4_order_type == -1) {
          return -1;
       }
-      return OrderSend(symbol, mt4_order_type, volume, price, Slippage, 0, 0, NULL, (int) server_ticket_no);
+      int result = OrderSend(symbol, mt4_order_type, volume, price, Slippage, 0, 0, NULL, (int) server_ticket_no);
+      if (result < 0) {
+         int error_code = GetLastError();
+         error_message = IntegerToString(error_code) + ":" + ErrorCodeToString(error_code);
+         return -1;
+      } else {
+         return result;
+      }
    }
    
-   int m_send_close_order(long server_ticket_no, long local_ticket_no, string symbol, int order_type, double volume, double price) {
+   bool m_send_close_order(long server_ticket_no, long local_ticket_no, string symbol, int order_type, double volume, double price, string &error_message) {
       if (DRY_RUN) {
          Print("m_send_close_order: server_ticket_no = ", server_ticket_no, ", local_ticket_no = ", local_ticket_no, ", symbol = ", symbol, ", order_type = ", order_type, ", volume = ", volume, ", price = ", price); 
-         return -1;
+         return true;
       }
-      return OrderClose((int)local_ticket_no, volume, price, Slippage);
+      if (!OrderClose((int)local_ticket_no, volume, price, Slippage)) {
+         int error_code = GetLastError();
+         error_message = IntegerToString(error_code) + ":" + ErrorCodeToString(error_code);
+         return false;
+      } else {
+         return true;
+      }
    }
 
    int m_get_positions(PositionInfo &arr_positions[], bool includeAll) {
@@ -686,10 +701,10 @@ public:
             lots  = order_lots;
             order_lots -= order_lots;
          }
-         long local_ticket_no = m_send_open_order(server_ticket_no, symbol, order_type, lots, m_get_current_price(symbol, order_type));
+         string error_message = NULL;
+         long local_ticket_no = m_send_open_order(server_ticket_no, symbol, order_type, lots, m_get_current_price(symbol, order_type), error_message);
          if (local_ticket_no < 0) {
-            int error_code = GetLastError();
-            m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + IntegerToString(error_code) + ":" + ErrorCodeToString(error_code));
+            m_logger.WriteLog("ERROR", "OrderSend failed: " + IntegerToString(server_ticket_no) + ", Error = " + error_message);
             break;
          } else {
             success = true;
@@ -726,19 +741,14 @@ public:
          m_logger.WriteLog("ERROR", "OrderClose fail: position order type is invalid. " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
          return true;
       }
-      int result = m_send_close_order(server_ticket_no, local_ticket_no, info.symbol, order_type, info.volume, m_get_current_price(info.symbol, order_type));
-      if (result == 0) {
-         m_logger.WriteLog("WARN", "OrderClose failed: Already closed. " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
-         return true;
-      }
-      if (result < 0) {
-         int error_code = GetLastError();
-         m_logger.WriteLog("ERROR", "OrderClose failed: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + IntegerToString(error_code) + ":" + ErrorCodeToString(error_code));
-         return false;
-      } else {
+      string error_message = NULL;
+      if (m_send_close_order(server_ticket_no, local_ticket_no, info.symbol, order_type, info.volume, m_get_current_price(info.symbol, order_type), error_message)) {
          m_logger.WriteLog("INFO", "OrderClose succeeded: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no));
          m_closing_ticket_no_list.Add(PendingOrder::Create(server_ticket_no, server_symbol, server_order_type, local_ticket_no));
          return true;
+      } else {
+         m_logger.WriteLog("ERROR", "OrderClose failed: " + IntegerToString(server_ticket_no) + ", OrderTicket = " + IntegerToString(local_ticket_no) + ", Error = " + error_message);
+         return false;
       }
    };
    void OrderClosed(long server_ticket_no, string server_symbol, int server_order_type, long local_ticket_no) {
