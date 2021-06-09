@@ -356,6 +356,7 @@ class PositionManager {
       }
       //--- リクエストを準備する
       MqlTradeRequest request;
+      ZeroMemory(request);
       request.action       = TRADE_ACTION_DEAL; // 取引操作タイプ
       request.symbol       = symbol;            // シンボル
       request.volume       = volume;            // ロットのボリューム
@@ -388,6 +389,7 @@ class PositionManager {
          return false;
       }
       MqlTradeRequest request;
+      ZeroMemory(request);
       request.action       = TRADE_ACTION_DEAL; // - type of trade operation
       request.position     = local_ticket_no;   // - ticket of the position
       request.symbol       = symbol;            // - symbol 
@@ -915,6 +917,7 @@ public:
 class RemoteOrderState {
    PositionManager *m_position_manager;
    List<CopyTradeInfo> m_orders;
+   List<CopyTradeInfo> *m_server_orders;
    string m_last_server_response;
 
    void m_initialize() {
@@ -940,6 +943,10 @@ public:
       m_position_manager = l_position_manager;
       m_last_server_response = NULL;
       m_initialize();
+      m_server_orders = new List<CopyTradeInfo>();
+   };
+   ~RemoteOrderState() {
+      delete m_server_orders;
    };
    TicketNoDifference<CopyTradeInfo> GetDifference() {
       TicketNoDifference<CopyTradeInfo> diff;
@@ -949,39 +956,41 @@ public:
             string error = NULL;
             List<CopyTradeInfo> *serverInfo = CopyTradeInfoParser::Parse(response, error);
             if (error == NULL) {
-               for (int i = 0; i < m_orders.Length(); i++) {
-                  CopyTradeInfo ii = m_orders.Get(i);
-                  bool exists = false;
-                  for (int j = 0; j < serverInfo.Length(); j++) {
-                     CopyTradeInfo ij = serverInfo.Get(j);
-                     if (ii.server_ticket_no == ij.server_ticket_no) {
-                        exists = true;
-                        break;
-                     }
-                  }
-                  if (!exists) {
-                     diff.Closed(ii);
-                  }
-               }
-               for (int i = 0; i < serverInfo.Length(); i++) {
-                  CopyTradeInfo ii = serverInfo.Get(i);
-                  bool exists = false;
-                  for (int j = 0; j < m_orders.Length(); j++) {
-                     CopyTradeInfo ij = m_orders.Get(j);
-                     if (ii.server_ticket_no == ij.server_ticket_no) {
-                        exists = true;
-                        break;
-                     }
-                  }
-                  if (!exists) {
-                     diff.Opened(ii);
-                  }
-               }
+               delete m_server_orders;
+               m_server_orders = serverInfo;
             } else {
+               delete serverInfo;
                logger.WriteLog("ERROR", error);
             }
             m_last_server_response = response;
-            delete serverInfo;
+         }
+         for (int i = 0; i < m_orders.Length(); i++) {
+            CopyTradeInfo ii = m_orders.Get(i);
+            bool exists = false;
+            for (int j = 0; j < m_server_orders.Length(); j++) {
+               CopyTradeInfo ij = m_server_orders.Get(j);
+               if (ii.server_ticket_no == ij.server_ticket_no) {
+                  exists = true;
+                  break;
+               }
+            }
+            if (!exists) {
+               diff.Closed(ii);
+            }
+         }
+         for (int i = 0; i < m_server_orders.Length(); i++) {
+            CopyTradeInfo ii = m_server_orders.Get(i);
+            bool exists = false;
+            for (int j = 0; j < m_orders.Length(); j++) {
+               CopyTradeInfo ij = m_orders.Get(j);
+               if (ii.server_ticket_no == ij.server_ticket_no) {
+                  exists = true;
+                  break;
+               }
+            }
+            if (!exists) {
+               diff.Opened(ii);
+            }
          }
       }
       return diff;
@@ -1277,7 +1286,11 @@ class TrsysClient {
          status.SetErrorCode(error_code);
          return res;
       }
-      m_state.SetServerConnection(true);
+      if (res > 500) {
+         m_state.SetServerConnection(false);
+      } else {
+         m_state.SetServerConnection(true);
+      }
       error_code = -1;
       status.SetErrorCode(error_code);
       status.SetStatusCode(res);
