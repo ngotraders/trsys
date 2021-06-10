@@ -7,11 +7,13 @@ namespace Trsys.Web.Infrastructure.Tokens
     {
         public event EventHandler<TokenConnectionEventArgs> Connected;
         public event EventHandler<TokenConnectionEventArgs> Disconnected;
+        public Guid Id => id;
         private readonly Guid id;
         private readonly string token;
         private readonly Timer timer;
         private DateTime? lastAccessed;
         private bool init;
+
 
         public TokenConnectionReporter(Guid id, string token)
         {

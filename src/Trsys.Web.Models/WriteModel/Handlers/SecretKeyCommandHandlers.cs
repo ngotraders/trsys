@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Models.WriteModel.Domain;
 using Trsys.Web.Models.WriteModel.Extensions;
+using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
@@ -19,13 +20,13 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         IRequestHandler<DisconnectSecretKeyCommand>,
         IRequestHandler<DeleteSecretKeyCommand>
     {
-        private readonly ISession session;
         private readonly IRepository repository;
+        private readonly ISecretKeyConnectionStore store;
 
-        public SecretKeyCommandHandlers(ISession session, IRepository repository)
+        public SecretKeyCommandHandlers(IRepository repository, ISecretKeyConnectionStore store)
         {
-            this.session = session;
             this.repository = repository;
+            this.store = store;
         }
 
         public async Task<Guid> Handle(CreateSecretKeyIfNotExistsCommand request, CancellationToken cancellationToken = default)
@@ -108,6 +109,10 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<string> Handle(GenerateSecretTokenCommand request, CancellationToken cancellationToken)
         {
+            if (await store.IsTokenInUseAsync(request.Id))
+            {
+                throw new InvalidOperationException("Ea is already connected.");
+            }
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             var token = item.GenerateToken();
             await repository.Save(item, item.Version, cancellationToken);
@@ -117,16 +122,20 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(ConnectSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            item.Connect(request.Token);
-            await repository.Save(item, item.Version, cancellationToken);
+            if (item.Token == request.Token)
+            {
+                await store.ConnectAsync(request.Id);
+            }
             return Unit.Value;
         }
 
         public async Task<Unit> Handle(DisconnectSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            item.Disconnect(request.Token);
-            await repository.Save(item, item.Version, cancellationToken);
+            if (string.IsNullOrEmpty(item.Token) || item.Token == request.Token)
+            {
+                await store.DisconnectAsync(request.Id);
+            }
             return Unit.Value;
         }
 
@@ -141,7 +150,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var state = await repository.GetWorldState();
-            var item = await session.Get<SecretKeyAggregate>(request.Id, null, cancellationToken);
+            var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             state.DeleteSecretKey(item.Key, item.Id);
             item.Delete();
             await repository.Save(item, item.Version, cancellationToken);

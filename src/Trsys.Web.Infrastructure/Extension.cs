@@ -9,6 +9,7 @@ using Trsys.Web.Infrastructure.InMemory;
 using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models.ReadModel.Infrastructure;
+using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure
 {
@@ -63,6 +64,8 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
             services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
+
+            services.AddSingleton<ISecretKeyConnectionStore, InMemorySecretKeyConnectionStore>();
 
             return services;
         }

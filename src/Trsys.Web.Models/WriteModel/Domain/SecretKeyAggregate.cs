@@ -13,11 +13,12 @@ namespace Trsys.Web.Models.WriteModel.Domain
         private SecretKeyType? _keyType;
         private string _description;
         private string _token;
-        private bool _connected;
         private bool _deleted;
 
         public bool IsApproved => _approved;
         public string Key => _key;
+
+        public string Token => _token;
 
         private HashSet<int> _publishedOrderTickets = new HashSet<int>();
         private HashSet<int> _subscribedOrderTickets = new HashSet<int>();
@@ -29,8 +30,6 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public void Apply(SecretKeyDescriptionChanged e) => _description = e.Description;
         public void Apply(SecretKeyTokenGenerated e) => _token = e.Token;
         public void Apply(SecretKeyTokenInvalidated e) => _token = null;
-        public void Apply(SecretKeyEaConnected e) => _connected = true;
-        public void Apply(SecretKeyEaDisconnected e) => _connected = false;
         public void Apply(SecretKeyDeleted e) => _deleted = true;
 
         public void Apply(OrderPublisherOpenedOrder e) => _publishedOrderTickets.Add(e.Order.TicketNo);
@@ -101,10 +100,6 @@ namespace Trsys.Web.Models.WriteModel.Domain
         public string GenerateToken()
         {
             EnsureNotDeleted();
-            if (_connected)
-            {
-                throw new InvalidOperationException("Ea is already connected.");
-            }
             if (!_approved)
             {
                 throw new InvalidOperationException("Cannot generate token if secret key is approved.");
@@ -129,29 +124,8 @@ namespace Trsys.Web.Models.WriteModel.Domain
             {
                 throw new InvalidOperationException("The token is not valid.");
             }
-            if (_connected)
-            {
-                ApplyChange(new SecretKeyEaDisconnected(Id));
-            }
 
             ApplyChange(new SecretKeyTokenInvalidated(Id, _token));
-        }
-
-        public void Connect(string token)
-        {
-            EnsureNotDeleted();
-            if (!_connected && _token == token)
-            {
-                ApplyChange(new SecretKeyEaConnected(Id));
-            }
-        }
-        public void Disconnect(string token)
-        {
-            EnsureNotDeleted();
-            if (_connected && _token == token)
-            {
-                ApplyChange(new SecretKeyEaDisconnected(Id));
-            }
         }
         public void Delete()
         {

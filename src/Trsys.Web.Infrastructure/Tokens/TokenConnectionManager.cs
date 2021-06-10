@@ -10,6 +10,7 @@ namespace Trsys.Web.Infrastructure.Tokens
     {
         private readonly ConcurrentDictionary<string, TokenConnectionReporter> _reporters = new();
         private readonly IServiceScopeFactory serviceScopeFactory;
+        private bool disposed = false;
 
         public TokenConnectionManager(IServiceScopeFactory serviceScopeFactory)
         {
@@ -39,28 +40,38 @@ namespace Trsys.Web.Infrastructure.Tokens
         {
             if (_reporters.TryRemove(token, out var reporter))
             {
+                OnDisconnected(this, new TokenConnectionEventArgs(reporter.Id, token));
                 reporter.Connected -= OnConnected;
                 reporter.Disconnected -= OnDisconnected;
                 reporter.Dispose();
             }
         }
 
-        private void OnDisconnected(object sender, TokenConnectionEventArgs e)
+        private async void OnDisconnected(object sender, TokenConnectionEventArgs e)
         {
+            if (disposed)
+            {
+                return;
+            }
             using var scope = serviceScopeFactory.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            mediator.Send(new DisconnectSecretKeyCommand(e.Id, e.Token));
+            await mediator.Send(new DisconnectSecretKeyCommand(e.Id, e.Token));
         }
 
-        private void OnConnected(object sender, TokenConnectionEventArgs e)
+        private async void OnConnected(object sender, TokenConnectionEventArgs e)
         {
+            if (disposed)
+            {
+                return;
+            }
             using var scope = serviceScopeFactory.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            mediator.Send(new ConnectSecretKeyCommand(e.Id, e.Token));
+            await mediator.Send(new ConnectSecretKeyCommand(e.Id, e.Token));
         }
 
         public void Dispose()
         {
+            disposed = true;
             foreach (var key in _reporters.Keys)
             {
                 Remove(key);

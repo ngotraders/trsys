@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.ReadModel.Events;
 using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Models.Tests
 {
@@ -26,7 +27,7 @@ namespace Trsys.Web.Models.Tests
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
 
-            Assert.AreEqual(6, events.Count);
+            Assert.AreEqual(4, events.Count);
             Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
             Assert.AreEqual("KEY", ((SecretKeyCreated)events[0]).Key);
             Assert.AreEqual(typeof(SecretKeyKeyTypeChanged), events[1].GetType());
@@ -34,8 +35,9 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
             Assert.AreEqual(typeof(SecretKeyTokenGenerated), events[3].GetType());
             Assert.AreEqual(token, ((SecretKeyTokenGenerated)events[3]).Token);
-            Assert.AreEqual(typeof(SecretKeyEaConnected), events[4].GetType());
-            Assert.AreEqual(typeof(SecretKeyEaDisconnected), events[5].GetType());
+
+            var connectionStore = services.GetRequiredService<ISecretKeyConnectionStore>();
+            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(id));
         }
 
         [TestMethod]
@@ -51,7 +53,7 @@ namespace Trsys.Web.Models.Tests
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
 
-            Assert.AreEqual(5, events.Count);
+            Assert.AreEqual(4, events.Count);
             Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
             Assert.AreEqual("KEY", ((SecretKeyCreated)events[0]).Key);
             Assert.AreEqual(typeof(SecretKeyKeyTypeChanged), events[1].GetType());
@@ -59,7 +61,9 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
             Assert.AreEqual(typeof(SecretKeyTokenGenerated), events[3].GetType());
             Assert.AreEqual(token, ((SecretKeyTokenGenerated)events[3]).Token);
-            Assert.AreEqual(typeof(SecretKeyEaConnected), events[4].GetType());
+
+            var connectionStore = services.GetRequiredService<ISecretKeyConnectionStore>();
+            Assert.IsTrue(await connectionStore.IsTokenInUseAsync(id));
         }
 
         [TestMethod]
@@ -82,6 +86,9 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
             Assert.AreEqual(typeof(SecretKeyTokenGenerated), events[3].GetType());
             Assert.AreEqual(token, ((SecretKeyTokenGenerated)events[3]).Token);
+
+            var connectionStore = services.GetRequiredService<ISecretKeyConnectionStore>();
+            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(id));
         }
     }
 }
