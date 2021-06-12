@@ -57,7 +57,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             {
                 Id = message.MessageId.ToString(),
                 Timestamp = timestamp,
-                EventType = message.Type.Replace("Trsys.Web.Models.ReadModel.Events.", ""),
+                EventType = message.Type.Replace("Trsys.Web.Models.", ""),
                 AggregateId = message.StreamId,
                 Version = version,
                 Data = obj.ToString(),

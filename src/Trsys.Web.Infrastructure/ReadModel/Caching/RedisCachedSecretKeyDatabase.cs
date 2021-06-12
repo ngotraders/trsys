@@ -94,8 +94,8 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
                 {
                     await cache.HashDeleteAsync(byTokenKey, secretKey.Token);
                 }
-                await cache.HashGetAsync(byKeyKey, secretKey.Key);
-                await cache.HashGetAsync(byIdKey, idValue);
+                await cache.HashDeleteAsync(byKeyKey, secretKey.Key);
+                await cache.HashDeleteAsync(byIdKey, idValue);
             }
         }
 
@@ -134,8 +134,16 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
 
         public async Task UpdateTokenAsync(Guid id, string token)
         {
+            var secretKey = await FindByIdAsync(id);
+            var oldToken = secretKey.Token;
             await db.UpdateTokenAsync(id, token);
-            var secretKey = await db.FindByIdAsync(id);
+
+            secretKey = await db.FindByIdAsync(id);
+            if (!string.IsNullOrEmpty(oldToken))
+            {
+                var cache = connection.GetDatabase();
+                await cache.HashDeleteAsync(byTokenKey, oldToken);
+            }
             await UpdateCacheAsync(secretKey);
         }
 
@@ -148,10 +156,6 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
             if (!string.IsNullOrEmpty(secretKey.Token))
             {
                 await cache.HashSetAsync(byTokenKey, secretKey.Token, idValue);
-            }
-            else
-            {
-                await cache.HashDeleteAsync(byTokenKey, secretKey.Token);
             }
         }
 
