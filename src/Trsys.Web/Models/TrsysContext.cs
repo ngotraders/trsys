@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using Trsys.Web.Infrastructure.ReadModel.Database;
+using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.Models
 {
-    public partial class TrsysContext : DbContext
+    public class TrsysContext : DbContext, ITrsysReadModelContext
     {
         public TrsysContext(DbContextOptions<TrsysContext> options)
             : base(options)
@@ -11,6 +14,11 @@ namespace Trsys.Web.Models
 
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Stream> Streams { get; set; }
+
+        public DbSet<UserDto> Users { get; set; }
+        public DbSet<SecretKeyDto> SecretKeys { get; set; }
+        public DbSet<OrderDto> OrdersDto { get; set; }
+        public DbSet<LogDto> Logs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -72,6 +80,35 @@ namespace Trsys.Web.Models
                 entity.Property(e => e.Position).HasDefaultValueSql("((-1))");
 
                 entity.Property(e => e.Version).HasDefaultValueSql("((-1))");
+            });
+
+            modelBuilder.Entity<UserDto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Username);
+            });
+
+            modelBuilder.Entity<SecretKeyDto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<OrderDto>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Order)
+                    .HasConversion(
+                        po => JsonConvert.SerializeObject(po),
+                        value => JsonConvert.DeserializeObject<PublishedOrder>(value)
+                    );
+            });
+
+            modelBuilder.Entity<LogDto>(entity =>
+            {
+                entity.HasKey(e => e.Id)
+                    .IsClustered(false);
+                entity.HasIndex(e => new { e.Received, e.Key })
+                    .IsClustered();
             });
         }
     }

@@ -7,6 +7,7 @@ using SqlStreamStore;
 using StackExchange.Redis;
 using System.Reflection;
 using Trsys.Web.Infrastructure.Messaging;
+using Trsys.Web.Infrastructure.ReadModel.Database;
 using Trsys.Web.Infrastructure.ReadModel.InMemory;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.InMemory;
@@ -46,24 +47,14 @@ namespace Trsys.Web.Infrastructure
 
         public static IServiceCollection AddInMemoryInfrastructure(this IServiceCollection services)
         {
-            return services.AddSqlServerInfrastructure(null, null);
+            return services.AddInfrastructure(null, null);
         }
 
-        public static IServiceCollection AddSqlServerInfrastructure(this IServiceCollection services, string connectionString, string redisConfiguration)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string sqlserverConnection, string redisConnection)
         {
             services.AddInfrastructure();
 
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                services.AddSingleton<IStreamStore, InMemoryStreamStore>();
-            }
-            else
-            {
-                services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
-                services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
-            }
-
-            if (string.IsNullOrEmpty(redisConfiguration))
+            if (string.IsNullOrEmpty(redisConnection))
             {
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
@@ -71,18 +62,34 @@ namespace Trsys.Web.Infrastructure
             }
             else
             {
-                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
 
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
                 services.AddSingleton<ISecretKeyConnectionStore, RedisSecretKeyConnectionStore>();
             }
 
-            // Database
-            services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
-            services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
-            services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
-            services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
+            if (string.IsNullOrEmpty(sqlserverConnection))
+            {
+                services.AddSingleton<IStreamStore, InMemoryStreamStore>();
+
+                // ReadModel Database
+                services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
+                services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
+                services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
+                services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
+            }
+            else
+            {
+                services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
+                services.AddSingleton(new MsSqlStreamStoreV3Settings(sqlserverConnection));
+
+                // WriteModel Database
+                services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
+                services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
+                services.AddTransient<IOrderDatabase, InMemoryOrderDatabase>();
+                services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
+            }
 
             return services;
         }

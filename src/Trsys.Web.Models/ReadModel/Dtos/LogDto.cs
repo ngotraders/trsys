@@ -13,6 +13,7 @@ namespace Trsys.Web.Models.ReadModel.Dtos
             "ERROR",
         };
 
+        public Guid Id { get; set; }
         public string RequestId { get; set; }
         public DateTimeOffset Received { get; set; }
         public string Key { get; set; }

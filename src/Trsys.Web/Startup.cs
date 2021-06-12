@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Trsys.Web.Configurations;
 using Trsys.Web.Infrastructure;
+using Trsys.Web.Infrastructure.ReadModel.Database;
 using Trsys.Web.Models;
 
 namespace Trsys.Web
@@ -48,28 +49,21 @@ namespace Trsys.Web
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(sqlserverConnection))
+            var redisConnection = Configuration.GetConnectionString("RedisConnection");
+            if (!string.IsNullOrEmpty(redisConnection))
             {
-                services.AddInMemoryInfrastructure();
-            }
-            else
-            {
-                var redisConnection = Configuration.GetConnectionString("RedisConnection");
-                if (!string.IsNullOrEmpty(redisConnection))
+                var redis = ConnectionMultiplexer.Connect(redisConnection);
+                services.AddDataProtection()
+                    .PersistKeysToStackExchangeRedis(redis, "Trsys.Web:DataProtection-Keys");
+                //Add distributed cache service backed by Redis cache
+                services.AddStackExchangeRedisCache(o =>
                 {
-                    var redis = ConnectionMultiplexer.Connect(redisConnection);
-                    services.AddDataProtection()
-                        .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
-                        .SetApplicationName("Trsys.Web");
-                    //Add distributed cache service backed by Redis cache
-                    services.AddStackExchangeRedisCache(o =>
-                    {
-                        o.Configuration = redisConnection;
-                    });
-                }
-                services.AddSqlServerInfrastructure(sqlserverConnection, redisConnection);
-                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
+                    o.Configuration = redisConnection;
+                });
             }
+            services.AddInfrastructure(sqlserverConnection, redisConnection);
+            services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
+            services.AddTransient<ITrsysReadModelContext>(sp => new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseSqlServer(sqlserverConnection).Options));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
