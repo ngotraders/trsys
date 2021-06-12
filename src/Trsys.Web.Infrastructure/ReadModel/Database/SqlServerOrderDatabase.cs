@@ -37,10 +37,17 @@ namespace Trsys.Web.Infrastructure.ReadModel.Database
             return OrdersTextEntry.Create(await SearchPublishedOrderAsync());
         }
 
-        public Task RemoveAsync(string id)
+        public async Task RemoveAsync(string id)
         {
-            db.Orders.Remove(new OrderDto() { Id = id });
-            return db.SaveChangesAsync();
+            var order = await db.Orders
+                .Where(order => order.Id == id)
+                .FirstOrDefaultAsync();
+            if (order == null)
+            {
+                return;
+            }
+            db.Orders.Remove(order);
+            await db.SaveChangesAsync();
         }
 
         public async Task RemoveBySecretKeyAsync(Guid id)
