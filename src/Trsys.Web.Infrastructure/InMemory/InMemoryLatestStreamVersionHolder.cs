@@ -6,7 +6,7 @@ using Trsys.Web.Infrastructure.SqlStreamStore;
 
 namespace Trsys.Web.Infrastructure.InMemory
 {
-    public class InMemoryLatestStreamVersionHolder : ILatestStreamVersionHolder
+    public class InMemoryLatestStreamVersionHolder : ILatestStreamVersionHolder, IDisposable
     {
         private readonly BlockingTaskQueue queue = new();
         private readonly Dictionary<Guid, int> _store = new();
@@ -62,6 +62,12 @@ namespace Trsys.Web.Infrastructure.InMemory
                     _store.Add(id, newVersion);
                 }
             });
+        }
+
+        public void Dispose()
+        {
+            queue.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }
