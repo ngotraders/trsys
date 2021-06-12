@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trsys.Web.Models.ReadModel.Events;
+using Trsys.Web.Models.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
 {

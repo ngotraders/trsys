@@ -7,7 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Infrastructure.SqlStreamStore;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Models

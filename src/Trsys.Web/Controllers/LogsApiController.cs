@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
-using Trsys.Web.Infrastructure.SqlStreamStore;
-using Trsys.Web.Models.ReadModel.Events;
+using Trsys.Web.Models.Messaging;
+using Trsys.Web.Models.ReadModel.Notifications;
 
 namespace Trsys.Web.Controllers
 {

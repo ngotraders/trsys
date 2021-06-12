@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
-using Trsys.Web.Infrastructure.SqlStreamStore;
-using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Notifications;
 
 namespace Trsys.Web.Filters
 {

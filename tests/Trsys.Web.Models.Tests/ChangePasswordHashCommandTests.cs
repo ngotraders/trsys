@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Models.ReadModel.Events;
+using Trsys.Web.Models.Events;
 using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Models.Tests

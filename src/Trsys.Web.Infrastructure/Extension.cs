@@ -6,10 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
 using StackExchange.Redis;
 using System.Reflection;
-using Trsys.Web.Infrastructure.InMemory;
-using Trsys.Web.Infrastructure.Redis;
-using Trsys.Web.Infrastructure.SqlStreamStore;
-using Trsys.Web.Infrastructure.Tokens;
+using Trsys.Web.Infrastructure.Messaging;
+using Trsys.Web.Infrastructure.ReadModel.InMemory;
+using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore;
+using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.InMemory;
+using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.Redis;
+using Trsys.Web.Infrastructure.WriteModel.Tokens;
+using Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 using Trsys.Web.Models.WriteModel.Infrastructure;
 
@@ -20,7 +24,7 @@ namespace Trsys.Web.Infrastructure
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             // MediatR dependencies
-            services.AddMediatR(Assembly.Load("Trsys.Web.Models"), Assembly.Load("Trsys.Web.Infrastructure"));
+            services.AddMediatR(Assembly.Load("Trsys.Web.Models"));
 
             // Cqrs services without IEventStore
             services.AddSingleton<ICache, MemoryCache>();
@@ -31,10 +35,10 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IEventStore, SqlStreamStoreEventStore>();
 
             // Token management
-            services.AddSingleton<TokenConnectionManager>();
+            services.AddSingleton<ITokenConnectionManager, TokenConnectionManager>();
 
             // Message synchronization
-            services.AddSingleton<PublishingMessageProcessor>();
+            services.AddSingleton<IPublishingMessageProcessor, PublishingMessageProcessor>();
 
             return services;
         }
