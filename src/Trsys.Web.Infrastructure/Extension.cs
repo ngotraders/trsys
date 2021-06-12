@@ -13,6 +13,7 @@ using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.InMemory;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.Redis;
 using Trsys.Web.Infrastructure.WriteModel.Tokens;
 using Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory;
+using Trsys.Web.Infrastructure.WriteModel.Tokens.Redis;
 using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.ReadModel.Infrastructure;
 using Trsys.Web.Models.WriteModel.Infrastructure;
@@ -66,6 +67,7 @@ namespace Trsys.Web.Infrastructure
             {
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
+                services.AddSingleton<ISecretKeyConnectionStore, InMemorySecretKeyConnectionStore>();
             }
             else
             {
@@ -73,6 +75,7 @@ namespace Trsys.Web.Infrastructure
 
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
+                services.AddSingleton<ISecretKeyConnectionStore, RedisSecretKeyConnectionStore>();
             }
 
             // Database
@@ -80,8 +83,6 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
             services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
-
-            services.AddSingleton<ISecretKeyConnectionStore, InMemorySecretKeyConnectionStore>();
 
             return services;
         }
