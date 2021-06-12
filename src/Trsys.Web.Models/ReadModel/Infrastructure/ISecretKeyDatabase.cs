@@ -7,7 +7,7 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
 {
     public interface ISecretKeyDatabase
     {
-        Task AddAsync(SecretKeyDto secretKeyDto);
+        Task AddAsync(SecretKeyDto secretKey);
         Task UpdateKeyTypeAsync(Guid id, SecretKeyType keyType);
         Task UpdateDescriptionAsync(Guid id, string description);
         Task UpdateIsApprovedAsync(Guid id, bool isApproved);

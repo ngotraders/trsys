@@ -7,6 +7,7 @@ using SqlStreamStore;
 using StackExchange.Redis;
 using System.Reflection;
 using Trsys.Web.Infrastructure.Messaging;
+using Trsys.Web.Infrastructure.ReadModel.Caching;
 using Trsys.Web.Infrastructure.ReadModel.Database;
 using Trsys.Web.Infrastructure.ReadModel.InMemory;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore;
@@ -84,11 +85,22 @@ namespace Trsys.Web.Infrastructure
                 services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
                 services.AddSingleton(new MsSqlStreamStoreV3Settings(sqlserverConnection));
 
-                // WriteModel Database
-                services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
-                services.AddTransient<ISecretKeyDatabase, SqlServerSecretKeyDatabase>();
-                services.AddTransient<IOrderDatabase, SqlServerOrderDatabase>();
-                services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
+                if (string.IsNullOrEmpty(redisConnection))
+                {
+                    // WriteModel Database
+                    services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
+                    services.AddTransient<ISecretKeyDatabase, SqlServerSecretKeyDatabase>();
+                    services.AddTransient<IOrderDatabase, SqlServerOrderDatabase>();
+                    services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
+                }
+                else
+                {
+                    // WriteModel Database
+                    services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
+                    services.AddTransient<ISecretKeyDatabase, RedisCachedSecretKeyDatabase>();
+                    services.AddTransient<IOrderDatabase, RedisCachedOrderDatabase>();
+                    services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
+                }
             }
 
             return services;
