@@ -29,8 +29,9 @@ namespace Trsys.Web.Models.ReadModel.Handlers
             return db.AddAsync(new OrderDto()
             {
                 Id = $"{notification.Id}:{notification.Order.TicketNo}",
-                Order = notification.Order,
                 SecretKeyId = notification.Id,
+                TicketNo = notification.Order.TicketNo,
+                Order = notification.Order,
             });
         }
 

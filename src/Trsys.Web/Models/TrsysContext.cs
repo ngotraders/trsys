@@ -17,7 +17,7 @@ namespace Trsys.Web.Models
 
         public DbSet<UserDto> Users { get; set; }
         public DbSet<SecretKeyDto> SecretKeys { get; set; }
-        public DbSet<OrderDto> OrdersDto { get; set; }
+        public DbSet<OrderDto> Orders { get; set; }
         public DbSet<LogDto> Logs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -91,6 +91,8 @@ namespace Trsys.Web.Models
             modelBuilder.Entity<SecretKeyDto>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Key);
+                entity.HasIndex(e => e.Token);
             });
 
             modelBuilder.Entity<OrderDto>(entity =>

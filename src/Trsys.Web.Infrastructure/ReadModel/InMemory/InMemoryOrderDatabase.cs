@@ -24,7 +24,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
         {
             return queue.Enqueue(() =>
             {
-                if (ByTicketNo.TryAdd(order.Order.TicketNo, order))
+                if (ByTicketNo.TryAdd(order.TicketNo, order))
                 {
                     All.Add(order);
                     ById.Add(order.Id, order);
@@ -48,7 +48,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                 {
                     ById.Remove(item.Id);
                     All.Remove(item);
-                    ByTicketNo.Remove(item.Order.TicketNo);
+                    ByTicketNo.Remove(item.TicketNo);
                     if (BySecretKey.TryGetValue(item.SecretKeyId, out var list))
                     {
                         list.Remove(item);
@@ -69,7 +69,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                     {
                         ById.Remove(item.Id);
                         All.Remove(item);
-                        ByTicketNo.Remove(item.Order.TicketNo);
+                        ByTicketNo.Remove(item.TicketNo);
                     }
                     Entry = OrdersTextEntry.Create(List);
                 }

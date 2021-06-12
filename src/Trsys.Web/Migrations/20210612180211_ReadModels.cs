@@ -27,16 +27,17 @@ namespace Trsys.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OrdersDto",
+                name: "Orders",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     SecretKeyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TicketNo = table.Column<int>(type: "int", nullable: false),
                     Order = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrdersDto", x => x.Id);
+                    table.PrimaryKey("PK_Orders", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -45,10 +46,10 @@ namespace Trsys.Web.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     KeyType = table.Column<int>(type: "int", nullable: true),
-                    Key = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Key = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Token = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     IsConnected = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -78,6 +79,16 @@ namespace Trsys.Web.Migrations
                 .Annotation("SqlServer:Clustered", true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SecretKeys_Key",
+                table: "SecretKeys",
+                column: "Key");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SecretKeys_Token",
+                table: "SecretKeys",
+                column: "Token");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",
                 table: "Users",
                 column: "Username");
@@ -89,7 +100,7 @@ namespace Trsys.Web.Migrations
                 name: "Logs");
 
             migrationBuilder.DropTable(
-                name: "OrdersDto");
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "SecretKeys");

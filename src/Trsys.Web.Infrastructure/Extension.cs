@@ -86,8 +86,8 @@ namespace Trsys.Web.Infrastructure
 
                 // WriteModel Database
                 services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
-                services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
-                services.AddTransient<IOrderDatabase, InMemoryOrderDatabase>();
+                services.AddTransient<ISecretKeyDatabase, SqlServerSecretKeyDatabase>();
+                services.AddTransient<IOrderDatabase, SqlServerOrderDatabase>();
                 services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
             }
 

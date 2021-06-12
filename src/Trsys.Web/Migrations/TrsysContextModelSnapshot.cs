@@ -112,9 +112,12 @@ namespace Trsys.Web.Migrations
                     b.Property<Guid>("SecretKeyId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("TicketNo")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.ToTable("OrdersDto");
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Trsys.Web.Models.ReadModel.Dtos.SecretKeyDto", b =>
@@ -133,15 +136,19 @@ namespace Trsys.Web.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Key")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("KeyType")
                         .HasColumnType("int");
 
                     b.Property<string>("Token")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Key");
+
+                    b.HasIndex("Token");
 
                     b.ToTable("SecretKeys");
                 });

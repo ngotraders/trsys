@@ -6,6 +6,7 @@ namespace Trsys.Web.Models.ReadModel.Dtos
     {
         public string Id { get; set; }
         public Guid SecretKeyId { get; set; }
+        public int TicketNo { get; set; }
         public PublishedOrder Order { get; set; }
     }
 }
