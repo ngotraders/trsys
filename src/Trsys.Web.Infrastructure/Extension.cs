@@ -4,8 +4,10 @@ using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
+using StackExchange.Redis;
 using System.Reflection;
 using Trsys.Web.Infrastructure.InMemory;
+using Trsys.Web.Infrastructure.Redis;
 using Trsys.Web.Infrastructure.SqlStreamStore;
 using Trsys.Web.Infrastructure.Tokens;
 using Trsys.Web.Models.ReadModel.Infrastructure;
@@ -56,8 +58,18 @@ namespace Trsys.Web.Infrastructure
                 services.AddSingleton(new MsSqlStreamStoreV3Settings(connectionString));
             }
 
-            // Manage latest version for each stream in StreamStore
-            services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
+            if (string.IsNullOrEmpty(redisConfiguration))
+            {
+                // Manage latest version for each stream in StreamStore
+                services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
+            }
+            else
+            {
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConfiguration));
+
+                // Manage latest version for each stream in StreamStore
+                services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
+            }
 
             // Database
             services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
