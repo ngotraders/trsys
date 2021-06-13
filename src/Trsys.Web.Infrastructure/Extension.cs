@@ -78,17 +78,16 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
             services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
+            services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
 
             if (string.IsNullOrEmpty(sqlserverConnection))
             {
                 services.AddSingleton<IStreamStore, InMemoryStreamStore>();
-                services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
             }
             else
             {
                 services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
                 services.AddSingleton(new MsSqlStreamStoreV3Settings(sqlserverConnection));
-                services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
             }
 
             return services;
