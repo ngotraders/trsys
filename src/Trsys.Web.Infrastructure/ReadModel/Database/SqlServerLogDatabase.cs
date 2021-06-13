@@ -27,7 +27,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.Database
         public async Task<IEnumerable<LogDto>> SearchAsync(string source, int page, int perPage)
         {
             var query = db.Logs as IQueryable<LogDto>;
-            if (string.IsNullOrEmpty(source))
+            if (!string.IsNullOrEmpty(source))
             {
                 query = query.Where(q => q.Key == source);
             }
