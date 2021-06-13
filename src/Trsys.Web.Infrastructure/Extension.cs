@@ -36,6 +36,7 @@ namespace Trsys.Web.Infrastructure
 
             // Event store
             services.AddSingleton<IEventStore, SqlStreamStoreEventStore>();
+            services.AddSingleton<IEventDatabase, SqlStreamEventDatabase>();
 
             // Token management
             services.AddSingleton<ITokenConnectionManager, TokenConnectionManager>();
