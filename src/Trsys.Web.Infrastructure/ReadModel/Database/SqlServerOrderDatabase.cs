@@ -21,7 +21,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.Database
         public async Task AddAsync(OrderDto order)
         {
             var dbOrder = await db.Orders
-                .Where(order => order.TicketNo == order.TicketNo)
+                .Where(o => o.TicketNo == order.TicketNo)
                 .FirstOrDefaultAsync();
             if (dbOrder != null)
             {
