@@ -115,7 +115,6 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpDelete("{key}")]
-        [Consumes("application/json")]
         public async Task<IActionResult> DeleteKey(string key)
         {
             if (!ModelState.IsValid)
