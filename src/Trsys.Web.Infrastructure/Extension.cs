@@ -41,9 +41,6 @@ namespace Trsys.Web.Infrastructure
             // Token management
             services.AddSingleton<ITokenConnectionManager, TokenConnectionManager>();
 
-            // Message synchronization
-            services.AddSingleton<IPublishingMessageProcessor, PublishingMessageProcessor>();
-
             return services;
         }
 
@@ -61,6 +58,9 @@ namespace Trsys.Web.Infrastructure
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
                 services.AddSingleton<ISecretKeyConnectionStore, InMemorySecretKeyConnectionStore>();
+
+                // Message synchronization
+                services.AddSingleton<IMessagePublisher, LocalMessagePublisher>();
             }
             else
             {
@@ -69,39 +69,26 @@ namespace Trsys.Web.Infrastructure
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
                 services.AddSingleton<ISecretKeyConnectionStore, RedisSecretKeyConnectionStore>();
+
+                // Message synchronization
+                services.AddSingleton<IMessagePublisher, RedisMessageBroker>();
             }
+
+            // ReadModel Database
+            services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
+            services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
+            services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
 
             if (string.IsNullOrEmpty(sqlserverConnection))
             {
                 services.AddSingleton<IStreamStore, InMemoryStreamStore>();
-
-                // ReadModel Database
-                services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
-                services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
-                services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
                 services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
             }
             else
             {
                 services.AddTransient<IStreamStore, MsSqlStreamStoreV3>();
                 services.AddSingleton(new MsSqlStreamStoreV3Settings(sqlserverConnection));
-
-                if (string.IsNullOrEmpty(redisConnection))
-                {
-                    // WriteModel Database
-                    services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
-                    services.AddTransient<ISecretKeyDatabase, SqlServerSecretKeyDatabase>();
-                    services.AddTransient<IOrderDatabase, SqlServerOrderDatabase>();
-                    services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
-                }
-                else
-                {
-                    // WriteModel Database
-                    services.AddTransient<IUserDatabase, SqlServerUserDatabase>();
-                    services.AddTransient<ISecretKeyDatabase, RedisCachedSecretKeyDatabase>();
-                    services.AddTransient<IOrderDatabase, RedisCachedOrderDatabase>();
-                    services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
-                }
+                services.AddTransient<ILogDatabase, SqlServerLogDatabase>();
             }
 
             return services;

@@ -6,12 +6,12 @@ using Trsys.Web.Models.Messaging;
 
 namespace Trsys.Web.Infrastructure.Messaging
 {
-    public class PublishingMessageProcessor : IPublishingMessageProcessor, IDisposable
+    public class LocalMessagePublisher : IMessagePublisher, IDisposable
     {
         private readonly SemaphoreSlim queue = new(1);
         private readonly IMediator mediator;
 
-        public PublishingMessageProcessor(IMediator mediator)
+        public LocalMessagePublisher(IMediator mediator)
         {
             this.mediator = mediator;
         }

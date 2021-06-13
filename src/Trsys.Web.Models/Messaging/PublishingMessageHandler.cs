@@ -6,9 +6,9 @@ namespace Trsys.Web.Models.Messaging
 {
     public class PublishingMessageHandler : INotificationHandler<PublishingMessageEnvelope>
     {
-        private readonly IPublishingMessageProcessor processor;
+        private readonly IMessagePublisher processor;
 
-        public PublishingMessageHandler(IPublishingMessageProcessor processor)
+        public PublishingMessageHandler(IMessagePublisher processor)
         {
             this.processor = processor;
         }

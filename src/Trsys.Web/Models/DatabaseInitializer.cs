@@ -53,7 +53,8 @@ namespace Trsys.Web.Models
             {
                 throw new Exception("Failed to create SqlStreamStore schema.", lastException);
             }
-            // await InitializeReadModelAsync(store, mediator);
+            await InitializeReadModelAsync(store, mediator);
+            scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
         }
 
         public static async Task SeedDataAsync(IApplicationBuilder app)
