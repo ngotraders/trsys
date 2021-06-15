@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Trsys.Web.Models
 {
@@ -9,12 +9,18 @@ namespace Trsys.Web.Models
         {
         }
 
+        public virtual DbSet<Log> Logs { get; set; }
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Stream> Streams { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS");
+
+            modelBuilder.Entity<Log>(entity =>
+            {
+                entity.Property(e => e.TimeStamp).HasColumnType("datetime");
+            });
 
             modelBuilder.Entity<Message>(entity =>
             {
