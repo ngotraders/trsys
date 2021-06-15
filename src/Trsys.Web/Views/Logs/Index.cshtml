@@ -52,7 +52,7 @@
                 @foreach (var e in Model.Events)
                 {
                     <tr>
-                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(DateTime.SpecifyKind(e.TimeStamp.Value, DateTimeKind.Utc)).ToOffset(TimeSpan.FromHours(9)))</td>
+                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(DateTime.SpecifyKind(e.TimeStamp.Value, DateTimeKind.Local)).ToOffset(TimeSpan.FromHours(9)))</td>
                         <td>@e.Level</td>
                         <td>@e.Message</td>
                     </tr>
