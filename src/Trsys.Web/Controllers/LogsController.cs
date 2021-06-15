@@ -1,9 +1,10 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models;
 using Trsys.Web.ViewModels.Logs;
 
 namespace Trsys.Web.Controllers
@@ -12,11 +13,11 @@ namespace Trsys.Web.Controllers
     [Authorize(Roles = "Administrator")]
     public class LogsController : Controller
     {
-        private readonly IMediator mediator;
+        private readonly TrsysContext db;
 
-        public LogsController(IMediator mediator)
+        public LogsController(TrsysContext db)
         {
-            this.mediator = mediator;
+            this.db = db;
         }
 
         [HttpGet]
@@ -29,8 +30,26 @@ namespace Trsys.Web.Controllers
                 Source = source,
             };
 
-            model.Events = (await mediator.Send(new GetLogs(source, model.Page, model.PerPage))).ToList();
+            model.Events = await SearchAsync(source, page ?? 1, perPage ?? 100);
             return View(model);
+        }
+
+        private async Task<List<Log>> SearchAsync(string source, int page, int perPage)
+        {
+            var query = db.Logs as IQueryable<Log>;
+            if (!string.IsNullOrEmpty(source))
+            {
+                query = query.Where(q => q.MessageTemplate == source);
+            }
+            if (page > 1)
+            {
+                query = query.Skip((page - 1) * perPage);
+            }
+            if (perPage > 0)
+            {
+                query = query.Take(perPage);
+            }
+            return await query.OrderByDescending(q => q.TimeStamp).ToListAsync();
         }
     }
 }

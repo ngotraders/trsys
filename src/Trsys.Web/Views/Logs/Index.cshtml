@@ -38,26 +38,23 @@
         <table class="table table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
             <colgroup>
                 <col style="width: 15em" />
-                <col style="width: 28em" />
-                <col style="width: 7em" />
+                <col style="width: 8em" />
                 <col />
             </colgroup>
             <thead>
                 <tr>
                     <th>時刻</th>
-                    <th>ソース (バージョン)</th>
-                    <th>ログタイプ</th>
-                    <th>ログ</th>
+                    <th>レベル</th>
+                    <th>メッセージ</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var e in Model.Events)
                 {
                     <tr>
-                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", e.Timestamp.ToOffset(TimeSpan.FromHours(9)))</td>
-                        <td><a href="@Url.Action("Index", new { source = e.Key })">@e.Key (@e.Version)</a></td>
-                        <td>@e.LogType</td>
-                        <td>@e.Data</td>
+                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(DateTime.SpecifyKind(e.TimeStamp.Value, DateTimeKind.Utc)).ToOffset(TimeSpan.FromHours(9)))</td>
+                        <td>@e.Level</td>
+                        <td>@e.Message</td>
                     </tr>
                 }
             </tbody>
