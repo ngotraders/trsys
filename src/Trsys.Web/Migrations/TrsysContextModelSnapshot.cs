@@ -47,6 +47,8 @@ namespace Trsys.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TimeStamp");
+
                     b.ToTable("Logs");
                 });
 

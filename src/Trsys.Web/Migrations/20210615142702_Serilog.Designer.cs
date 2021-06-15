@@ -10,7 +10,7 @@ using Trsys.Web.Models;
 namespace Trsys.Web.Migrations
 {
     [DbContext(typeof(TrsysContext))]
-    [Migration("20210615031917_Serilog")]
+    [Migration("20210615142702_Serilog")]
     partial class Serilog
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,6 +48,8 @@ namespace Trsys.Web.Migrations
                         .HasColumnType("datetime");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TimeStamp");
 
                     b.ToTable("Logs");
                 });

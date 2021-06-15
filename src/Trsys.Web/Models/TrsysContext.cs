@@ -20,6 +20,7 @@ namespace Trsys.Web.Models
             modelBuilder.Entity<Log>(entity =>
             {
                 entity.Property(e => e.TimeStamp).HasColumnType("datetime");
+                entity.HasIndex(e => e.TimeStamp);
             });
 
             modelBuilder.Entity<Message>(entity =>

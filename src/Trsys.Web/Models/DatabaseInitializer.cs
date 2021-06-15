@@ -20,6 +20,18 @@ namespace Trsys.Web.Models
             using var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
             using var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            await InitializeContextAsync(db);
+            if (store is MsSqlStreamStoreV3 mssqlstore)
+            {
+                await mssqlstore.CreateSchemaIfNotExists();
+            }
+
+            await InitializeReadModelAsync(store, mediator);
+            scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
+        }
+
+        public static async Task InitializeContextAsync(TrsysContext db)
+        {
             int retryCount = 0;
             bool success = false;
             Exception lastException = null;
@@ -35,10 +47,6 @@ namespace Trsys.Web.Models
                     {
                         await db.Database.EnsureCreatedAsync();
                     }
-                    if (store is MsSqlStreamStoreV3 mssqlstore)
-                    {
-                        await mssqlstore.CreateSchemaIfNotExists();
-                    }
                     success = true;
                     break;
                 }
@@ -53,8 +61,6 @@ namespace Trsys.Web.Models
             {
                 throw new Exception("Failed to create SqlStreamStore schema.", lastException);
             }
-            await InitializeReadModelAsync(store, mediator);
-            scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
         }
 
         public static async Task SeedDataAsync(IApplicationBuilder app)

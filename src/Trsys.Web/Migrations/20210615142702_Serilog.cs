@@ -24,6 +24,11 @@ namespace Trsys.Web.Migrations
                 {
                     table.PrimaryKey("PK_Logs", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Logs_TimeStamp",
+                table: "Logs",
+                column: "TimeStamp");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

@@ -36,10 +36,10 @@ namespace Trsys.Web.Controllers
 
         private async Task<List<Log>> SearchAsync(string source, int page, int perPage)
         {
-            var query = db.Logs as IQueryable<Log>;
+            var query = db.Logs.OrderByDescending(q => q.TimeStamp) as IQueryable<Log>;
             if (!string.IsNullOrEmpty(source))
             {
-                query = query.Where(q => q.MessageTemplate == source);
+                query = query.Where(q => q.Level == source);
             }
             if (page > 1)
             {
@@ -49,7 +49,7 @@ namespace Trsys.Web.Controllers
             {
                 query = query.Take(perPage);
             }
-            return await query.OrderByDescending(q => q.TimeStamp).ToListAsync();
+            return await query.ToListAsync();
         }
     }
 }
