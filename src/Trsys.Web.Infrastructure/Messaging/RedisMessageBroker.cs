@@ -1,5 +1,5 @@
 using MediatR;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
 using System.Collections.Concurrent;
@@ -22,31 +22,37 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly ISubscriber subscriber;
         private readonly RedisKey streamsKey = RedisHelper.GetKey("Message:Streams");
         private EventHandler<EventArgs> StreamArrived;
-        private RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
+        private readonly RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
         private RedisValue? lastReadStream;
         private bool isProcessing;
-        private IMediator mediator;
+        private readonly IMediator mediator;
+        private readonly ILogger<RedisMessageBroker> logger;
 
-        public RedisMessageBroker(IConnectionMultiplexer connection, IMediator mediator)
+        public RedisMessageBroker(IConnectionMultiplexer connection, IMediator mediator, ILogger<RedisMessageBroker> logger)
         {
             this.connection = connection;
             this.subscriber = connection.GetSubscriber();
             this.mediator = mediator;
+            this.logger = logger;
             subscriber.Subscribe(messageChannel, OnMessage);
         }
 
         private async void OnMessage(RedisChannel _, RedisValue message)
         {
+            logger.LogInformation("Message received: {id}", message.ToString());
+            logger.LogDebug("OnMessage start");
             lock (this)
             {
                 if (isProcessing)
                 {
+                    logger.LogDebug("OnMessage end: already processing");
                     return;
                 }
                 isProcessing = true;
             }
             try
             {
+                logger.LogInformation("Processing message: {id}", message.ToString());
                 await ReadMessages();
             }
             finally
@@ -55,6 +61,7 @@ namespace Trsys.Web.Infrastructure.Messaging
                 {
                     isProcessing = false;
                 }
+                logger.LogDebug("OnMessage end");
             }
         }
 
@@ -66,31 +73,34 @@ namespace Trsys.Web.Infrastructure.Messaging
             {
                 foreach (var entry in result)
                 {
+                    var message = new PublishingMessage();
+                    foreach (var e in entry.Values)
+                    {
+                        switch (e.Name)
+                        {
+                            case "Id":
+                                message.Id = Guid.Parse(e.Value);
+                                break;
+                            case "Type":
+                                message.Type = e.Value;
+                                break;
+                            case "Data":
+                                message.Data = e.Value;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    var notification = MessageConverter.ConvertToNotification(message);
                     try
                     {
-                        var message = new PublishingMessage();
-                        foreach (var e in entry.Values)
-                        {
-                            switch (e.Name)
-                            {
-                                case "Id":
-                                    message.Id = Guid.Parse(e.Value);
-                                    break;
-                                case "Type":
-                                    message.Type = e.Value;
-                                    break;
-                                case "Data":
-                                    message.Data = e.Value;
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        await mediator.Publish(MessageConverter.ConvertToNotification(message));
+                        logger.LogDebug("Applying message {@message}", notification);
+                        await mediator.Publish(notification);
+                        logger.LogInformation("Applied message {@message}", notification);
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine(ex);
+                        logger.LogError(ex, "Error on applying message {@message}", notification);
                     }
                     lastReadStream = entry.Id;
                     arrivedStreamIds.TryAdd(entry.Id, true);
@@ -113,7 +123,9 @@ namespace Trsys.Web.Infrastructure.Messaging
                  });
                 streamIds.Add(streamId);
             }
-            await connection.GetSubscriber().PublishAsync(messageChannel, "OnMessage");
+            var id = Guid.NewGuid().ToString();
+            logger.LogInformation("Publishing message: {id}", id);
+            await connection.GetSubscriber().PublishAsync(messageChannel, id);
             await Task.Run(() => WaitFor(streamIds));
         }
 
