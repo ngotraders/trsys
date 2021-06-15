@@ -63,7 +63,6 @@ namespace Trsys.Web
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
             services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
-            services.AddTransient<ITrsysReadModelContext>(sp => new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseSqlServer(sqlserverConnection).Options));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
