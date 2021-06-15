@@ -2,7 +2,7 @@
 
 namespace Trsys.Web.Models
 {
-    public partial class Log
+    public class Log
     {
         public int Id { get; set; }
         public string Message { get; set; }
