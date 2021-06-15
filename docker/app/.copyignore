@@ -1,3 +1,4 @@
+.copyignore
 .git
 .vs
 docker

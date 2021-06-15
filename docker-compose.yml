@@ -18,7 +18,7 @@ services:
     build:
       context: ./docker/app
     working_dir: /app
-    command: bash -c "rm -rf `find . -type f | grep -v '.copyignore'` && rsync -a --exclude-from=./.copyignore /workspace/ /app/ && dotnet run --project src/Trsys.Web/Trsys.Web.csproj"
+    command: bash -c "rsync --recursive --delete --exclude-from=/app/.copyignore /workspace/ /app/ && dotnet run --project src/Trsys.Web/Trsys.Web.csproj"
     volumes:
       - ./docker/app/workdir1:/app
       - ./docker/app/.copyignore:/app/.copyignore
@@ -33,7 +33,7 @@ services:
     build:
       context: ./docker/app
     working_dir: /app
-    command: bash -c "rm -rf `find . -type f | grep -v '.copyignore'` && rsync -a --exclude-from=./.copyignore /workspace/ /app/ && dotnet run --project src/Trsys.Web/Trsys.Web.csproj"
+    command: bash -c "rsync --recursive --delete --exclude-from=/app/.copyignore /workspace/ /app/ && dotnet run --project src/Trsys.Web/Trsys.Web.csproj"
     volumes:
       - ./docker/app/workdir2:/app
       - ./docker/app/.copyignore:/app/.copyignore
