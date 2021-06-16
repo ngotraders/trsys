@@ -1,10 +1,9 @@
-﻿using CQRSlite.Events;
-using MediatR;
+﻿using MediatR;
 using System;
 
 namespace Trsys.Web.Models.Events
 {
-    public class SecretKeyEaDisconnected : INotification, IEvent
+    public class SecretKeyEaDisconnected : INotification
     {
         public SecretKeyEaDisconnected(Guid id)
         {
@@ -12,7 +11,5 @@ namespace Trsys.Web.Models.Events
         }
 
         public Guid Id { get; set; }
-        public int Version { get; set; }
-        public DateTimeOffset TimeStamp { get; set; }
     }
 }

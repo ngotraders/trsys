@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models.Events;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
@@ -24,7 +25,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
             {
                 if (ConnectedIdSet.Add(id))
                 {
-                    await mediator.Publish(new SecretKeyEaConnected(id));
+                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
                 }
             });
         }
@@ -35,7 +36,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
             {
                 if (ConnectedIdSet.Remove(id))
                 {
-                    await mediator.Publish(new SecretKeyEaDisconnected(id));
+                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(id)));
                 }
             });
         }

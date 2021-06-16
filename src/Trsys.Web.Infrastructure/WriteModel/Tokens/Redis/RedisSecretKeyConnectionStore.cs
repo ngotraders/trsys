@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure.Redis;
 using Trsys.Web.Models.Events;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
@@ -26,7 +27,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
             var value = (RedisValue)id.ToString();
             if (await cache.SetAddAsync(storeKey, value))
             {
-                await mediator.Publish(new SecretKeyEaConnected(id));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
             }
         }
 
@@ -36,7 +37,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
             var value = (RedisValue)id.ToString();
             if (await cache.SetRemoveAsync(storeKey, value))
             {
-                await mediator.Publish(new SecretKeyEaDisconnected(id));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(id)));
             }
         }
 
