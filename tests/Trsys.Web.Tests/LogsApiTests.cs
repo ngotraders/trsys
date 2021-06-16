@@ -1,10 +1,6 @@
 using MediatR;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -25,7 +21,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_empty_string()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -45,7 +41,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_ok_given_non_empty_string()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -63,16 +59,6 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(VALID_KEY, events.First().Key);
             Assert.AreEqual("DEBUG", events.First().LogType);
             Assert.AreEqual("1:DEBUG:NonEmpty", events.First().Data);
-        }
-
-        private static TestServer CreateTestServer()
-        {
-            return new TestServer(new WebHostBuilder()
-                .UseConfiguration(
-                    new ConfigurationBuilder()
-                    .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
-                 )
-                .UseStartup<Startup>());
         }
     }
 }

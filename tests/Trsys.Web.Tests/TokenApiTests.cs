@@ -1,10 +1,6 @@
 using MediatR;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -24,7 +20,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_ok_given_valid_secret_key()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
@@ -48,7 +44,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_not_exsisting_secret_key()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
@@ -60,7 +56,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_invalid_secret_key()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
@@ -78,7 +74,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_in_use_secret_key()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
@@ -98,7 +94,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiTokenRelease_should_return_ok_given_valid_token_and_secret_key()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
@@ -124,23 +120,13 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiTokenRelease_should_return_badrequest_given_invalid_token()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var res = await client.PostAsync("/api/token/INVALID_TOKEN/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
-        }
-
-        private static TestServer CreateTestServer()
-        {
-            return new TestServer(new WebHostBuilder()
-                .UseConfiguration(
-                    new ConfigurationBuilder()
-                    .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
-                 )
-                .UseStartup<Startup>());
         }
     }
 }

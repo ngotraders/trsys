@@ -46,6 +46,8 @@ namespace Trsys.Web.Infrastructure
 
         public static IServiceCollection AddInMemoryInfrastructure(this IServiceCollection services)
         {
+            // For testing
+            services.AddLogging();
             return services.AddInfrastructure(null, null);
         }
 

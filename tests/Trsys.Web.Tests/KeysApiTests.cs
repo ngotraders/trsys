@@ -1,7 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
@@ -24,7 +21,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -39,7 +36,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_is_approved_is_false()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -61,7 +58,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_key_type_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -84,7 +81,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -94,16 +91,6 @@ namespace Trsys.Web.Tests
             var res = await client.GetAsync($"/api/keys/{key.Key}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
-        }
-
-        private static TestServer CreateTestServer()
-        {
-            return new TestServer(new WebHostBuilder()
-                .UseConfiguration(
-                    new ConfigurationBuilder()
-                    .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
-                 )
-                .UseStartup<Startup>());
         }
     }
     public static class HttpClientExtension
