@@ -8,11 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Serilog;
 using StackExchange.Redis;
 using Trsys.Web.Configurations;
 using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.ReadModel.Database;
 using Trsys.Web.Models;
 
 namespace Trsys.Web
@@ -88,7 +86,6 @@ namespace Trsys.Web
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseSerilogRequestLogging();
             app.UseHttpsRedirection();
             app.UseSession();
             app.UseRouting();
