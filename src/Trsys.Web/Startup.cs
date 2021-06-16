@@ -82,7 +82,7 @@ namespace Trsys.Web
             var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
             if (string.IsNullOrEmpty(sqlserverConnection))
             {
-                logger.LogInformation("Using in-memory implementation.");
+                logger.LogInformation("Using in-memory implementation for database.");
             }
             else
             {
@@ -90,6 +90,15 @@ namespace Trsys.Web
                 logger.LogInformation("Database initializing.");
                 DatabaseInitializer.InitializeAsync(app).Wait();
                 logger.LogInformation("Database initialized.");
+            }
+            var redisConnection = Configuration.GetConnectionString("RedisConnection");
+            if (string.IsNullOrEmpty(redisConnection))
+            {
+                logger.LogInformation("Using in-memory implementation for redis.");
+            }
+            else
+            {
+                logger.LogInformation("Using redis implementation.");
             }
             DatabaseInitializer.SeedDataAsync(app).Wait();
 

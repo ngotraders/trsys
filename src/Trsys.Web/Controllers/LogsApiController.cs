@@ -12,11 +12,11 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class LogsApiController : Controller
     {
-        private readonly ILogger logger;
+        private readonly ILogger<LogsApiController> logger;
 
-        public LogsApiController(ILoggerFactory loggerFactory)
+        public LogsApiController(ILogger<LogsApiController> logger)
         {
-            this.logger = loggerFactory.CreateLogger("Trsys.Web.Ea");
+            this.logger = logger;
         }
 
         [HttpPost]
@@ -34,11 +34,11 @@ namespace Trsys.Web.Controllers
             var logText = text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (string.IsNullOrEmpty(secretKey))
             {
-                logger.LogDebug("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", secretKey, type, version, logText);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", secretKey, type, version, logText);
             }
             else
             {
-                logger.LogDebug("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", User.Identity.Name, "Unknown", version ?? "Unknown", logText);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", User.Identity.Name ?? "Unknown", "Unknown", version ?? "Unknown", logText);
             }
             return Accepted();
         }
