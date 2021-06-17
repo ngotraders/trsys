@@ -18,34 +18,51 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly ConcurrentDictionary<string, bool> arrivedStreamIds = new();
 
         private readonly IConnectionMultiplexer connection;
+        private readonly ISubscriber subscriber;
         private readonly RedisKey streamsKey = RedisHelper.GetKey("Message:Streams");
         private EventHandler<EventArgs> StreamArrived;
+        private readonly RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
         private RedisValue? lastReadStream;
+        private bool isProcessing;
         private readonly IMediator mediator;
         private readonly ILogger<RedisMessageBroker> logger;
-
-        public Task Task { get; }
 
         public RedisMessageBroker(IConnectionMultiplexer connection, IMediator mediator, ILogger<RedisMessageBroker> logger)
         {
             this.connection = connection;
-            this.mediator = mediator;
-            this.logger = logger;
-            this.Task = Task.Run(PollingMessage);
-        }
-
-        private async Task PollingMessage()
-        {
             var cache = connection.GetDatabase();
-            var result = await cache.StreamRangeAsync(streamsKey, messageOrder: Order.Descending, count: 1);
+            var result = cache.StreamRange(streamsKey, messageOrder: Order.Descending, count: 1);
             if (result.Any())
             {
                 lastReadStream = result.LastOrDefault().Id;
             }
-            while (!isDisposed.IsCancellationRequested)
+            this.mediator = mediator;
+            this.logger = logger;
+            this.subscriber = connection.GetSubscriber();
+            subscriber.Subscribe(messageChannel, OnMessage);
+        }
+
+        private async void OnMessage(RedisChannel _, RedisValue message)
+        {
+            lock (this)
             {
+                if (isProcessing)
+                {
+                    return;
+                }
+                isProcessing = true;
+            }
+            try
+            {
+                logger.LogInformation("Processing message: {id}", message.ToString());
                 await ReadMessages();
-                await Task.Delay(10);
+            }
+            finally
+            {
+                lock (this)
+                {
+                    isProcessing = false;
+                }
             }
         }
 
@@ -111,6 +128,9 @@ namespace Trsys.Web.Infrastructure.Messaging
                  });
                 streamIds.Add(streamId);
             }
+            var id = Guid.NewGuid().ToString();
+            logger.LogInformation("Publishing message: {id}", id);
+            await connection.GetSubscriber().PublishAsync(messageChannel, id);
             var streamIdsList = streamIds.ToArray();
             logger.LogDebug("Waiting streamIds to apply: {streamId}", streamIdsList);
             await Task.Run(() => WaitFor(streamIds));
@@ -135,6 +155,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             {
                 StreamArrived -= OnStreamArrived;
             }
+
         }
 
         private async Task CheckStreamIds(List<string> streamIds, TaskCompletionSource<bool> tcs, SemaphoreSlim semaphore)
@@ -166,6 +187,7 @@ namespace Trsys.Web.Infrastructure.Messaging
 
         public void Dispose()
         {
+            subscriber?.Unsubscribe(messageChannel, OnMessage);
             isDisposed.Cancel();
             GC.SuppressFinalize(this);
         }
