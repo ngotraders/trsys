@@ -16,6 +16,10 @@ namespace Trsys.Web.Infrastructure.Logging
         }
         public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
         {
+            if (request.GetType().FullName.StartsWith("Trsys.Web.Models.ReadModel.Queries"))
+            {
+                return await next();
+            }
             var id = Guid.NewGuid();
             logger.LogDebug("processing {id}: {@request}", id, request);
             try
