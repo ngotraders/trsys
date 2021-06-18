@@ -54,7 +54,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             }
             try
             {
-                logger.LogInformation("Processing message: {id}", message.ToString());
+                logger.LogDebug("Processing message: {id}", message.ToString());
                 await ReadMessages();
             }
             finally
@@ -129,7 +129,7 @@ namespace Trsys.Web.Infrastructure.Messaging
                 streamIds.Add(streamId);
             }
             var id = Guid.NewGuid().ToString();
-            logger.LogInformation("Publishing message: {id}", id);
+            logger.LogDebug("Publishing message: {id}", id);
             await connection.GetSubscriber().PublishAsync(messageChannel, id);
             var streamIdsList = streamIds.ToArray();
             logger.LogDebug("Waiting streamIds to apply: {streamId}", streamIdsList);
