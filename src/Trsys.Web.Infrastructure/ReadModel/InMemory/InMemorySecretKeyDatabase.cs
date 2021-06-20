@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
@@ -15,7 +16,12 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
         private readonly Dictionary<Guid, SecretKeyDto> ById = new();
         private readonly Dictionary<string, SecretKeyDto> ByKey = new();
         private readonly Dictionary<string, SecretKeyDto> ByToken = new();
+        private readonly ILogger<InMemorySecretKeyDatabase> logger;
 
+        public InMemorySecretKeyDatabase(ILogger<InMemorySecretKeyDatabase> logger)
+        {
+            this.logger = logger;
+        }
         public Task AddAsync(SecretKeyDto secretKey)
         {
             return queue.Enqueue(() =>
@@ -26,32 +32,61 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             });
         }
 
-        private Task UpdateAsync(Guid id, Action<SecretKeyDto> modification)
+        private Task<bool> UpdateAsync(Guid id, Action<SecretKeyDto> modification)
         {
             return queue.Enqueue(() =>
             {
-                modification.Invoke(ById[id]);
+                if (ById.TryGetValue(id, out var value))
+                {
+                    modification.Invoke(value);
+                    return true;
+                }
+                return false;
             });
         }
 
         public Task UpdateKeyTypeAsync(Guid id, SecretKeyType keyType)
         {
-            return UpdateAsync(id, item => item.KeyType = keyType);
+            return UpdateAsync(id, item => item.KeyType = keyType).ContinueWith(task =>
+            {
+                if (!task.Result)
+                {
+                    logger.LogWarning("UpdateKeyTypeAsync fail: {id}");
+                }
+            });
         }
 
         public Task UpdateDescriptionAsync(Guid id, string description)
         {
-            return UpdateAsync(id, item => item.Description = description);
+            return UpdateAsync(id, item => item.Description = description).ContinueWith(task =>
+            {
+                if (!task.Result)
+                {
+                    logger.LogWarning("UpdateDescriptionAsync fail: {id}");
+                }
+            });
         }
 
         public Task UpdateIsApprovedAsync(Guid id, bool isApproved)
         {
-            return UpdateAsync(id, item => item.IsApproved = isApproved);
+            return UpdateAsync(id, item => item.IsApproved = isApproved).ContinueWith(task =>
+            {
+                if (!task.Result)
+                {
+                    logger.LogWarning("UpdateIsApprovedAsync fail: {id}");
+                }
+            });
         }
 
         public Task UpdateIsConnectedAsync(Guid id, bool isConnected)
         {
-            return UpdateAsync(id, item => item.IsConnected = isConnected);
+            return UpdateAsync(id, item => item.IsConnected = isConnected).ContinueWith(task =>
+            {
+                if (!task.Result)
+                {
+                    logger.LogWarning("UpdateIsConnectedAsync fail: {id}");
+                }
+            });
         }
 
         public Task UpdateTokenAsync(Guid id, string token)
@@ -67,6 +102,12 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                 {
                     item.Token = token;
                     ByToken.Add(item.Token, item);
+                }
+            }).ContinueWith(task =>
+            {
+                if (!task.Result)
+                {
+                    logger.LogWarning("UpdateTokenAsync fail: {id}");
                 }
             });
         }
