@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
@@ -51,7 +51,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 if (!task.Result)
                 {
-                    logger.LogWarning("UpdateKeyTypeAsync fail: {id}");
+                    logger.LogWarning("UpdateKeyTypeAsync fail: {id}", id);
                 }
             });
         }
@@ -62,7 +62,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 if (!task.Result)
                 {
-                    logger.LogWarning("UpdateDescriptionAsync fail: {id}");
+                    logger.LogWarning("UpdateDescriptionAsync fail: {id}", id);
                 }
             });
         }
@@ -73,7 +73,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 if (!task.Result)
                 {
-                    logger.LogWarning("UpdateIsApprovedAsync fail: {id}");
+                    logger.LogWarning("UpdateIsApprovedAsync fail: {id}", id);
                 }
             });
         }
@@ -84,7 +84,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 if (!task.Result)
                 {
-                    logger.LogWarning("UpdateIsConnectedAsync fail: {id}");
+                    logger.LogWarning("UpdateIsConnectedAsync fail: {id}", id);
                 }
             });
         }
@@ -107,7 +107,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 if (!task.Result)
                 {
-                    logger.LogWarning("UpdateTokenAsync fail: {id}");
+                    logger.LogWarning("UpdateTokenAsync fail: {id}", id);
                 }
             });
         }
