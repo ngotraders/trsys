@@ -1,4 +1,5 @@
 ﻿using CQRSlite.Domain;
+using CQRSlite.Domain.Exception;
 using MediatR;
 using System;
 using System.Threading;
@@ -61,7 +62,14 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var key = request.Key ?? Guid.NewGuid().ToString();
             if (!state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
-                throw new InvalidOperationException("specified key already exists.");
+                try
+                {
+                    await repository.Get<SecretKeyAggregate>(secretKeyId, cancellationToken);
+                    throw new InvalidOperationException("specified key already exists.");
+                }
+                catch (AggregateNotFoundException)
+                {
+                }
             }
             var item = new SecretKeyAggregate(secretKeyId, key);
             if (request.KeyType.HasValue)
