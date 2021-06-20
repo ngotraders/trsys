@@ -12,7 +12,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
     {
         private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly Timer timer;
-        private bool isProcessing = false;
+        private int isProcessing = 0;
 
         public TokenConnectionManager(IServiceScopeFactory serviceScopeFactory)
         {
@@ -22,13 +22,9 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
 
         private async void OnTick(object state)
         {
-            lock (this)
+            if (Interlocked.CompareExchange(ref isProcessing, 1, 0) == 1)
             {
-                if (isProcessing)
-                {
-                    return;
-                }
-                isProcessing = true;
+                return;
             }
             try
             {
@@ -36,10 +32,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
             }
             finally
             {
-                lock (this)
-                {
-                    isProcessing = false;
-                }
+                Interlocked.Exchange(ref isProcessing, 0);
             }
         }
 

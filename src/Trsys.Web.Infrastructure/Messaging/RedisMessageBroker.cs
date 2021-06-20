@@ -23,7 +23,7 @@ namespace Trsys.Web.Infrastructure.Messaging
         private EventHandler<EventArgs> StreamArrived;
         private readonly RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
         private RedisValue? lastReadStream;
-        private bool isProcessing;
+        private int isProcessing = 0;
         private readonly IMediator mediator;
         private readonly ILogger<RedisMessageBroker> logger;
 
@@ -44,13 +44,10 @@ namespace Trsys.Web.Infrastructure.Messaging
 
         private async void OnMessage(RedisChannel _, RedisValue message)
         {
-            lock (this)
+            if (Interlocked.CompareExchange(ref isProcessing, 1, 0) == 1)
             {
-                if (isProcessing)
-                {
-                    return;
-                }
-                isProcessing = true;
+                logger.LogDebug("Ignored. Other process is processing message: {id}", message.ToString());
+                return;
             }
             try
             {
@@ -59,10 +56,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             }
             finally
             {
-                lock (this)
-                {
-                    isProcessing = false;
-                }
+                Interlocked.Exchange(ref isProcessing, 0);
             }
         }
 
