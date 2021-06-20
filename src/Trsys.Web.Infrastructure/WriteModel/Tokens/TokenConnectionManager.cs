@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trsys.Web.Models.Events;
 using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Models.WriteModel.Infrastructure;
 
@@ -18,6 +20,21 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
         {
             this.serviceScopeFactory = serviceScopeFactory;
             timer = new Timer(OnTick, null, 1000, 1000);
+        }
+
+        public async Task InitializeAsync()
+        {
+            using var scope = this.serviceScopeFactory.CreateScope();
+            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
+            var connections = await store.SearchConnectionsAsync();
+            if (connections.Any())
+            {
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                foreach (var connection in connections)
+                {
+                    await mediator.Publish(new SecretKeyEaConnected(connection.Item2));
+                }
+            }
         }
 
         private async void OnTick(object state)

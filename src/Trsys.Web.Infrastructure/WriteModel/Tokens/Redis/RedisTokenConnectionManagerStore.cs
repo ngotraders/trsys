@@ -76,7 +76,11 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
                 }
                 return (false, Guid.Parse(value.ToString()));
             }
-            return (false, Guid.Empty);
+            else
+            {
+                await cache.SortedSetRemoveAsync(lastAccessedKey, token);
+                return (false, Guid.Empty);
+            }
         }
 
         public async Task<List<string>> SearchExpiredTokensAsync()
@@ -84,6 +88,15 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
             var cache = connection.GetDatabase();
             var values = await cache.SortedSetRangeByScoreAsync(lastAccessedKey, stop: DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             return values.Select(v => v.ToString()).ToList();
+        }
+
+        public async Task<List<(string, Guid)>> SearchConnectionsAsync()
+        {
+            var cache = connection.GetDatabase();
+            var values = await cache.HashGetAllAsync(tokenKey);
+            return values
+                .Select(value => (value.Name.ToString(), Guid.Parse(value.Value.ToString())))
+                .ToList();
         }
     }
 }

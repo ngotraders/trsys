@@ -87,5 +87,10 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
                     .ToList();
             });
         }
+
+        public Task<List<(string, Guid)>> SearchConnectionsAsync()
+        {
+            return Task.FromResult(new List<(string, Guid)>());
+        }
     }
 }

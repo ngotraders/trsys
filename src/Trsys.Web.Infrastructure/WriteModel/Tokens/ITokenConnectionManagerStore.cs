@@ -11,5 +11,6 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
         Task<(bool, Guid)> ExtendTokenExpirationTimeAsync(string token);
         Task<(bool, Guid)> ClearExpirationTimeAsync(string token);
         Task<List<string>> SearchExpiredTokensAsync();
+        Task<List<(string, Guid)>> SearchConnectionsAsync();
     }
 }

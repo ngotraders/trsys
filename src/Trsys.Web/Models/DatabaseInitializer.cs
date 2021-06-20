@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
+using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
 using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Models
 {
@@ -19,6 +21,7 @@ namespace Trsys.Web.Models
             using var scope = app.ApplicationServices.CreateScope();
             using var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
             using var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
+            var tokenConnectionManager = scope.ServiceProvider.GetRequiredService<ITokenConnectionManager>();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             await InitializeContextAsync(db);
             if (store is MsSqlStreamStoreV3 mssqlstore)
@@ -27,6 +30,7 @@ namespace Trsys.Web.Models
             }
 
             await InitializeReadModelAsync(store, mediator);
+            await InitializeWriteModelAsync(tokenConnectionManager);
             scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
         }
 
@@ -71,6 +75,11 @@ namespace Trsys.Web.Models
                 var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
                 await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
             }
+        }
+
+        public static async Task InitializeWriteModelAsync(ITokenConnectionManager tokenManager)
+        {
+            await tokenManager.InitializeAsync();
         }
 
         public static async Task InitializeReadModelAsync(IStreamStore store, IMediator mediator)
