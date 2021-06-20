@@ -1,38 +1,44 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Threading.Tasks;
 using Trsys.Web.Filters;
-using Trsys.Web.Services;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/logs")]
+    [EaEndpoint]
+    [MinimumEaVersion("20210331")]
     [ApiController]
-    [EaVersion("20210331")]
-    [Authorize(AuthenticationSchemes = "SecretToken")]
     public class LogsApiController : Controller
     {
-        private readonly EventService service;
+        private readonly ILogger<LogsApiController> logger;
 
-        public LogsApiController(EventService service)
+        public LogsApiController(ILogger<LogsApiController> logger)
         {
-            this.service = service;
+            this.logger = logger;
         }
 
         [HttpPost]
         [Consumes("text/plain")]
-        public async Task<IActionResult> PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
+        public IActionResult PostLog([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             if (string.IsNullOrEmpty(text))
             {
                 return Accepted();
             }
 
-            foreach (var line in text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries))
+            var secretKey = (string)HttpContext.Request.Headers["X-Ea-Id"];
+            var type = (string)HttpContext.Request.Headers["X-Ea-Type"];
+            var version = (string)HttpContext.Request.Headers["X-Ea-Version"] ?? (string)HttpContext.Request.Headers["Version"];
+            var logText = text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrEmpty(secretKey))
             {
-                await service.RegisterEaEventAsync(User.Identity.Name, "Log", line);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", secretKey, type, version, logText);
+            }
+            else
+            {
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", User.Identity.Name ?? "Unknown", "Unknown", version ?? "Unknown", logText);
             }
             return Accepted();
         }

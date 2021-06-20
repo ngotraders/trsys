@@ -1,21 +1,17 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Data;
-using Trsys.Web.Infrastructure;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Tests
 {
@@ -25,7 +21,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -40,7 +36,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_is_approved_is_false()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -62,7 +58,7 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_key_type_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -85,37 +81,17 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
             await client.LoginAsync();
-            var db = server.Services.GetRequiredService<TrsysContext>();
-            var key = SecretKey.Create(SecretKeyType.Publisher);
-            db.SecretKeys.Add(key);
-            await db.SaveChangesAsync();
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null));
+            var key = await mediator.Send(new GetSecretKey(id));
 
             var res = await client.GetAsync($"/api/keys/{key.Key}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
         }
-
-
-        private static TestServer CreateTestServer()
-        {
-            var databaseName = Guid.NewGuid().ToString();
-            return new TestServer(new WebHostBuilder()
-                            .UseConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.json").Build())
-                            .UseStartup<Startup>()
-                            .ConfigureServices(services =>
-                            {
-                                services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
-                            })
-                            .ConfigureTestServices(services =>
-                            {
-                                services.AddRepositories();
-                            }));
-
-        }
-
     }
     public static class HttpClientExtension
     {

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Trsys.Web.Data;
+using Trsys.Web.Models;
 
 namespace Trsys.Web.Migrations
 {
@@ -15,117 +15,155 @@ namespace Trsys.Web.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("ProductVersion", "5.0.5")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("Trsys.Web.Models.Events.Event", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Data")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("EventType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Source")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Timestamp");
-
-                    b.ToTable("Events");
-                });
-
-            modelBuilder.Entity("Trsys.Web.Models.Orders.Order", b =>
+            modelBuilder.Entity("Trsys.Web.Models.Log", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<decimal>("Lots")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("OrderType")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Symbol")
+                    b.Property<string>("Exception")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TicketNo")
-                        .HasColumnType("int");
+                    b.Property<string>("Level")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<long>("Time")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MessageTemplate")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Properties")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("TimeStamp")
+                        .HasColumnType("datetime");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders");
+                    b.HasIndex("TimeStamp");
+
+                    b.ToTable("Logs");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.SecretKeys.SecretKey", b =>
+            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Position")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
+                        .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2");
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Key")
+                    b.Property<string>("JsonData")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<int?>("KeyType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ValidToken")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("JsonMetadata")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("Key");
+                    b.Property<int>("StreamIdInternal")
+                        .HasColumnType("int");
 
-                    b.ToTable("SecretKeys");
+                    b.Property<int>("StreamVersion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("Position")
+                        .HasName("PK_Events");
+
+                    b.HasIndex(new[] { "StreamIdInternal", "Created" }, "IX_Messages_StreamIdInternal_Created");
+
+                    b.HasIndex(new[] { "StreamIdInternal", "Id" }, "IX_Messages_StreamIdInternal_Id")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "StreamIdInternal", "StreamVersion" }, "IX_Messages_StreamIdInternal_Revision")
+                        .IsUnique();
+
+                    b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Users.User", b =>
+            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("IdInternal")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Id")
+                        .IsRequired()
+                        .HasMaxLength(42)
+                        .IsUnicode(false)
+                        .HasColumnType("char(42)")
+                        .IsFixedLength(true);
 
-                    b.Property<string>("Role")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("IdOriginal")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
-                    b.Property<string>("Username")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("IdOriginalReversed")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasComputedColumnSql("(reverse([IdOriginal]))", false);
 
-                    b.HasKey("Id");
+                    b.Property<int?>("MaxAge")
+                        .HasColumnType("int");
 
-                    b.ToTable("Users");
+                    b.Property<int?>("MaxCount")
+                        .HasColumnType("int");
+
+                    b.Property<long>("Position")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValueSql("((-1))");
+
+                    b.Property<int>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("((-1))");
+
+                    b.HasKey("IdInternal");
+
+                    b.HasIndex(new[] { "Id" }, "IX_Streams_Id")
+                        .IsUnique();
+
+                    b.HasIndex(new[] { "IdOriginal", "IdInternal" }, "IX_Streams_IdOriginal");
+
+                    b.HasIndex(new[] { "IdOriginalReversed", "IdInternal" }, "IX_Streams_IdOriginalReversed");
+
+                    b.ToTable("Streams");
+                });
+
+            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
+                {
+                    b.HasOne("Trsys.Web.Models.Stream", "StreamIdInternalNavigation")
+                        .WithMany("Messages")
+                        .HasForeignKey("StreamIdInternal")
+                        .HasConstraintName("FK_Events_Streams")
+                        .IsRequired();
+
+                    b.Navigation("StreamIdInternalNavigation");
+                });
+
+            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

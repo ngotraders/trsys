@@ -1,71 +1,66 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
-using Trsys.Web.Services;
+using Trsys.Web.Filters;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Controllers
 {
     [Route("api/token")]
+    [EaEndpoint]
+    [MinimumEaVersion("20210331")]
     [ApiController]
     public class TokenApiController : ControllerBase
     {
 
-        private readonly SecretKeyService service;
-        private readonly IAuthenticationTicketStore ticketStore;
-        private readonly EventService eventService;
+        private readonly IMediator mediator;
 
-        public TokenApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
+        public TokenApiController(IMediator mediator)
         {
-            this.service = service;
-            this.ticketStore = ticketStore;
-            this.eventService = eventService;
+            this.mediator = mediator;
         }
 
         [HttpPost]
         [Consumes("text/plain")]
-        public async Task<IActionResult> PostToken([FromBody] string secretKey)
+        public async Task<IActionResult> PostToken([FromBody] string key)
         {
-            if (string.IsNullOrEmpty(secretKey))
+            if (string.IsNullOrEmpty(key))
             {
                 return BadRequest("InvalidSecretKey");
             }
 
-            var result = await service.GenerateSecretTokenAsync(secretKey);
-            if (!result.Success)
+            try
             {
-                if (result.InUse)
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
                 {
-                    return BadRequest("SecretKeyInUse");
-                }
-                else
-                {
-                    if (result.NewlyCreated)
-                    {
-                        await eventService.RegisterSystemEventAsync("token", "NewEaAccessed", new { SecretKey = secretKey });
-                    }
+                    await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
                     return BadRequest("InvalidSecretKey");
                 }
+                else if (!secretKey.IsApproved)
+                {
+                    return BadRequest("InvalidSecretKey");
+                }
+                var token = await mediator.Send(new GenerateSecretTokenCommand(secretKey.Id));
+                return Ok(token);
             }
-
-            await eventService.RegisterSystemEventAsync("token", "TokenGenerated", new { SecretKey = secretKey, SecretToken = result.Token });
-            var principal = SecretKeyAuthenticationTicketFactory.Create(result.Key, result.KeyType);
-            await ticketStore.AddAsync(result.Token, principal);
-            return Ok(result.Token);
+            catch
+            {
+                return BadRequest("SecretKeyInUse");
+            }
         }
 
         [HttpPost("{token}/release")]
         [Consumes("text/plain")]
         public async Task<IActionResult> PostTokenRelease(string token)
         {
-            var ticket = await ticketStore.RemoveAsync(token);
-            if (ticket == null)
+            var secretKey = await mediator.Send(new FindByCurrentToken(token));
+            if (secretKey == null)
             {
                 return BadRequest("InvalidToken");
             }
-
-            var secretKey = ticket.Principal.Identity.Name;
-            await service.ReleaseSecretTokenAsync(secretKey);
-            await eventService.RegisterSystemEventAsync("token", "TokenReleased", new { SecretKey = secretKey, SecretToken = token });
+            await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id, token));
             return Ok(token);
         }
     }

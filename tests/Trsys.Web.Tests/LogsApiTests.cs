@@ -1,22 +1,14 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
-using Trsys.Web.Data;
-using Trsys.Web.Infrastructure;
-using Trsys.Web.Infrastructure.Caching;
-using Trsys.Web.Infrastructure.Caching.InMemory;
-using Trsys.Web.Models.Events;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Tests
 {
@@ -24,71 +16,49 @@ namespace Trsys.Web.Tests
     public class LogsApiTests
     {
         private const string VALID_KEY = "VALID_KEY";
-        private const string VALID_SUBSCRIBER_TOKEN = "VALID_SUBSCRIBER_TOKEN";
-        private const string VALID_PUBLISHER_TOKEN = "VALID_PUBLISHER_TOKEN";
         private const string VALID_VERSION = "20210331";
 
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_empty_string()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+
             client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/logs", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
             await Task.Delay(1);
-            var repository = server.Services.GetRequiredService<IEventRepository>();
-            var events = await repository.SearchAllAsync();
-            Assert.AreEqual(0, events.Count);
+            var events = await mediator.Send(new GetLogs());
+            Assert.AreEqual(0, events.Count());
         }
         [TestMethod]
         public async Task PostLog_should_return_ok_given_non_empty_string()
         {
-            var server = CreateTestServer();
+            var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
-            client.DefaultRequestHeaders.Add("X-Secret-Token", VALID_PUBLISHER_TOKEN);
 
-            var res = await client.PostAsync("/api/logs", new StringContent("NonEmpty", Encoding.UTF8, "text/plain"));
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+
+            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+
+            var res = await client.PostAsync("/api/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
 
-            var repository = server.Services.GetRequiredService<IEventRepository>();
-            var events = await repository.SearchAllAsync();
-            Assert.AreEqual(1, events.Count);
-            Assert.AreEqual($"ea/{VALID_KEY}", events.First().Source);
-            Assert.AreEqual("Log", events.First().EventType);
-            Assert.AreEqual("NonEmpty", events.First().Data);
-        }
-
-
-        private static TestServer CreateTestServer()
-        {
-            var databaseName = Guid.NewGuid().ToString();
-            return new TestServer(new WebHostBuilder()
-                            .UseConfiguration(new ConfigurationBuilder().AddJsonFile("appsettings.json").Build())
-                            .UseStartup<Startup>()
-                            .ConfigureServices(services =>
-                            {
-                                services.AddDbContext<TrsysContext>(options => options.UseInMemoryDatabase(databaseName));
-                            })
-                            .ConfigureTestServices(services =>
-                            {
-                                services.AddRepositories();
-                                services.AddSingleton<IAuthenticationTicketStore>(new MockAuthenticationTicketStore());
-                            }));
-
-        }
-
-        private class MockAuthenticationTicketStore : AuthenticationTicketStore
-        {
-            public MockAuthenticationTicketStore() : base(new InMemoryKeyValueStoreFactory())
-            {
-                AddAsync(VALID_PUBLISHER_TOKEN, SecretKeyAuthenticationTicketFactory.Create(VALID_KEY, SecretKeyType.Publisher));
-                AddAsync(VALID_SUBSCRIBER_TOKEN, SecretKeyAuthenticationTicketFactory.Create(VALID_KEY, SecretKeyType.Subscriber));
-            }
+            var events = await mediator.Send(new GetLogs());
+            Assert.AreEqual(1, events.Count());
+            Assert.AreEqual(VALID_KEY, events.First().Key);
+            Assert.AreEqual("DEBUG", events.First().LogType);
+            Assert.AreEqual("1:DEBUG:NonEmpty", events.First().Data);
         }
     }
 }

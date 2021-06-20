@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
-using Trsys.Web.Models.Events;
-using Trsys.Web.Models.SecretKeys;
+using Trsys.Web.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.ViewModels.Events
 {
@@ -8,8 +7,8 @@ namespace Trsys.Web.ViewModels.Events
     {
         public int Page { get; set; }
         public int PerPage { get; set; }
-        public List<SecretKey> SecretKeys { get; set; }
-        public List<Event> Events { get; set; }
+        public List<SecretKeyDto> SecretKeys { get; set; }
+        public List<EventDto> Events { get; set; }
 
         public string Source { get; set; }
     }

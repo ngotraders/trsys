@@ -1,0 +1,76 @@
+﻿@using System.Linq
+@model Trsys.Web.ViewModels.Logs.IndexViewModel
+
+@{
+    ViewBag.Title = "ログ一覧";
+}
+
+<div class="float-right">
+    <span>ログ</span>
+    <a href="@Url.Action("Index", "Events")">イベント</a>
+</div>
+<div>
+    <h1 class="mb-3">ログ</h1>
+
+    <div class="mb-3">
+        <form>
+            <input class="form-control" type="text" name="source" value="@Model.Source" />
+        </form>
+        @if (!string.IsNullOrEmpty(Model.Source))
+        {
+            <a href="@Url.Action("Index")">クリア</a>
+        }
+    </div>
+    <div class="mb-3">
+        @if (Model.Page > 1)
+        {
+            <a href="@Url.Action("Index", new { source = Model.Source })">最初のページ</a>
+            <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">前のページ</a>
+        }
+        else
+        {
+            <span>最初のページ</span>
+            <span>前のページ</span>
+        }
+        <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page + 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">次のページ</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
+            <colgroup>
+                <col style="width: 15em" />
+                <col style="width: 8em" />
+                <col />
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>時刻</th>
+                    <th>レベル</th>
+                    <th>メッセージ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Events)
+                {
+                    <tr>
+                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(DateTime.SpecifyKind(e.TimeStamp.Value, DateTimeKind.Local)).ToOffset(TimeSpan.FromHours(9)))</td>
+                        <td><a href="@Url.Action("Index", new { source = e.Level })">@e.Level</a></td>
+                        <td>@e.Message</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div>
+        @if (Model.Page > 1)
+        {
+            <a href="@Url.Action("Index", new { source = Model.Source })">最初のページ</a>
+            <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">前のページ</a>
+        }
+        else
+        {
+            <span>最初のページ</span>
+            <span>前のページ</span>
+        }
+        <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page + 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">次のページ</a>
+    </div>
+</div>

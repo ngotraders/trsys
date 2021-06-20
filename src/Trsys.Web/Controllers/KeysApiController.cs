@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Trsys.Web.Authentication;
-using Trsys.Web.Models.SecretKeys;
-using Trsys.Web.Services;
+using Trsys.Web.Models;
+using Trsys.Web.Models.ReadModel.Queries;
+using Trsys.Web.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Controllers
 {
@@ -12,15 +14,29 @@ namespace Trsys.Web.Controllers
     [Authorize(Roles = "Administrator")]
     public class KeysApiController : Controller
     {
-        private readonly SecretKeyService service;
-        private readonly IAuthenticationTicketStore ticketStore;
-        private readonly EventService eventService;
+        private readonly IMediator mediator;
 
-        public KeysApiController(SecretKeyService service, IAuthenticationTicketStore ticketStore, EventService eventService)
+        public KeysApiController(IMediator mediator)
         {
-            this.service = service;
-            this.ticketStore = ticketStore;
-            this.eventService = eventService;
+            this.mediator = mediator;
+        }
+
+        [HttpGet]
+        [Produces("application/json")]
+        public async Task<IActionResult> GetKeys()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                return Ok(await mediator.Send(new GetSecretKeys()));
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
         }
 
         [HttpPost]
@@ -32,19 +48,16 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var result = await service.RegisterSecretKeyAsync(null, request.KeyType.Value, request.Description);
-            if (!result.Success)
+            try
             {
-                return BadRequest(new { result.ErrorMessage });
+                var id = await mediator.Send(new CreateSecretKeyCommand(request.KeyType, request.Key, request.Description, request.IsApproved));
+                var result = await mediator.Send(new GetSecretKey(id));
+                return CreatedAtAction("GetKey", new { key = result.Key }, new { key = result.Key });
             }
-            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { SecretKey = result.Key, request.KeyType.Value, request.Description });
-            if (request.IsApproved)
+            catch (Exception e)
             {
-                await service.ApproveSecretKeyAsync(result.Key);
-                await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyRegistered", new { result.Key });
+                return BadRequest(new { message = e.Message });
             }
-            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyPosted", new { SecretKey = result.Key, request.KeyType, request.Description, request.IsApproved });
-            return CreatedAtAction("GetKey", new { key = result.Key }, new { key = result.Key });
         }
 
         [HttpGet("{key}")]
@@ -55,67 +68,73 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var data = await service.FindBySecretKeyAsync(key);
-            return Ok(new SecretKeyEntity()
+            try
             {
-                Key = data.Key,
-                KeyType = data.KeyType,
-                Description = data.Description,
-                IsApproved = data.IsValid,
-            });
+                var secretKey = await mediator.Send(new FindBySecretKey(key));
+                if (secretKey == null)
+                {
+                    return NotFound();
+                }
+                return Ok(new SecretKeyEntity()
+                {
+                    Key = secretKey.Key,
+                    KeyType = secretKey.KeyType,
+                    Description = secretKey.Description,
+                    IsApproved = secretKey.IsApproved,
+                });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
         }
 
         [HttpPut("{key}")]
         [Consumes("application/json")]
-        public async Task<IActionResult> PutKey(string key, PutKeyRequest request)
+        public async Task<IActionResult> PutKey(string key, [FromBody] PutKeyRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var data = await service.FindBySecretKeyAsync(key);
-            if (data == null)
+            var secretKey = await mediator.Send(new FindBySecretKey(key));
+            if (secretKey == null)
             {
                 return NotFound();
             }
-
-            var result = await service.UpdateSecretKeyAsync(key, request.KeyType.Value, request.Description);
-            if (!result.Success)
+            try
             {
-                return BadRequest(new { result.ErrorMessage });
+                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, request.KeyType, request.Description, request.IsApproved));
+                var result = await mediator.Send(new GetSecretKey(secretKey.Id));
+                return Ok();
             }
-            if (request.IsApproved)
+            catch (Exception e)
             {
-                await service.ApproveSecretKeyAsync(key);
+                return BadRequest(new { message = e.Message });
             }
-            else
-            {
-                var operationResult = await service.RevokeSecretKeyAsync(key);
-                if (operationResult is RevokeSecretKeyResult revokeSecretKeyResult && !string.IsNullOrEmpty(revokeSecretKeyResult.Token))
-                {
-                    await ticketStore.RemoveAsync(revokeSecretKeyResult.Token);
-                }
-            }
-
-            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyPutted", new { SecretKey = key, request.KeyType, request.Description, request.IsApproved });
-            return Ok();
         }
 
         [HttpDelete("{key}")]
-        [Consumes("application/json")]
         public async Task<IActionResult> DeleteKey(string key)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var result = await service.DeleteSecretKeyAsync(key);
-            if (!result.Success)
+            var secretKey = await mediator.Send(new FindBySecretKey(key));
+            if (secretKey == null)
             {
-                return BadRequest(new { result.ErrorMessage });
+                return NotFound();
             }
-            await eventService.RegisterUserEventAsync(User.Identity.Name, "SecretKeyDeleted", new { SecretKey = key });
-            return Ok();
+            try
+            {
+                await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
         }
 
         public class SecretKeyEntity
@@ -128,6 +147,7 @@ namespace Trsys.Web.Controllers
 
         public class PostKeyRequest
         {
+            public string Key { get; set; }
             [Required]
             public SecretKeyType? KeyType { get; set; }
             public string Description { get; set; }

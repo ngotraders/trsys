@@ -1,4 +1,4 @@
-﻿@using Trsys.Web.Models.SecretKeys
+﻿@using Trsys.Web.Models
 @using System.Linq
 @model Trsys.Web.ViewModels.Admin.IndexViewModel
 
@@ -20,6 +20,7 @@
 }
 
 <div class="float-right">
+    <a href="@Url.Action("Index", "Logs")">ログ</a>
     <a href="@Url.Action("Index", "Events")">イベント</a>
 </div>
 <form method="post" action="/admin/keys/new">
@@ -66,12 +67,13 @@
     </div>
     @if (Model.SecretKeys.Count > 0)
     {
-        <div style="overflow: auto; min-width: 60em">
-            <table style="table-layout: fixed">
+        <div class="table-responsive">
+            <table style="table-layout: fixed; min-width: 60em">
                 <colgroup>
                     <col style="width: 12em" />
                     <col />
                     <col />
+                    <col style="width: 4em" />
                     <col style="width: 4em" />
                     <col style="width: 16em" />
                 </colgroup>
@@ -80,6 +82,7 @@
                         <th>種類</th>
                         <th>シークレットキー</th>
                         <th>説明</th>
+                        <th>接続</th>
                         <th>状態</th>
                         <th></th>
                     </tr>
@@ -88,10 +91,10 @@
                     @for (var i = 0; i < Model.SecretKeys.Count; i++)
                     {
                         var key = Model.SecretKeys[i];
-                        var escapedKey = Uri.EscapeDataString(Uri.EscapeDataString(key.Key));
                         <tr>
                             <td>
-                                @if (key.IsValid)
+                                <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
+                                @if (key.IsApproved)
                                 {
                                     @key.KeyType
                                     <input type="hidden" name="SecretKeys[@i].KeyType" value="@key.KeyType" />
@@ -119,19 +122,20 @@
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
                             </td>
                             <td class="secret-key"><input type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
-                            <td>@(key.IsValid ? "有効" : "無効")</td>
+                            <td>@(key.IsConnected ? "○" : "-")</td>
+                            <td>@(key.IsApproved ? "有効" : "無効")</td>
                             <td>
                                 <div class="d-flex justify-content-between">
                                     <div class="flex-grow-1 pr-1">
-                                        <button class="d-block w-full" formaction="/admin/keys/@escapedKey/update">変更</button>
+                                        <button class="d-block w-full" formaction="/admin/keys/@key.Id/update">変更</button>
                                     </div>
-                                    @if (key.IsValid)
+                                    @if (key.IsApproved)
                                     {
                                         <div class="flex-grow-1 pr-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/revoke">無効化</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@key.Id/revoke">無効化</button>
                                         </div>
                                         <div class="flex-grow-1 pl-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/delete" disabled>削除</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
                                         </div>
                                     }
                                     else
@@ -139,15 +143,15 @@
                                         <div class="flex-grow-1 pr-1">
                                             @if (key.KeyType.HasValue)
                                             {
-                                                <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve">有効化</button>
+                                                <button class="d-block w-full" formaction="/admin/keys/@key.Id/approve">有効化</button>
                                             }
                                             else
                                             {
-                                                <button class="d-block w-full" formaction="/admin/keys/@escapedKey/approve" disabled>有効化</button>
+                                                <button class="d-block w-full" formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
                                             }
                                         </div>
                                         <div class="flex-grow-1 pl-1">
-                                            <button class="d-block w-full" formaction="/admin/keys/@escapedKey/delete">削除</button>
+                                            <button class="d-block w-full" formaction="/admin/keys/@key.Id/delete">削除</button>
                                         </div>
                                     }
                                 </div>

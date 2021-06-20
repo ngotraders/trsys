@@ -1,11 +1,14 @@
-﻿@using Trsys.Web.Models.SecretKeys
-@using System.Linq
+﻿@using System.Linq
 @model Trsys.Web.ViewModels.Events.IndexViewModel
 
 @{
     ViewBag.Title = "イベント一覧";
 }
 
+<div class="float-right">
+    <a href="@Url.Action("Index", "Logs")">ログ</a>
+    <span>イベント</span>
+</div>
 <div>
     <h1 class="mb-3">イベント</h1>
 
@@ -31,27 +34,35 @@
         }
         <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page + 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">次のページ</a>
     </div>
-    <table class="table table-bordered mb-3">
-        <thead>
-            <tr>
-                <th>時刻</th>
-                <th>イベント元</th>
-                <th>イベントタイプ</th>
-                <th>イベントデータ</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var e in Model.Events)
-            {
+    <div class="table-responsive">
+        <table class="table table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
+            <colgroup>
+                <col style="width: 15em" />
+                <col style="width: 24em" />
+                <col style="width: 24em" />
+                <col />
+            </colgroup>
+            <thead>
                 <tr>
-                    <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fffzzz}", e.Timestamp.ToOffset(TimeSpan.FromHours(9)))</td>
-                    <td><a href="@Url.Action("Index", new { source = e.Source })">@e.Source</a></td>
-                    <td>@e.EventType</td>
-                    <td>@e.Data</td>
+                    <th>時刻</th>
+                    <th>イベント元</th>
+                    <th>イベントタイプ</th>
+                    <th>イベントデータ</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Events)
+                {
+                    <tr>
+                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", e.Timestamp.ToOffset(TimeSpan.FromHours(9)))</td>
+                        <td><a href="@Url.Action("Index", new { source = e.AggregateId })">@e.AggregateId</a></td>
+                        <td>@e.EventType</td>
+                        <td>@e.Data</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
     <div>
         @if (Model.Page > 1)
         {
