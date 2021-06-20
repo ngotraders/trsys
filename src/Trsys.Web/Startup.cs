@@ -11,8 +11,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
+using System.Threading.Tasks;
 using Trsys.Web.Configurations;
 using Trsys.Web.Infrastructure;
+using Trsys.Web.Middlewares;
 using Trsys.Web.Models;
 
 namespace Trsys.Web
@@ -80,6 +82,7 @@ namespace Trsys.Web
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
+            var task = Task.CompletedTask;
             if (string.IsNullOrEmpty(sqlserverConnection))
             {
                 logger.LogInformation("Using in-memory implementation for database.");
@@ -87,9 +90,12 @@ namespace Trsys.Web
             else
             {
                 logger.LogInformation("Using sql server connection.");
-                logger.LogInformation("Database initializing.");
-                DatabaseInitializer.InitializeAsync(app).Wait();
-                logger.LogInformation("Database initialized.");
+                task = Task.Run(async () =>
+                {
+                    logger.LogInformation("Database initializing.");
+                    await DatabaseInitializer.InitializeAsync(app);
+                    logger.LogInformation("Database initialized.");
+                });
             }
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
             if (string.IsNullOrEmpty(redisConnection))
@@ -100,7 +106,7 @@ namespace Trsys.Web
             {
                 logger.LogInformation("Using redis implementation.");
             }
-            DatabaseInitializer.SeedDataAsync(app).Wait();
+            task = task.ContinueWith(task => DatabaseInitializer.SeedDataAsync(app));
 
             if (env.IsDevelopment())
             {
@@ -108,6 +114,7 @@ namespace Trsys.Web
             }
 
             app.UseHttpsRedirection();
+            app.UseInitialization(task);
             app.UseSession();
             app.UseRouting();
             app.UseAuthentication();
