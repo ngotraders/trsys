@@ -170,7 +170,7 @@ namespace Trsys.Web.Infrastructure.Messaging
                 }
                 if (!streamIds.Any())
                 {
-                    tcs.SetResult(true);
+                    tcs.TrySetResult(true);
                 }
             }
             finally
