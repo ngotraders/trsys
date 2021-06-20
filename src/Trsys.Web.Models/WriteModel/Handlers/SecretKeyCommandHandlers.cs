@@ -144,6 +144,10 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.InvalidateToken(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
+            if (!string.IsNullOrEmpty(request.Token))
+            {
+                await store.DisconnectAsync(request.Id);
+            }
             return Unit.Value;
         }
 

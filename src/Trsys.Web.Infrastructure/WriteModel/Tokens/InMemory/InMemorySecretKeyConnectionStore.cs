@@ -1,7 +1,7 @@
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MediatR;
 using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.Messaging;
@@ -21,32 +21,31 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
         }
         public Task ConnectAsync(Guid id)
         {
-            return queue.Enqueue(async () =>
-            {
-                if (ConnectedIdSet.Add(id))
+            return queue.Enqueue(() => ConnectedIdSet.Add(id))
+                .ContinueWith(async task =>
                 {
-                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
-                }
-            });
+                    if (task.Result)
+                    {
+                        await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
+                    }
+                });
         }
 
         public Task DisconnectAsync(Guid id)
         {
-            return queue.Enqueue(async () =>
-            {
-                if (ConnectedIdSet.Remove(id))
+            return queue.Enqueue(() => ConnectedIdSet.Remove(id))
+                .ContinueWith(async task =>
                 {
-                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(id)));
-                }
-            });
+                    if (task.Result)
+                    {
+                        await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(id)));
+                    }
+                });
         }
 
         public Task<bool> IsTokenInUseAsync(Guid id)
         {
-            return queue.Enqueue(() =>
-            {
-                return ConnectedIdSet.Contains(id);
-            });
+            return queue.Enqueue(() => ConnectedIdSet.Contains(id));
         }
     }
 }
