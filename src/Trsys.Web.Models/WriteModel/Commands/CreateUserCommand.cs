@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class CreateUserCommand : IRequest<Guid>
+    public class CreateUserCommand : IRequest<Guid>, IRetryableRequest
     {
         public CreateUserCommand(string name, string username, string passwordHash, string role)
         {

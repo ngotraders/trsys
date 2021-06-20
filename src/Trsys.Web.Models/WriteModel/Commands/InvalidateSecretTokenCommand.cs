@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class InvalidateSecretTokenCommand : IRequest
+    public class InvalidateSecretTokenCommand : IRequest, IRetryableRequest
     {
         public InvalidateSecretTokenCommand(Guid id, string token)
         {

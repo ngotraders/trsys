@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class UpdateSecretKeyCommand: IRequest
+    public class UpdateSecretKeyCommand: IRequest, IRetryableRequest
     {
         public UpdateSecretKeyCommand(Guid id, SecretKeyType? keyType, string description, bool? approve = null)
         {

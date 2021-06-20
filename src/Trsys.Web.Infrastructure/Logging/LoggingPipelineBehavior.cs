@@ -18,20 +18,35 @@ namespace Trsys.Web.Infrastructure.Logging
         {
             if (request.GetType().FullName.StartsWith("Trsys.Web.Models.ReadModel.Queries"))
             {
-                return await next();
+                var id = Guid.NewGuid();
+                logger.LogTrace("processing {id}: {@request}", id, request);
+                try
+                {
+                    var response = await next();
+                    logger.LogTrace("processed {id}: {@response}", id, response);
+                    return response;
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "error {id}", id);
+                    throw;
+                }
             }
-            var id = Guid.NewGuid();
-            logger.LogDebug("processing {id}: {@request}", id, request);
-            try
+            else
             {
-                var response = await next();
-                logger.LogDebug("processed {id}: {@response}", id, response);
-                return response;
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, "error {id}", id);
-                throw;
+                var id = Guid.NewGuid();
+                logger.LogDebug("processing {id}: {@request}", id, request);
+                try
+                {
+                    var response = await next();
+                    logger.LogDebug("processed {id}: {@response}", id, response);
+                    return response;
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "error {id}", id);
+                    throw;
+                }
             }
         }
     }

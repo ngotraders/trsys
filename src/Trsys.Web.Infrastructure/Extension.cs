@@ -9,6 +9,7 @@ using System.Reflection;
 using Trsys.Web.Infrastructure.Logging;
 using Trsys.Web.Infrastructure.Messaging;
 using Trsys.Web.Infrastructure.ReadModel.InMemory;
+using Trsys.Web.Infrastructure.WriteModel;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.InMemory;
 using Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.Redis;
@@ -28,6 +29,7 @@ namespace Trsys.Web.Infrastructure
             // MediatR dependencies
             services.AddMediatR(Assembly.Load("Trsys.Web.Models"));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryPipelineBehavior<,>));
 
             // Cqrs services without IEventStore
             services.AddSingleton<ICache, MemoryCache>();

@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class FetchOrderCommand : IRequest
+    public class FetchOrderCommand : IRequest, IRetryableRequest
     {
         public FetchOrderCommand(Guid id, int[] tickets)
         {

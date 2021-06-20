@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class PublishOrderCommand : IRequest
+    public class PublishOrderCommand : IRequest, IRetryableRequest
     {
         public PublishOrderCommand(Guid id, IEnumerable<PublishedOrder> publishedOrders)
         {

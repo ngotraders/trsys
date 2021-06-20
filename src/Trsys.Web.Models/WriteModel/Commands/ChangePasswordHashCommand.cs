@@ -3,7 +3,7 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class ChangePasswordHashCommand : IRequest
+    public class ChangePasswordHashCommand : IRequest, IRetryableRequest
     {
         public ChangePasswordHashCommand(Guid id, string passwordHash)
         {
