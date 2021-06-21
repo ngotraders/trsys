@@ -93,8 +93,11 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
         public async Task<List<(string, Guid)>> SearchConnectionsAsync()
         {
             var cache = connection.GetDatabase();
+            var setValues = await cache.SortedSetRangeByScoreAsync(lastAccessedKey);
             var values = await cache.HashGetAllAsync(tokenKey);
+            var availableValues = setValues.Select(v => v.ToString()).ToHashSet();
             return values
+                .Where(value => availableValues.Contains(value.Name.ToString()))
                 .Select(value => (value.Name.ToString(), Guid.Parse(value.Value.ToString())))
                 .ToList();
         }

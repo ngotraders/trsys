@@ -90,7 +90,11 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
 
         public Task<List<(string, Guid)>> SearchConnectionsAsync()
         {
-            return Task.FromResult(new List<(string, Guid)>());
+            var connections = store.Values
+                .Where(e => e.ExpiredAt.HasValue)
+                .Select(e => (e.Token, e.Id))
+                .ToList();
+            return Task.FromResult(connections);
         }
     }
 }
