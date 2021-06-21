@@ -105,7 +105,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             StreamArrived?.Invoke(this, EventArgs.Empty);
         }
 
-        public async Task Enqueue(PublishingMessageEnvelope notification, CancellationToken cancellationToken)
+        public async Task Enqueue(PublishingMessageEnvelope notification, CancellationToken cancellationToken = default)
         {
             if (!notification.Payload.Any())
             {
