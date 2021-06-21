@@ -52,10 +52,29 @@
                 @foreach (var e in Model.Events)
                 {
                     <tr>
-                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(DateTime.SpecifyKind(e.TimeStamp.Value, DateTimeKind.Local)).ToOffset(TimeSpan.FromHours(9)))</td>
+                        <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(e.TimeStamp.Value).ToOffset(TimeSpan.FromHours(9)))</td>
                         <td><a href="@Url.Action("Index", new { source = e.Level })">@e.Level</a></td>
-                        <td>@e.Message</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(e.Message))
+                            {
+                                @foreach (var line in e.Message.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.TrimEntries))
+                                {
+                                    <text>@line</text><br />
+                                }
+                            }
+                        </td>
                     </tr>
+                    @if (!string.IsNullOrEmpty(e.Exception))
+                    {
+                        <tr>
+                            <td colspan="3">
+                                @foreach (var line in @e.Exception.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.TrimEntries))
+                                {
+                                    <text>@line</text><br />
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
