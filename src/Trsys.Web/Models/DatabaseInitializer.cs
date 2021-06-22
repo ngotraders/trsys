@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
-using StackExchange.Redis;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

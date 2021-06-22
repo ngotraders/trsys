@@ -28,7 +28,7 @@ namespace Trsys.Web.Infrastructure.Logging
                 }
                 catch (Exception e)
                 {
-                    logger.LogError(e, "error {id}", id);
+                    logger.LogTrace(e, "error {id}", id);
                     throw;
                 }
             }
@@ -42,9 +42,14 @@ namespace Trsys.Web.Infrastructure.Logging
                     logger.LogDebug("processed {id}: {@response}", id, response);
                     return response;
                 }
+                catch (InvalidOperationException e)
+                {
+                    logger.LogDebug(e, "error {id}", id);
+                    throw;
+                }
                 catch (Exception e)
                 {
-                    logger.LogError(e, "error {id}", id);
+                    logger.LogWarning(e, "error {id}", id);
                     throw;
                 }
             }
