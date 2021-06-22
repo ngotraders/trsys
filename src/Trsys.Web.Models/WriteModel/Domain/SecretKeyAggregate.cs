@@ -89,10 +89,6 @@ namespace Trsys.Web.Models.WriteModel.Domain
             EnsureNotDeleted();
             if (_approved)
             {
-                if (!string.IsNullOrEmpty(_token))
-                {
-                    InvalidateToken(_token);
-                }
                 ApplyChange(new SecretKeyRevoked(Id));
             }
         }

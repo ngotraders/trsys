@@ -90,10 +90,15 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
+            var token = item.Token;
             if (request.Approve.HasValue)
             {
                 if (!request.Approve.Value)
                 {
+                    if (!string.IsNullOrEmpty(item.Token))
+                    {
+                        item.InvalidateToken(item.Token);
+                    }
                     item.Revoke();
                 }
             }
@@ -110,6 +115,10 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 }
             }
             await repository.Save(item, item.Version, cancellationToken);
+            if (!string.IsNullOrEmpty(token))
+            {
+                await tokenManager.RemoveAsync(token);
+            }
             return Unit.Value;
         }
 

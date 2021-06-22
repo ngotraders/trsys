@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Web.Models.WriteModel.Infrastructure;
+using Trsys.Web.Models.WriteModel.Notifications;
 
 namespace Trsys.Web.Models.Tests
 {
@@ -127,6 +129,33 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(SecretKeyType.Publisher, ((SecretKeyKeyTypeChanged)events[1]).KeyType);
             Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
             Assert.AreEqual(typeof(SecretKeyRevoked), events[3].GetType());
+        }
+
+        [TestMethod]
+        public async Task Given_approved_and_connected_When_revoke_Then_connection_closed()
+        {
+            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
+            var mediator = services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
+            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+            await mediator.Publish(new TokenTouched(token));
+            await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, false));
+
+            var store = services.GetRequiredService<IEventStore>();
+            var events = (await store.Get(id, 0)).ToList();
+
+            Assert.AreEqual(6, events.Count);
+            Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
+            Assert.IsNotNull(((SecretKeyCreated)events[0]).Key);
+            Assert.AreEqual(typeof(SecretKeyKeyTypeChanged), events[1].GetType());
+            Assert.AreEqual(SecretKeyType.Publisher, ((SecretKeyKeyTypeChanged)events[1]).KeyType);
+            Assert.AreEqual(typeof(SecretKeyApproved), events[2].GetType());
+            Assert.AreEqual(typeof(SecretKeyTokenGenerated), events[3].GetType());
+            Assert.AreEqual(typeof(SecretKeyTokenInvalidated), events[4].GetType());
+            Assert.AreEqual(typeof(SecretKeyRevoked), events[5].GetType());
+
+            var connectionStore = services.GetRequiredService<ITokenConnectionManager>();
+            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(token));
         }
     }
 }

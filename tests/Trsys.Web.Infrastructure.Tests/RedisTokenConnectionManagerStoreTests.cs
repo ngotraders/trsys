@@ -6,6 +6,7 @@ using Trsys.Web.Infrastructure.WriteModel.Tokens.Redis;
 namespace Trsys.Web.Infrastructure.Tests
 {
     [TestClass]
+    [Ignore]
     public class RedisTokenConnectionManagerStoreTests : TokenConnectionManagerStoreTestsBase
     {
         private ConnectionMultiplexer connection;
