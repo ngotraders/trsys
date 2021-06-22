@@ -30,19 +30,28 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
 
         public async Task<(bool, Guid)> TryRemoveAsync(string token)
         {
-            var cache = connection.GetDatabase();
-            var value = await cache.HashGetAsync(tokenKey, token);
-            if (value.HasValue)
+            try
             {
-                await cache.HashDeleteAsync(tokenKey, token);
-                var id = Guid.Parse(value.ToString());
-                if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
+                var cache = connection.GetDatabase();
+                var value = await cache.HashGetAsync(tokenKey, token);
+                if (value.HasValue)
                 {
-                    return (true, id);
+                    await cache.HashDeleteAsync(tokenKey, token);
+                    var id = Guid.Parse(value.ToString());
+                    if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
+                    {
+                        return (true, id);
+                    }
+                    return (false, id);
                 }
-                return (false, id);
+                return (false, Guid.Empty);
+
             }
-            return (false, Guid.Empty);
+            finally
+            {
+                // Remove cache most latest time
+                lastAccessed.TryRemove(token, out var _);
+            }
         }
 
         public async Task<(bool, Guid)> ExtendTokenExpirationTimeAsync(string token)
@@ -71,21 +80,28 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
 
         public async Task<(bool, Guid)> ClearExpirationTimeAsync(string token)
         {
-            lastAccessed.TryRemove(token, out var _);
-            var cache = connection.GetDatabase();
-            var value = await cache.HashGetAsync(tokenKey, token);
-            if (value.HasValue)
+            try
             {
-                if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
+                var cache = connection.GetDatabase();
+                var value = await cache.HashGetAsync(tokenKey, token);
+                if (value.HasValue)
                 {
-                    return (true, Guid.Parse(value.ToString()));
+                    if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
+                    {
+                        return (true, Guid.Parse(value.ToString()));
+                    }
+                    return (false, Guid.Parse(value.ToString()));
                 }
-                return (false, Guid.Parse(value.ToString()));
+                else
+                {
+                    await cache.SortedSetRemoveAsync(lastAccessedKey, token);
+                    return (false, Guid.Empty);
+                }
             }
-            else
+            finally
             {
-                await cache.SortedSetRemoveAsync(lastAccessedKey, token);
-                return (false, Guid.Empty);
+                // Remove cache most latest time
+                lastAccessed.TryRemove(token, out var _);
             }
         }
 

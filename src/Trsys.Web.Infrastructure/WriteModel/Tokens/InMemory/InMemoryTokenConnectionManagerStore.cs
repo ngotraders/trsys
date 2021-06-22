@@ -16,8 +16,8 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
         }
 
         private readonly BlockingTaskQueue queue = new();
-        private readonly Dictionary<string, TokenState> store = new Dictionary<string, TokenState>();
-        private static TimeSpan fiveSeconds = TimeSpan.FromSeconds(5);
+        private readonly Dictionary<string, TokenState> store = new();
+        private static readonly TimeSpan fiveSeconds = TimeSpan.FromSeconds(5);
 
         public Task<bool> TryAddAsync(string token, Guid id)
         {
@@ -40,11 +40,11 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
                     store.Remove(token);
                     if (state.ExpiredAt.HasValue)
                     {
-                        return (false, state.Id);
+                        return (true, state.Id);
                     }
                     else
                     {
-                        return (true, state.Id);
+                        return (false, state.Id);
                     }
                 }
                 return (false, Guid.Empty);
@@ -94,7 +94,8 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
             return queue.Enqueue(() =>
             {
                 return store.Values
-                    .Where(e => DateTime.UtcNow > e.ExpiredAt)
+                    .Where(e => e.ExpiredAt.HasValue)
+                    .Where(e => DateTime.UtcNow > e.ExpiredAt.Value)
                     .Select(e => e.Token)
                     .ToList();
             });

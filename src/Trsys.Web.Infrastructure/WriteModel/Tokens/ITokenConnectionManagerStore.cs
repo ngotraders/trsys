@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens
 {
-    interface ITokenConnectionManagerStore
+    public interface ITokenConnectionManagerStore
     {
         Task<bool> TryAddAsync(string token, Guid id);
         Task<(bool, Guid)> TryRemoveAsync(string token);
