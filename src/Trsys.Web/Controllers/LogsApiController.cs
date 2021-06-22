@@ -28,13 +28,13 @@ namespace Trsys.Web.Controllers
                 return Accepted();
             }
 
-            var secretKey = (string)HttpContext.Request.Headers["X-Ea-Id"];
+            var key = (string)HttpContext.Request.Headers["X-Ea-Id"];
             var type = (string)HttpContext.Request.Headers["X-Ea-Type"];
             var version = (string)HttpContext.Request.Headers["X-Ea-Version"] ?? (string)HttpContext.Request.Headers["Version"];
             var logText = text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            if (string.IsNullOrEmpty(secretKey))
+            if (!string.IsNullOrEmpty(key))
             {
-                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", secretKey, type, version, logText);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", key, type, version, logText);
             }
             else
             {
