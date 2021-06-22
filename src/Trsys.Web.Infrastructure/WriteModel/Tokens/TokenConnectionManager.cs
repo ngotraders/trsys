@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Events;
-using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Web.Models.Messaging;
 using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens
@@ -64,7 +64,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
                 if (clearExpirationResult.Item1)
                 {
                     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                    await mediator.Send(new DisconnectSecretKeyCommand(clearExpirationResult.Item2, token));
+                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(clearExpirationResult.Item2)));
                 }
             }
         }
@@ -77,22 +77,34 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
             if (touchResult.Item1)
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Send(new ConnectSecretKeyCommand(touchResult.Item2, token));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(touchResult.Item2)));
             }
         }
 
-        public async void Add(string token, Guid id)
+        public async Task AddAsync(string token, Guid id)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
             await store.TryAddAsync(token, id);
         }
 
-        public async void Remove(string token)
+        public async Task RemoveAsync(string token)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            await store.TryRemoveAsync(token);
+            var removeResult = await store.TryRemoveAsync(token);
+            if (removeResult.Item1)
+            {
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(removeResult.Item2)));
+            }
+        }
+
+        public Task<bool> IsTokenInUseAsync(string token)
+        {
+            using var scope = this.serviceScopeFactory.CreateScope();
+            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
+            return store.IsTokenInUseAsync(token);
         }
 
         public void Dispose()

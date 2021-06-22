@@ -15,6 +15,7 @@ using Trsys.Web.Models.WriteModel.Notifications;
 namespace Trsys.Web.Infrastructure.Tests
 {
     [TestClass]
+    [Ignore]
     public class RedisMessageBrokerTests
     {
         [TestMethod]

@@ -28,15 +28,21 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
             return cache.HashSetAsync(tokenKey, token, id.ToString(), When.NotExists);
         }
 
-        public async Task<bool> TryRemoveAsync(string token)
+        public async Task<(bool, Guid)> TryRemoveAsync(string token)
         {
             var cache = connection.GetDatabase();
-            if (await cache.HashDeleteAsync(tokenKey, token))
+            var value = await cache.HashGetAsync(tokenKey, token);
+            if (value.HasValue)
             {
-                await cache.SortedSetRemoveAsync(lastAccessedKey, token);
-                return true;
+                await cache.HashDeleteAsync(tokenKey, token);
+                var id = Guid.Parse(value.ToString());
+                if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
+                {
+                    return (true, id);
+                }
+                return (false, id);
             }
-            return false;
+            return (false, Guid.Empty);
         }
 
         public async Task<(bool, Guid)> ExtendTokenExpirationTimeAsync(string token)
@@ -100,6 +106,13 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
                 .Where(value => availableValues.Contains(value.Name.ToString()))
                 .Select(value => (value.Name.ToString(), Guid.Parse(value.Value.ToString())))
                 .ToList();
+        }
+
+        public async Task<bool> IsTokenInUseAsync(string token)
+        {
+            var cache = connection.GetDatabase();
+            var value = await cache.SortedSetScoreAsync(lastAccessedKey, token);
+            return value.HasValue;
         }
     }
 }

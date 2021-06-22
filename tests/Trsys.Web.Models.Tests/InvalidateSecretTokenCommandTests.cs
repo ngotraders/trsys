@@ -9,6 +9,7 @@ using Trsys.Web.Infrastructure;
 using Trsys.Web.Models.Events;
 using Trsys.Web.Models.WriteModel.Commands;
 using Trsys.Web.Models.WriteModel.Infrastructure;
+using Trsys.Web.Models.WriteModel.Notifications;
 
 namespace Trsys.Web.Models.Tests
 {
@@ -68,7 +69,7 @@ namespace Trsys.Web.Models.Tests
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
-            await mediator.Send(new ConnectSecretKeyCommand(id, token));
+            await mediator.Publish(new TokenTouched(token));
             await mediator.Send(new InvalidateSecretTokenCommand(id, token));
 
             var store = services.GetRequiredService<IEventStore>();
@@ -85,8 +86,8 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(typeof(SecretKeyTokenInvalidated), events[4].GetType());
             Assert.AreEqual(token, ((SecretKeyTokenInvalidated)events[4]).Token);
 
-            var connectionStore = services.GetRequiredService<ISecretKeyConnectionStore>();
-            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(id));
+            var connectionStore = services.GetRequiredService<ITokenConnectionManager>();
+            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(token));
         }
     }
 }

@@ -61,7 +61,6 @@ namespace Trsys.Web.Infrastructure
             {
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
-                services.AddSingleton<ISecretKeyConnectionStore, InMemorySecretKeyConnectionStore>();
                 services.AddSingleton<ITokenConnectionManagerStore, InMemoryTokenConnectionManagerStore>();
 
                 // Message synchronization
@@ -73,7 +72,6 @@ namespace Trsys.Web.Infrastructure
 
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
-                services.AddSingleton<ISecretKeyConnectionStore, RedisSecretKeyConnectionStore>();
                 services.AddSingleton<ITokenConnectionManagerStore, RedisTokenConnectionManagerStore>();
 
                 // Message synchronization

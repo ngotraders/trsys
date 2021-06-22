@@ -31,11 +31,23 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
             });
         }
 
-        public Task<bool> TryRemoveAsync(string token)
+        public Task<(bool, Guid)> TryRemoveAsync(string token)
         {
             return queue.Enqueue(() =>
             {
-                return store.TryGetValue(token, out var _);
+                if (store.TryGetValue(token, out var state))
+                {
+                    store.Remove(token);
+                    if (state.ExpiredAt.HasValue)
+                    {
+                        return (false, state.Id);
+                    }
+                    else
+                    {
+                        return (true, state.Id);
+                    }
+                }
+                return (false, Guid.Empty);
             });
         }
 
@@ -52,7 +64,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
                     }
                     else
                     {
-                        state.ExpiredAt = DateTime.UtcNow;
+                        state.ExpiredAt = DateTime.UtcNow + fiveSeconds;
                         return (true, state.Id);
                     }
                 }
@@ -95,6 +107,11 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
                 .Select(e => (e.Token, e.Id))
                 .ToList();
             return Task.FromResult(connections);
+        }
+
+        public Task<bool> IsTokenInUseAsync(string token)
+        {
+            return Task.FromResult(store.Values.Any(e => e.Token == token && e.ExpiredAt.HasValue));
         }
     }
 }
