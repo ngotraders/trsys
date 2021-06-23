@@ -24,16 +24,16 @@ namespace Trsys.Web.Infrastructure.WriteModel
             }
             catch (ConcurrencyException e)
             {
-                logger.LogDebug(e, "retrying: {@request}");
+                logger.LogDebug(e, "retrying: {@request}", request);
                 var result = await next();
-                logger.LogDebug(e, "retrying: {@request}");
+                logger.LogDebug(e, "retrying: {@request}", request);
                 return result;
             }
             catch (WrongExpectedVersionException e)
             {
-                logger.LogDebug(e, "retrying: {@request}");
+                logger.LogDebug(e, "retrying: {@request}", request);
                 var result = await next();
-                logger.LogDebug(e, "retrying: {@request}");
+                logger.LogDebug(e, "retrying: {@request}", request);
                 return result;
             }
         }
