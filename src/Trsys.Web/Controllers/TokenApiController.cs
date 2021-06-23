@@ -42,6 +42,10 @@ namespace Trsys.Web.Controllers
                 {
                     return BadRequest("InvalidSecretKey");
                 }
+                else if (secretKey.IsConnected)
+                {
+                    return BadRequest("SecretKeyInUse");
+                }
                 var token = await mediator.Send(new GenerateSecretTokenCommand(secretKey.Id));
                 return Ok(token);
             }
