@@ -34,23 +34,34 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var key = request.Key ?? Guid.NewGuid().ToString();
             if (state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
-                var item = new SecretKeyAggregate(secretKeyId, key);
-                if (request.KeyType.HasValue)
-                {
-                    item.ChangeKeyType(request.KeyType.Value);
-                }
-                item.ChangeDescription(request.Description);
-                if (request.Approve.HasValue)
-                {
-                    if (request.Approve.Value)
-                    {
-                        item.Approve();
-                    }
-                }
-                await repository.Save(item, item.Version, cancellationToken);
                 await repository.Save(state, null, cancellationToken);
-                return secretKeyId;
             }
+            else
+            {
+                try
+                {
+                    await repository.Get<SecretKeyAggregate>(secretKeyId, cancellationToken);
+                    return secretKeyId;
+                }
+                catch (AggregateNotFoundException)
+                {
+                }
+            }
+
+            var item = new SecretKeyAggregate(secretKeyId, key);
+            if (request.KeyType.HasValue)
+            {
+                item.ChangeKeyType(request.KeyType.Value);
+            }
+            item.ChangeDescription(request.Description);
+            if (request.Approve.HasValue)
+            {
+                if (request.Approve.Value)
+                {
+                    item.Approve();
+                }
+            }
+            await repository.Save(item, item.Version, cancellationToken);
             return secretKeyId;
         }
 
@@ -58,7 +69,11 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         {
             var state = await repository.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
-            if (!state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
+            if (state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
+            {
+                await repository.Save(state, null, cancellationToken);
+            }
+            else
             {
                 try
                 {
@@ -83,7 +98,6 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 }
             }
             await repository.Save(item, item.Version, cancellationToken);
-            await repository.Save(state, null, cancellationToken);
             return secretKeyId;
         }
 
@@ -149,11 +163,12 @@ namespace Trsys.Web.Models.WriteModel.Handlers
 
         public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
         {
-            var state = await repository.GetWorldState();
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            state.DeleteSecretKey(item.Key, item.Id);
             item.Delete();
             await repository.Save(item, item.Version, cancellationToken);
+
+            var state = await repository.GetWorldState();
+            state.DeleteSecretKey(item.Key, item.Id);
             await repository.Save(state, null, cancellationToken);
             return Unit.Value;
         }
