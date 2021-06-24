@@ -28,9 +28,10 @@ namespace Trsys.Web.Models
                 await mssqlstore.CreateSchemaIfNotExists();
             }
 
-            await InitializeReadModelAsync(store, dispatcher);
+            var nextPosition = await InitializeReadModelAsync(store, 0, dispatcher);
             await InitializeWriteModelAsync(tokenConnectionManager);
             scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
+            await InitializeReadModelAsync(store, nextPosition, dispatcher);
         }
 
         public static async Task InitializeContextAsync(TrsysContext db)
@@ -76,16 +77,18 @@ namespace Trsys.Web.Models
             }
         }
 
-        public static async Task InitializeWriteModelAsync(ITokenConnectionManager tokenManager)
+        private static async Task InitializeWriteModelAsync(ITokenConnectionManager tokenManager)
         {
             await tokenManager.InitializeAsync();
         }
 
-        public static async Task InitializeReadModelAsync(IStreamStore store, IMessageDispatcher dispatcher)
+        private static async Task<long> InitializeReadModelAsync(IStreamStore store, long position, IMessageDispatcher dispatcher)
         {
-            var page = await store.ReadAllForwards(0, 1000, true);
+            var nextPosition = 0L;
+            var page = await store.ReadAllForwards(position, 1000, true);
             while (true)
             {
+                nextPosition = page.NextPosition;
                 foreach (var message in page.Messages)
                 {
                     await dispatcher.DispatchAsync(new PublishingMessage()
@@ -101,6 +104,7 @@ namespace Trsys.Web.Models
                 }
                 page = await page.ReadNext();
             }
+            return nextPosition;
         }
     }
 }

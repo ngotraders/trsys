@@ -108,6 +108,9 @@ namespace Trsys.Web
             }
             task = task.ContinueWith(task => DatabaseInitializer.SeedDataAsync(app));
 
+            // 最大で1秒待つ
+            Task.WhenAny(Task.Delay(1000), task).Wait();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

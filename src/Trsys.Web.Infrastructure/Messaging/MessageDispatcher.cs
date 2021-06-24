@@ -13,6 +13,7 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly SemaphoreSlim queue = new(1);
         private readonly IMediator mediator;
         private readonly ILogger<MessageDispatcher> logger;
+        private readonly HashSet<Guid> applyingMessages = new();
         private readonly HashSet<Guid> appliedMessages = new();
 
         public MessageDispatcher(IMediator mediator, ILogger<MessageDispatcher> logger)
@@ -26,17 +27,44 @@ namespace Trsys.Web.Infrastructure.Messaging
             await queue.WaitAsync();
             try
             {
-                if (appliedMessages.Add(message.Id))
+                if (appliedMessages.Contains(message.Id))
                 {
-                    logger.LogDebug("Applying message {@message}", message);
-                    var notification = MessageConverter.ConvertToNotification(message);
-                    await mediator.Publish(notification, cancellationToken);
-                    logger.LogDebug("Applied message {@message}", message);
+                    logger.LogDebug("Application of message skipped. {@message}", message);
+                    return;
                 }
+                if (!applyingMessages.Add(message.Id))
+                {
+                    logger.LogDebug("Application of message skipped. {@message}", message);
+                    return;
+                }
+            }
+            finally
+            {
+                queue.Release();
+            }
+
+            bool succeeded = false;
+            try
+            {
+                logger.LogDebug("Applying message. {@message}", message);
+                var notification = MessageConverter.ConvertToNotification(message);
+                await mediator.Publish(notification, cancellationToken);
+                logger.LogDebug("Applied message. {@message}", message);
+                succeeded = true;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error on applying message {@message}", message);
+                logger.LogError(ex, "Error applying message. {@message}", message);
+            }
+
+            await queue.WaitAsync();
+            try
+            {
+                if (succeeded)
+                {
+                    appliedMessages.Add(message.Id);
+                }
+                applyingMessages.Remove(message.Id);
             }
             finally
             {
