@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,11 +11,10 @@ namespace Trsys.Web.Infrastructure.Messaging
 {
     public class MessageDispatcher : IMessageDispatcher
     {
-        private readonly SemaphoreSlim queue = new(1);
         private readonly IMediator mediator;
         private readonly ILogger<MessageDispatcher> logger;
-        private readonly HashSet<Guid> applyingMessages = new();
-        private readonly HashSet<Guid> appliedMessages = new();
+        private readonly ConcurrentDictionary<Guid, bool> applyingMessages = new();
+        private readonly ConcurrentDictionary<Guid, bool> appliedMessages = new();
 
         public MessageDispatcher(IMediator mediator, ILogger<MessageDispatcher> logger)
         {
@@ -24,23 +24,15 @@ namespace Trsys.Web.Infrastructure.Messaging
 
         public async Task DispatchAsync(PublishingMessage message, CancellationToken cancellationToken = default)
         {
-            await queue.WaitAsync();
-            try
+            if (appliedMessages.ContainsKey(message.Id))
             {
-                if (appliedMessages.Contains(message.Id))
-                {
-                    logger.LogDebug("Application of message skipped. {@message}", message);
-                    return;
-                }
-                if (!applyingMessages.Add(message.Id))
-                {
-                    logger.LogDebug("Application of message skipped. {@message}", message);
-                    return;
-                }
+                logger.LogDebug("Application of message skipped. {@message}", message);
+                return;
             }
-            finally
+            if (!applyingMessages.TryAdd(message.Id, true))
             {
-                queue.Release();
+                logger.LogDebug("Application of message skipped. {@message}", message);
+                return;
             }
 
             bool succeeded = false;
@@ -57,19 +49,11 @@ namespace Trsys.Web.Infrastructure.Messaging
                 logger.LogError(ex, "Error applying message. {@message}", message);
             }
 
-            await queue.WaitAsync();
-            try
+            if (succeeded)
             {
-                if (succeeded)
-                {
-                    appliedMessages.Add(message.Id);
-                }
-                applyingMessages.Remove(message.Id);
+                appliedMessages.TryAdd(message.Id, true);
             }
-            finally
-            {
-                queue.Release();
-            }
+            applyingMessages.Remove(message.Id, out var _);
         }
     }
 }
