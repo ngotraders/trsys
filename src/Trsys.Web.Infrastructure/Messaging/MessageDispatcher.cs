@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Messaging;
@@ -12,6 +13,7 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly SemaphoreSlim queue = new(1);
         private readonly IMediator mediator;
         private readonly ILogger<MessageDispatcher> logger;
+        private readonly HashSet<Guid> appliedMessages = new();
 
         public MessageDispatcher(IMediator mediator, ILogger<MessageDispatcher> logger)
         {
@@ -24,10 +26,13 @@ namespace Trsys.Web.Infrastructure.Messaging
             await queue.WaitAsync();
             try
             {
-                logger.LogDebug("Applying message {@message}", message);
-                var notification = MessageConverter.ConvertToNotification(message);
-                await mediator.Publish(notification, cancellationToken);
-                logger.LogDebug("Applied message {@message}", message);
+                if (appliedMessages.Add(message.Id))
+                {
+                    logger.LogDebug("Applying message {@message}", message);
+                    var notification = MessageConverter.ConvertToNotification(message);
+                    await mediator.Publish(notification, cancellationToken);
+                    logger.LogDebug("Applied message {@message}", message);
+                }
             }
             catch (Exception ex)
             {

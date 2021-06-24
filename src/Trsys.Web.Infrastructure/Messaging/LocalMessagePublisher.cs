@@ -1,5 +1,4 @@
-﻿using MediatR;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Models.Messaging;
