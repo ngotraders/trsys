@@ -9,9 +9,9 @@ namespace Trsys.Web.Infrastructure.Messaging
     public class LocalMessagePublisher : IMessagePublisher, IDisposable
     {
         private readonly SemaphoreSlim queue = new(1);
-        private readonly IMediator mediator;
+        private readonly IMessageDispatcher mediator;
 
-        public LocalMessagePublisher(IMediator mediator)
+        public LocalMessagePublisher(IMessageDispatcher mediator)
         {
             this.mediator = mediator;
         }
@@ -23,7 +23,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             {
                 foreach (var n in notification.Payload)
                 {
-                    await mediator.Publish(MessageConverter.ConvertToNotification(n), cancellationToken);
+                    await mediator.DispatchAsync(n, cancellationToken);
                 }
             }
             finally

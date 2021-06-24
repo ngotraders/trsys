@@ -25,12 +25,13 @@ namespace Trsys.Web.Infrastructure.Tests
             using var services = new ServiceCollection()
                 .AddSingleton<List<TokenTouched>>(store)
                 .AddMediatR(typeof(TestHandler1))
+                .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();
             var connection = await ConnectionMultiplexer.ConnectAsync("127.0.0.1");
-            var mediator = services.GetRequiredService<IMediator>();
+            var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
-            var sut = new RedisMessageBroker(connection, mediator, logger);
+            var sut = new RedisMessageBroker(connection, dispatcher, logger);
             await sut.Enqueue(PublishingMessageEnvelope.Create(new TokenTouched("Token")));
             Assert.AreEqual("Token", store.First().Token);
         }
@@ -40,12 +41,13 @@ namespace Trsys.Web.Infrastructure.Tests
         {
             using var services = new ServiceCollection()
                 .AddMediatR(typeof(TestHandler2))
+                .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();
             var connection = await ConnectionMultiplexer.ConnectAsync("127.0.0.1");
-            var mediator = services.GetRequiredService<IMediator>();
+            var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
-            var sut = new RedisMessageBroker(connection, mediator, logger);
+            var sut = new RedisMessageBroker(connection, dispatcher, logger);
             await sut.Enqueue(PublishingMessageEnvelope.Create(new TokenTouched("Token")));
         }
 
@@ -55,12 +57,13 @@ namespace Trsys.Web.Infrastructure.Tests
             var store = new List<TokenTouched>();
             using var services = new ServiceCollection()
                 .AddMediatR(typeof(TestHandler1))
+                .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();
             var connection = await ConnectionMultiplexer.ConnectAsync("unknown");
-            var mediator = services.GetRequiredService<IMediator>();
+            var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
-            var sut = new RedisMessageBroker(connection, mediator, logger);
+            var sut = new RedisMessageBroker(connection, dispatcher, logger);
             await sut.Enqueue(PublishingMessageEnvelope.Create(new TokenTouched("Token")));
         }
 

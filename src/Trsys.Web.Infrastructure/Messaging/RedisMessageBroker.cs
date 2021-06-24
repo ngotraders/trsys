@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
@@ -24,10 +23,10 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
         private RedisValue? lastReadStream;
         private int isProcessing = 0;
-        private readonly IMediator mediator;
+        private readonly IMessageDispatcher dispatcher;
         private readonly ILogger<RedisMessageBroker> logger;
 
-        public RedisMessageBroker(IConnectionMultiplexer connection, IMediator mediator, ILogger<RedisMessageBroker> logger)
+        public RedisMessageBroker(IConnectionMultiplexer connection, IMessageDispatcher dispatcher, ILogger<RedisMessageBroker> logger)
         {
             this.connection = connection;
             var cache = connection.GetDatabase();
@@ -36,7 +35,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             {
                 lastReadStream = result.LastOrDefault().Id;
             }
-            this.mediator = mediator;
+            this.dispatcher = dispatcher;
             this.logger = logger;
             this.subscriber = connection.GetSubscriber();
             subscriber.Subscribe(messageChannel, OnMessage);
@@ -86,17 +85,7 @@ namespace Trsys.Web.Infrastructure.Messaging
                                 break;
                         }
                     }
-                    var notification = MessageConverter.ConvertToNotification(message);
-                    try
-                    {
-                        logger.LogDebug("Applying message {@message}", notification);
-                        await mediator.Publish(notification);
-                        logger.LogDebug("Applied message {@message}", notification);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "Error on applying message {@message}", notification);
-                    }
+                    await dispatcher.DispatchAsync(message);
                     lastReadStream = entry.Id;
                     arrivedStreamIds.TryAdd(entry.Id, true);
                 }

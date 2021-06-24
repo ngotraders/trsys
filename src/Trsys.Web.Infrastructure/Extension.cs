@@ -43,6 +43,9 @@ namespace Trsys.Web.Infrastructure
             // Token management
             services.AddSingleton<ITokenConnectionManager, TokenConnectionManager>();
 
+            // message dispatching
+            services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
+
             return services;
         }
 
