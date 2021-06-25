@@ -19,7 +19,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             return queue.Enqueue(() =>
             {
                 ById.Add(userDto.Id, userDto);
-                ByUsername.Add(userDto.Username, userDto);
+                ByUsername.Add(userDto.Username.ToUpperInvariant(), userDto);
                 List.Add(userDto);
             });
         }
@@ -39,7 +39,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
             {
                 var item = ById[id];
                 ById.Remove(id);
-                ByUsername.Remove(item.Username);
+                ByUsername.Remove(item.Username.ToUpperInvariant());
                 List.RemoveAt(List.IndexOf(item));
             });
         }
@@ -56,7 +56,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
 
         public Task<UserDto> FindByUsernameAsync(string username)
         {
-            return Task.FromResult(ByUsername.TryGetValue(username, out var value) ? value : null);
+            return Task.FromResult(ByUsername.TryGetValue(username.ToUpperInvariant(), out var value) ? value : null);
         }
         public void Dispose()
         {
