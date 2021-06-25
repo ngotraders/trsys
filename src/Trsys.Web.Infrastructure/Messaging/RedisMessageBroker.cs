@@ -43,20 +43,23 @@ namespace Trsys.Web.Infrastructure.Messaging
 
         private async void OnMessage(RedisChannel _, RedisValue message)
         {
-            if (Interlocked.CompareExchange(ref isProcessing, 1, 0) == 1)
+            await Task.Run(async () =>
             {
-                logger.LogDebug("Ignored. Other process is processing message: {id}", message.ToString());
-                return;
-            }
-            try
-            {
-                logger.LogDebug("Processing message: {id}", message.ToString());
-                await ReadMessages();
-            }
-            finally
-            {
-                Interlocked.Exchange(ref isProcessing, 0);
-            }
+                if (Interlocked.CompareExchange(ref isProcessing, 1, 0) == 1)
+                {
+                    logger.LogDebug("Ignored. Other process is processing message: {id}", message.ToString());
+                    return;
+                }
+                try
+                {
+                    logger.LogDebug("Processing message: {id}", message.ToString());
+                    await ReadMessages();
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref isProcessing, 0);
+                }
+            });
         }
 
         private async Task ReadMessages()
