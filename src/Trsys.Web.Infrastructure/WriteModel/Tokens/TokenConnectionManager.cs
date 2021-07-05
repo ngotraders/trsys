@@ -10,7 +10,7 @@ using Trsys.Web.Models.WriteModel.Infrastructure;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens
 {
-    public class TokenConnectionManager : ITokenConnectionManager, IDisposable
+    public class TokenConnectionManager : ISecretKeyConnectionManager, IDisposable
     {
         private readonly IServiceScopeFactory serviceScopeFactory;
         private readonly Timer timer;
@@ -25,14 +25,14 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
         public async Task InitializeAsync()
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            var connections = await store.SearchConnectionsAsync();
-            if (connections.Any())
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            var connectedKeys = await store.SearchConnectedSecretKeysAsync();
+            if (connectedKeys.Any())
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                foreach (var connection in connections)
+                foreach (var keyId in connectedKeys)
                 {
-                    await mediator.Publish(new SecretKeyEaConnected(connection.Item2));
+                    await mediator.Publish(new SecretKeyEaConnected(keyId));
                 }
             }
         }
@@ -56,55 +56,55 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens
         private async Task DisconnectExpiredTokens()
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            var expiredTokens = await store.SearchExpiredTokensAsync();
-            foreach (var token in expiredTokens)
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            var expiredKeys = await store.SearchExpiredSecretKeysAsync();
+            foreach (var keyId in expiredKeys)
             {
-                var clearExpirationResult = await store.ClearExpirationTimeAsync(token);
-                if (clearExpirationResult.Item1)
+                var clearExpirationResult = await store.ClearConnectionAsync(keyId);
+                if (clearExpirationResult)
                 {
                     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(clearExpirationResult.Item2)));
+                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(keyId)));
                 }
             }
         }
 
-        public async void Touch(string token)
+        public async void Touch(Guid id, bool forcePublishEvent)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            var touchResult = await store.ExtendTokenExpirationTimeAsync(token);
-            if (touchResult.Item1)
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            var touchResult = await store.UpdateLastAccessedAsync(id);
+            if (forcePublishEvent || touchResult)
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(touchResult.Item2)));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
             }
         }
 
-        public async Task AddAsync(string token, Guid id)
+        public async Task RetainAsync(Guid id)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            await store.TryAddAsync(token, id);
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            await store.UpdateLastAccessedAsync(id);
         }
 
-        public async Task RemoveAsync(string token)
+        public async Task ReleaseAsync(Guid id)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            var removeResult = await store.TryRemoveAsync(token);
-            if (removeResult.Item1)
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            var removeResult = await store.ClearConnectionAsync(id);
+            if (removeResult)
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(removeResult.Item2)));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(id)));
             }
         }
 
-        public Task<bool> IsTokenInUseAsync(string token)
+        public Task<bool> IsConnectedAsync(Guid id)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ITokenConnectionManagerStore>();
-            return store.IsTokenInUseAsync(token);
+            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
+            return store.IsConnectedAsync(id);
         }
 
         public void Dispose()

@@ -41,7 +41,7 @@ namespace Trsys.Web.Infrastructure
             services.AddSingleton<IEventDatabase, SqlStreamEventDatabase>();
 
             // Token management
-            services.AddSingleton<ITokenConnectionManager, TokenConnectionManager>();
+            services.AddSingleton<ISecretKeyConnectionManager, TokenConnectionManager>();
 
             // message dispatching
             services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
@@ -64,7 +64,7 @@ namespace Trsys.Web.Infrastructure
             {
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
-                services.AddSingleton<ITokenConnectionManagerStore, InMemoryTokenConnectionManagerStore>();
+                services.AddSingleton<ISecretKeyConnectionManagerStore, InMemoryTokenConnectionManagerStore>();
 
                 // Message synchronization
                 services.AddSingleton<IMessagePublisher, LocalMessagePublisher>();
@@ -75,7 +75,7 @@ namespace Trsys.Web.Infrastructure
 
                 // Manage latest version for each stream in StreamStore
                 services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
-                services.AddSingleton<ITokenConnectionManagerStore, RedisTokenConnectionManagerStore>();
+                services.AddSingleton<ISecretKeyConnectionManagerStore, RedisTokenConnectionManagerStore>();
 
                 // Message synchronization
                 services.AddSingleton<IMessagePublisher, RedisMessageBroker>();

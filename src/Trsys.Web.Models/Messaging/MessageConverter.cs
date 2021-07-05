@@ -32,7 +32,7 @@ namespace Trsys.Web.Models.Messaging
             typeof(SecretKeyRevoked),
             typeof(SecretKeyTokenGenerated),
             typeof(SecretKeyTokenInvalidated),
-            typeof(TokenTouched),
+            typeof(SecretKeyConnected),
             typeof(UserCreated),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),

@@ -20,7 +20,7 @@ namespace Trsys.Web.Models
             using var scope = app.ApplicationServices.CreateScope();
             using var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
             using var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
-            var tokenConnectionManager = scope.ServiceProvider.GetRequiredService<ITokenConnectionManager>();
+            var tokenConnectionManager = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManager>();
             var dispatcher = scope.ServiceProvider.GetRequiredService<IMessageDispatcher>();
             await InitializeContextAsync(db);
             if (store is MsSqlStreamStoreV3 mssqlstore)
@@ -77,7 +77,7 @@ namespace Trsys.Web.Models
             }
         }
 
-        private static async Task InitializeWriteModelAsync(ITokenConnectionManager tokenManager)
+        private static async Task InitializeWriteModelAsync(ISecretKeyConnectionManager tokenManager)
         {
             await tokenManager.InitializeAsync();
         }

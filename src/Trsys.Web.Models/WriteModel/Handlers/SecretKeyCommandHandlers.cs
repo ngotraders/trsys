@@ -20,12 +20,12 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         IRequestHandler<DeleteSecretKeyCommand>
     {
         private readonly IRepository repository;
-        private readonly ITokenConnectionManager tokenManager;
+        private readonly ISecretKeyConnectionManager connectionManager;
 
-        public SecretKeyCommandHandlers(IRepository repository, ITokenConnectionManager tokenManager)
+        public SecretKeyCommandHandlers(IRepository repository, ISecretKeyConnectionManager connectionManager)
         {
             this.repository = repository;
-            this.tokenManager = tokenManager;
+            this.connectionManager = connectionManager;
         }
 
         public async Task<Guid> Handle(CreateSecretKeyIfNotExistsCommand request, CancellationToken cancellationToken = default)
@@ -129,22 +129,18 @@ namespace Trsys.Web.Models.WriteModel.Handlers
                 }
             }
             await repository.Save(item, item.Version, cancellationToken);
-            if (!string.IsNullOrEmpty(token))
-            {
-                await tokenManager.RemoveAsync(token);
-            }
+            await connectionManager.ReleaseAsync(item.Id);
             return Unit.Value;
         }
 
         public async Task<string> Handle(GenerateSecretTokenCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            if (!string.IsNullOrEmpty(item.Token) && await tokenManager.IsTokenInUseAsync(item.Token))
+            if (!string.IsNullOrEmpty(item.Token) && await connectionManager.IsConnectedAsync(request.Id))
             {
                 throw new InvalidOperationException("Ea is already connected.");
             }
             var token = item.GenerateToken();
-            await tokenManager.AddAsync(token, request.Id);
             await repository.Save(item, item.Version, cancellationToken);
             return token;
         }
@@ -154,10 +150,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.InvalidateToken(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
-            if (!string.IsNullOrEmpty(request.Token))
-            {
-                await tokenManager.RemoveAsync(request.Token);
-            }
+            await connectionManager.ReleaseAsync(request.Id);
             return Unit.Value;
         }
 

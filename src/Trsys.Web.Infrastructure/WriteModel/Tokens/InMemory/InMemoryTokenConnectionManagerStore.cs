@@ -6,113 +6,56 @@ using Trsys.Web.Infrastructure.Queue;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens.InMemory
 {
-    public class InMemoryTokenConnectionManagerStore : ITokenConnectionManagerStore
+    public class InMemoryTokenConnectionManagerStore : ISecretKeyConnectionManagerStore
     {
-        private class TokenState
-        {
-            public string Token { get; set; }
-            public Guid Id { get; set; }
-            public DateTime? ExpiredAt { get; set; }
-        }
-
         private readonly BlockingTaskQueue queue = new();
-        private readonly Dictionary<string, TokenState> store = new();
+        private readonly Dictionary<Guid, DateTime> store = new();
         private static readonly TimeSpan fiveSeconds = TimeSpan.FromSeconds(5);
 
-        public Task<bool> TryAddAsync(string token, Guid id)
+        public Task<bool> UpdateLastAccessedAsync(Guid id)
         {
             return queue.Enqueue(() =>
             {
-                return store.TryAdd(token, new TokenState()
+                var value = DateTime.UtcNow + fiveSeconds;
+                if (store.TryAdd(id, value))
                 {
-                    Token = token,
-                    Id = id,
-                });
-            });
-        }
-
-        public Task<(bool, Guid)> TryRemoveAsync(string token)
-        {
-            return queue.Enqueue(() =>
-            {
-                if (store.TryGetValue(token, out var state))
-                {
-                    store.Remove(token);
-                    if (state.ExpiredAt.HasValue)
-                    {
-                        return (true, state.Id);
-                    }
-                    else
-                    {
-                        return (false, state.Id);
-                    }
+                    return true;
                 }
-                return (false, Guid.Empty);
-            });
-        }
-
-        public Task<(bool, Guid)> ExtendTokenExpirationTimeAsync(string token)
-        {
-            return queue.Enqueue(() =>
-            {
-                if (store.TryGetValue(token, out var state))
+                else
                 {
-                    if (state.ExpiredAt.HasValue)
-                    {
-                        state.ExpiredAt = DateTime.UtcNow + fiveSeconds;
-                        return (false, state.Id);
-                    }
-                    else
-                    {
-                        state.ExpiredAt = DateTime.UtcNow + fiveSeconds;
-                        return (true, state.Id);
-                    }
+                    store[id] = value;
+                    return false;
                 }
-                return (false, Guid.Empty);
             });
         }
 
-        public Task<(bool, Guid)> ClearExpirationTimeAsync(string token)
+        public Task<bool> ClearConnectionAsync(Guid id)
         {
             return queue.Enqueue(() =>
             {
-                if (store.TryGetValue(token, out var state))
-                {
-                    if (state.ExpiredAt.HasValue)
-                    {
-                        state.ExpiredAt = null;
-                        return (true, state.Id);
-                    }
-                    return (false, state.Id);
-                }
-                return (false, Guid.Empty);
+                return store.Remove(id);
             });
         }
 
-        public Task<List<string>> SearchExpiredTokensAsync()
+        public Task<List<Guid>> SearchExpiredSecretKeysAsync()
         {
             return queue.Enqueue(() =>
             {
-                return store.Values
-                    .Where(e => e.ExpiredAt.HasValue)
-                    .Where(e => DateTime.UtcNow > e.ExpiredAt.Value)
-                    .Select(e => e.Token)
+                return store
+                    .Where(e => DateTime.UtcNow > e.Value)
+                    .Select(e => e.Key)
                     .ToList();
             });
         }
 
-        public Task<List<(string, Guid)>> SearchConnectionsAsync()
+        public Task<List<Guid>> SearchConnectedSecretKeysAsync()
         {
-            var connections = store.Values
-                .Where(e => e.ExpiredAt.HasValue)
-                .Select(e => (e.Token, e.Id))
-                .ToList();
-            return Task.FromResult(connections);
+            return Task.FromResult(store.Keys.ToList());
         }
 
-        public Task<bool> IsTokenInUseAsync(string token)
+        public Task<bool> IsConnectedAsync(Guid id)
         {
-            return Task.FromResult(store.Values.Any(e => e.Token == token && e.ExpiredAt.HasValue));
+            return Task.FromResult(store.TryGetValue(id, out var _));
         }
     }
 }

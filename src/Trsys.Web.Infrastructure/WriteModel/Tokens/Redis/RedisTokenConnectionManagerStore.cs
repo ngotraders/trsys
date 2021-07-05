@@ -8,11 +8,10 @@ using Trsys.Web.Infrastructure.Redis;
 
 namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
 {
-    public class RedisTokenConnectionManagerStore : ITokenConnectionManagerStore
+    public class RedisTokenConnectionManagerStore : ISecretKeyConnectionManagerStore
     {
-        private readonly ConcurrentDictionary<string, DateTimeOffset> lastAccessed = new();
+        private readonly ConcurrentDictionary<Guid, DateTimeOffset> lastAccessed = new();
         private readonly IConnectionMultiplexer connection;
-        private static readonly RedisKey tokenKey = RedisHelper.GetKey("TokenConnectionManagerStore:Tokens");
         private static readonly RedisKey lastAccessedKey = RedisHelper.GetKey("TokenConnectionManagerStore:LastAccessed");
         private static readonly TimeSpan fiveSeconds = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan oneSecond = TimeSpan.FromSeconds(1);
@@ -22,112 +21,54 @@ namespace Trsys.Web.Infrastructure.WriteModel.Tokens.Redis
             this.connection = connection;
         }
 
-        public Task<bool> TryAddAsync(string token, Guid id)
-        {
-            var cache = connection.GetDatabase();
-            return cache.HashSetAsync(tokenKey, token, id.ToString(), When.NotExists);
-        }
-
-        public async Task<(bool, Guid)> TryRemoveAsync(string token)
-        {
-            try
-            {
-                var cache = connection.GetDatabase();
-                var value = await cache.HashGetAsync(tokenKey, token);
-                if (value.HasValue)
-                {
-                    await cache.HashDeleteAsync(tokenKey, token);
-                    var id = Guid.Parse(value.ToString());
-                    if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
-                    {
-                        return (true, id);
-                    }
-                    return (false, id);
-                }
-                return (false, Guid.Empty);
-
-            }
-            finally
-            {
-                // Remove cache most latest time
-                lastAccessed.TryRemove(token, out var _);
-            }
-        }
-
-        public async Task<(bool, Guid)> ExtendTokenExpirationTimeAsync(string token)
+        public async Task<bool> UpdateLastAccessedAsync(Guid id)
         {
             var now = DateTimeOffset.UtcNow;
-            if (!lastAccessed.TryGetValue(token, out var timestamp))
+            if (!lastAccessed.TryGetValue(id, out var timestamp))
             {
-                lastAccessed.TryAdd(token, now);
+                lastAccessed.TryAdd(id, now);
             }
             if (now - timestamp < oneSecond)
             {
-                return (false, Guid.Empty);
+                return false;
             }
             var cache = connection.GetDatabase();
-            var value = await cache.HashGetAsync(tokenKey, token);
-            if (value.HasValue)
-            {
-                if (await cache.SortedSetAddAsync(lastAccessedKey, token, (now + fiveSeconds).ToUnixTimeSeconds(), When.Always))
-                {
-                    return (true, Guid.Parse(value.ToString()));
-                }
-                return (false, Guid.Parse(value.ToString()));
-            }
-            return (false, Guid.Empty);
+            var idStr = id.ToString();
+            return await cache.SortedSetAddAsync(lastAccessedKey, idStr, (now + fiveSeconds).ToUnixTimeSeconds(), When.Always);
         }
 
-        public async Task<(bool, Guid)> ClearExpirationTimeAsync(string token)
+        public async Task<bool> ClearConnectionAsync(Guid id)
         {
             try
             {
                 var cache = connection.GetDatabase();
-                var value = await cache.HashGetAsync(tokenKey, token);
-                if (value.HasValue)
-                {
-                    if (await cache.SortedSetRemoveAsync(lastAccessedKey, token))
-                    {
-                        return (true, Guid.Parse(value.ToString()));
-                    }
-                    return (false, Guid.Parse(value.ToString()));
-                }
-                else
-                {
-                    await cache.SortedSetRemoveAsync(lastAccessedKey, token);
-                    return (false, Guid.Empty);
-                }
+                return await cache.SortedSetRemoveAsync(lastAccessedKey, id.ToString());
             }
             finally
             {
                 // Remove cache most latest time
-                lastAccessed.TryRemove(token, out var _);
+                lastAccessed.TryRemove(id, out var _);
             }
         }
 
-        public async Task<List<string>> SearchExpiredTokensAsync()
+        public async Task<List<Guid>> SearchExpiredSecretKeysAsync()
         {
             var cache = connection.GetDatabase();
             var values = await cache.SortedSetRangeByScoreAsync(lastAccessedKey, stop: DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-            return values.Select(v => v.ToString()).ToList();
+            return values.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
         }
 
-        public async Task<List<(string, Guid)>> SearchConnectionsAsync()
+        public async Task<List<Guid>> SearchConnectedSecretKeysAsync()
         {
             var cache = connection.GetDatabase();
             var setValues = await cache.SortedSetRangeByScoreAsync(lastAccessedKey);
-            var values = await cache.HashGetAllAsync(tokenKey);
-            var availableValues = setValues.Select(v => v.ToString()).ToHashSet();
-            return values
-                .Where(value => availableValues.Contains(value.Name.ToString()))
-                .Select(value => (value.Name.ToString(), Guid.Parse(value.Value.ToString())))
-                .ToList();
+            return setValues.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
         }
 
-        public async Task<bool> IsTokenInUseAsync(string token)
+        public async Task<bool> IsConnectedAsync(Guid id)
         {
             var cache = connection.GetDatabase();
-            var value = await cache.SortedSetScoreAsync(lastAccessedKey, token);
+            var value = await cache.SortedSetScoreAsync(lastAccessedKey, id.ToString());
             return value.HasValue;
         }
     }

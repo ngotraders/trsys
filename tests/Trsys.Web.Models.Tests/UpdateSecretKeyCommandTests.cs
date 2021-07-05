@@ -138,7 +138,7 @@ namespace Trsys.Web.Models.Tests
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
-            await mediator.Publish(new TokenTouched(token));
+            await mediator.Publish(new SecretKeyConnected(id));
             await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, false));
 
             var store = services.GetRequiredService<IEventStore>();
@@ -154,8 +154,8 @@ namespace Trsys.Web.Models.Tests
             Assert.AreEqual(typeof(SecretKeyTokenInvalidated), events[4].GetType());
             Assert.AreEqual(typeof(SecretKeyRevoked), events[5].GetType());
 
-            var connectionStore = services.GetRequiredService<ITokenConnectionManager>();
-            Assert.IsFalse(await connectionStore.IsTokenInUseAsync(token));
+            var connectionStore = services.GetRequiredService<ISecretKeyConnectionManager>();
+            Assert.IsFalse(await connectionStore.IsConnectedAsync(id));
         }
     }
 }

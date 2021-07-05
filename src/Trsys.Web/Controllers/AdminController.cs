@@ -93,11 +93,7 @@ namespace Trsys.Web.Controllers
                     return SaveModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
-                var result = await mediator.Send(new GetSecretKey(secretKey.Id));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
-                model.KeyType = null;
-                model.Key = null;
-                model.Description = null;
                 return SaveModelAndRedirectToIndex(model);
             }
             catch (Exception ex)

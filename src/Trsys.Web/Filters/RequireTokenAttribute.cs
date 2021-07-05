@@ -44,7 +44,7 @@ namespace Trsys.Web.Filters
                 context.Result = new UnauthorizedObjectResult("X-Secret-Token is invalid.");
                 return;
             }
-            await mediator.Publish(new TokenTouched(token));
+            await mediator.Publish(new SecretKeyConnected(result.Id, !result.IsConnected));
             await base.OnActionExecutionAsync(context, next);
         }
     }

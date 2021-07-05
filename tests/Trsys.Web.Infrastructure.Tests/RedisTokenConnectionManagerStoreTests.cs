@@ -16,12 +16,18 @@ namespace Trsys.Web.Infrastructure.Tests
         {
             connection = await ConnectionMultiplexer.ConnectAsync("127.0.0.1");
             sut = new RedisTokenConnectionManagerStore(connection);
-            await sut.TryRemoveAsync("Token");
+            foreach (var connectedId in await sut.SearchConnectedSecretKeysAsync())
+            {
+                await sut.ClearConnectionAsync(connectedId);
+            }
         }
         [TestCleanup]
         public async Task Teardown()
         {
-            await sut.TryRemoveAsync("Token");
+            foreach (var connectedId in await sut.SearchConnectedSecretKeysAsync())
+            {
+                await sut.ClearConnectionAsync(connectedId);
+            }
             connection.Dispose();
         }
     }
