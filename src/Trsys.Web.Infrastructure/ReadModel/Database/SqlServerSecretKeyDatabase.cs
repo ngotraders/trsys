@@ -91,6 +91,20 @@ namespace Trsys.Web.Infrastructure.ReadModel.Database
             return db.SecretKeys.ToListAsync();
         }
 
+        public async Task<PagedResultDto<SecretKeyDto>> SearchPagedAsync(int page, int perPage)
+        {
+            var query = db.SecretKeys
+                .OrderBy(e => e.IsApproved)
+                .ThenBy(e => e.KeyType)
+                .ThenBy(e => e.Id)
+                .AsQueryable();
+            if (perPage > 0)
+            {
+                query = query.Skip((page - 1) * perPage).Take(perPage);
+            }
+            return new PagedResultDto<SecretKeyDto>(page, perPage, await db.SecretKeys.CountAsync(), await query.ToListAsync());
+        }
+
         public Task<SecretKeyDto> FindByIdAsync(Guid id)
         {
             return db.SecretKeys.Where(secretKey => secretKey.Id == id).FirstOrDefaultAsync();

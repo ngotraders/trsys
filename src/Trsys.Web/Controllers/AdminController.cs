@@ -24,7 +24,7 @@ namespace Trsys.Web.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? page, int? perPage)
         {
             var model = RestoreModel() ?? new IndexViewModel();
             if (TempData["KeyType"] != null)
@@ -34,12 +34,11 @@ namespace Trsys.Web.Controllers
 
             var order = await mediator.Send(new GetOrderTextEntry());
             model.CacheOrderText = order?.Text;
-
-            model.SecretKeys = (await mediator.Send(new GetSecretKeys()))
-                .OrderBy(e => e.IsApproved)
-                .ThenBy(e => e.KeyType)
-                .ThenBy(e => e.Id)
-                .ToList();
+            var pagedResult = await mediator.Send(new GetSecretKeysWithPagination(page ?? 1, perPage ?? 10));
+            model.SecretKeys = pagedResult.List;
+            model.SecretKeysTotalCount = pagedResult.TotalCount;
+            model.SecretKeysPage = pagedResult.Page;
+            model.SecretKeysPerPage = pagedResult.PerPage;
             return View(model);
         }
 

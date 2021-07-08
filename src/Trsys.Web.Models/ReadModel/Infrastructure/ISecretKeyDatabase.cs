@@ -15,6 +15,7 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
         Task UpdateIsConnectedAsync(Guid id, bool isConnected);
         Task RemoveAsync(Guid id);
         Task<List<SecretKeyDto>> SearchAsync();
+        Task<PagedResultDto<SecretKeyDto>> SearchPagedAsync(int page, int perPage);
         Task<SecretKeyDto> FindByIdAsync(Guid id);
         Task<SecretKeyDto> FindByKeyAsync(string key);
         Task<SecretKeyDto> FindByTokenAsync(string token);

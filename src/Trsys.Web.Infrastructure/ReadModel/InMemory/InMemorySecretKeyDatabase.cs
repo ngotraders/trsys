@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Web.Infrastructure.Queue;
 using Trsys.Web.Models;
@@ -126,6 +127,20 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
         public Task<List<SecretKeyDto>> SearchAsync()
         {
             return Task.FromResult(List);
+        }
+
+        public Task<PagedResultDto<SecretKeyDto>> SearchPagedAsync(int page, int perPage)
+        {
+            var query = List
+                .OrderBy(e => e.IsApproved)
+                .ThenBy(e => e.KeyType)
+                .ThenBy(e => e.Id)
+                .AsEnumerable();
+            if (perPage > 0)
+            {
+                query = query.Skip((page - 1) * perPage).Take(perPage);
+            }
+            return Task.FromResult(new PagedResultDto<SecretKeyDto>(page, perPage, List.Count, query.ToList()));
         }
 
         public Task<SecretKeyDto> FindByIdAsync(Guid id)

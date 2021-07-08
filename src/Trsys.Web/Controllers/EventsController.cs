@@ -27,7 +27,6 @@ namespace Trsys.Web.Controllers
                 Page = page ?? 1,
                 PerPage = perPage ?? 100,
                 Source = source,
-                SecretKeys = await mediator.Send(new GetSecretKeys()),
             };
 
             model.Events = (await mediator.Send(new GetEvents(source, model.Page, model.PerPage))).ToList();

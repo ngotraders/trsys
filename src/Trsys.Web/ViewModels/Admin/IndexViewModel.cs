@@ -14,6 +14,9 @@ namespace Trsys.Web.ViewModels.Admin
         public string Description { get; set; }
 
         public List<SecretKeyDto> SecretKeys { get; set; }
+        public int SecretKeysTotalCount { get; set; }
+        public int SecretKeysPage { get; set; }
+        public int SecretKeysPerPage { get; set; }
         public string CacheOrderText { get; set; }
     }
 }

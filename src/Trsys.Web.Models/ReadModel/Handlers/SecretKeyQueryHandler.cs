@@ -21,6 +21,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         INotificationHandler<SecretKeyEaDisconnected>,
         INotificationHandler<SecretKeyDeleted>,
         IRequestHandler<GetSecretKeys, List<SecretKeyDto>>,
+        IRequestHandler<GetSecretKeysWithPagination, PagedResultDto<SecretKeyDto>>,
         IRequestHandler<GetSecretKey, SecretKeyDto>,
         IRequestHandler<FindBySecretKey, SecretKeyDto>,
         IRequestHandler<FindByCurrentToken, SecretKeyDto>
@@ -89,6 +90,11 @@ namespace Trsys.Web.Models.ReadModel.Handlers
         public Task<List<SecretKeyDto>> Handle(GetSecretKeys message, CancellationToken token = default)
         {
             return db.SearchAsync();
+        }
+
+        public Task<PagedResultDto<SecretKeyDto>> Handle(GetSecretKeysWithPagination message, CancellationToken token = default)
+        {
+            return db.SearchPagedAsync(message.Page, message.PerPage);
         }
 
         public Task<SecretKeyDto> Handle(GetSecretKey request, CancellationToken cancellationToken)

@@ -104,6 +104,11 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
             return db.SearchAsync();
         }
 
+        public Task<PagedResultDto<SecretKeyDto>> SearchPagedAsync(int page, int perPage)
+        {
+            return db.SearchPagedAsync(page, perPage);
+        }
+
         public async Task UpdateDescriptionAsync(Guid id, string description)
         {
             await db.UpdateDescriptionAsync(id, description);

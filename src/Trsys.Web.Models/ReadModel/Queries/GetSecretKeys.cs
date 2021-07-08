@@ -6,5 +6,8 @@ namespace Trsys.Web.Models.ReadModel.Queries
 {
     public class GetSecretKeys : IRequest<List<SecretKeyDto>>
     {
+        public GetSecretKeys()
+        {
+        }
     }
 }
