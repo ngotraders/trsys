@@ -63,11 +63,9 @@ namespace Trsys.Web
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
+            var blobStorageConnection = Configuration.GetConnectionString("BlobStorageConnection");
             if (!string.IsNullOrEmpty(redisConnection))
             {
-                var redis = ConnectionMultiplexer.Connect(redisConnection);
-                services.AddDataProtection()
-                    .PersistKeysToStackExchangeRedis(redis, "Trsys.Web:DataProtection-Keys");
                 //Add distributed cache service backed by Redis cache
                 services.AddStackExchangeRedisCache(o =>
                 {
@@ -76,6 +74,10 @@ namespace Trsys.Web
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
             services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
+            if (!string.IsNullOrEmpty(sqlserverConnection))
+            {
+                services.AddDataProtection().PersistKeysToDbContext<TrsysContext>();
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

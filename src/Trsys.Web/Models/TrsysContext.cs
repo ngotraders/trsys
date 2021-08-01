@@ -1,14 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Trsys.Web.Models
 {
-    public class TrsysContext : DbContext
+    public class TrsysContext : DbContext, IDataProtectionKeyContext
     {
         public TrsysContext(DbContextOptions<TrsysContext> options)
             : base(options)
         {
         }
 
+        public virtual DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
         public virtual DbSet<Log> Logs { get; set; }
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Stream> Streams { get; set; }

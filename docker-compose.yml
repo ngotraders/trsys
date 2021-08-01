@@ -1,6 +1,10 @@
 version: "3.5"
 
 services:
+  storage:
+    image: mcr.microsoft.com/azure-storage/azurite
+    volumes:
+      - ./docker/azurite/data:/data
   nginx:
     image: nginx
     volumes:
@@ -25,10 +29,13 @@ services:
       - ./docker/app/.copyignore:/app/.copyignore
       - .:/workspace
     environment:
-      - ConnectionStrings:DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
-      - ConnectionStrings:RedisConnection=redis
+      - ConnectionStrings__DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
+      - ConnectionStrings__RedisConnection=redis
+      - ConnectionStrings__BlobStorageConnection=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://storage:10000/devstoreaccount1;QueueEndpoint=http://storage:10001/devstoreaccount1;
+      - Trsys.Web__DataContainerName=data
     depends_on:
       - db
+      - storage
       - redis
   app2:
     build:
@@ -40,10 +47,13 @@ services:
       - ./docker/app/.copyignore:/app/.copyignore
       - .:/workspace
     environment:
-      - ConnectionStrings:DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
-      - ConnectionStrings:RedisConnection=redis
+      - ConnectionStrings__DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db
+      - ConnectionStrings__RedisConnection=redis
+      - ConnectionStrings__BlobStorageConnection=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://storage:10000/devstoreaccount1;QueueEndpoint=http://storage:10001/devstoreaccount1;
+      - Trsys.Web__DataContainerName=data
     depends_on:
       - db
+      - storage
       - redis
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
