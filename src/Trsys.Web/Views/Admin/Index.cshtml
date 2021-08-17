@@ -72,8 +72,8 @@
             <div class="mb-3">
                 @if (Model.SecretKeysPage > 1)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
                 }
                 else
                 {
@@ -82,8 +82,8 @@
                 }
                 @if (Model.SecretKeysPage * Model.SecretKeysPerPage < Model.SecretKeysTotalCount)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
                 }
                 else
                 {
@@ -191,8 +191,8 @@
             <div class="mb-3">
                 @if (Model.SecretKeysPage > 1)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
                 }
                 else
                 {
@@ -201,8 +201,8 @@
                 }
                 @if (Model.SecretKeysPage * Model.SecretKeysPerPage < Model.SecretKeysTotalCount)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 10 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
+                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
                 }
                 else
                 {

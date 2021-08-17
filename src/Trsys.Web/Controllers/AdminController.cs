@@ -34,7 +34,7 @@ namespace Trsys.Web.Controllers
 
             var order = await mediator.Send(new GetOrderTextEntry());
             model.CacheOrderText = order?.Text;
-            var pagedResult = await mediator.Send(new GetSecretKeysWithPagination(page ?? 1, perPage ?? 10));
+            var pagedResult = await mediator.Send(new GetSecretKeysWithPagination(page ?? 1, perPage ?? 20));
             model.SecretKeys = pagedResult.List;
             model.SecretKeysTotalCount = pagedResult.TotalCount;
             model.SecretKeysPage = pagedResult.Page;
