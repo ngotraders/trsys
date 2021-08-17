@@ -139,7 +139,7 @@
                     ],
                     "properties": {
                         "repoUrl": "https://github.com/chameleonhead/trsys.git",
-                        "branch": "csharp",
+                        "branch": "main",
                         "isManualIntegration": true
                     }
                 }
