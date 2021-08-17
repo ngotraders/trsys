@@ -28,7 +28,7 @@ namespace Trsys.Web.Infrastructure.Logging
                 }
                 catch (Exception e)
                 {
-                    logger.LogTrace(e, "error {id}", id);
+                    logger.LogTrace(e, "error {id}: {message}", id, e.Message);
                     throw;
                 }
             }
@@ -44,12 +44,12 @@ namespace Trsys.Web.Infrastructure.Logging
                 }
                 catch (InvalidOperationException e)
                 {
-                    logger.LogDebug(e, "error {id}", id);
+                    logger.LogDebug(e, "error {id}: {message}", id, e.Message);
                     throw;
                 }
                 catch (Exception e)
                 {
-                    logger.LogWarning(e, "error {id}", id);
+                    logger.LogWarning(e, "error {id}: {message}", id, e.Message);
                     throw;
                 }
             }
