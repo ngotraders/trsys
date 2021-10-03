@@ -4,7 +4,7 @@ bool DEBUG = false;
 bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
-string Endpoint = "https://copy-trading-system.azurewebsites.net";
+string Endpoint = "https://copy-trading-system-2.azurewebsites.net";
 string Type = "Publisher";
 string Version = "20210609";
 
