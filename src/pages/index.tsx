@@ -21,10 +21,10 @@ const IndexPage = (props: IndexPageProps) => {
         <h2>ダウンロード(MT4用)</h2>
         <ul>
           <li>
-            <a href="/downloads/TrsysPublisher.ex4">配信用</a>
+            <a href="/downloads/TrsysPublisher2.ex4">配信用</a>
           </li>
           <li>
-            <a href="/downloads/TrsysSubscriber.ex4">受信用</a>
+            <a href="/downloads/TrsysSubscriber2.ex4">受信用</a>
           </li>
         </ul>
       </div>
@@ -32,10 +32,10 @@ const IndexPage = (props: IndexPageProps) => {
         <h2>ダウンロード(MT5用)</h2>
         <ul>
           <li>
-            <a href="/downloads/TrsysPublisher.ex5">配信用</a>
+            <a href="/downloads/TrsysPublisher2.ex5">配信用</a>
           </li>
           <li>
-            <a href="/downloads/TrsysSubscriber.ex5">受信用</a>
+            <a href="/downloads/TrsysSubscriber2.ex5">受信用</a>
           </li>
         </ul>
       </div>
