@@ -18,5 +18,6 @@ namespace Trsys.Web.ViewModels.Admin
         public int SecretKeysPage { get; set; }
         public int SecretKeysPerPage { get; set; }
         public string CacheOrderText { get; set; }
+        public string EaSiteUrl { get; set; }
     }
 }

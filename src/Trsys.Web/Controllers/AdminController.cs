@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -17,10 +18,12 @@ namespace Trsys.Web.Controllers
     public class AdminController : Controller
     {
         private readonly IMediator mediator;
+        private readonly IConfiguration configuration;
 
-        public AdminController(IMediator mediator)
+        public AdminController(IMediator mediator, IConfiguration configuration)
         {
             this.mediator = mediator;
+            this.configuration = configuration;
         }
 
         [HttpGet]
@@ -39,6 +42,7 @@ namespace Trsys.Web.Controllers
             model.SecretKeysTotalCount = pagedResult.TotalCount;
             model.SecretKeysPage = pagedResult.Page;
             model.SecretKeysPerPage = pagedResult.PerPage;
+            model.EaSiteUrl = configuration.GetValue<string>("Trsys.Web:EaSiteUrl");
             return View(model);
         }
 
