@@ -20,6 +20,7 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
         private readonly RedisKey ordersKey = RedisHelper.GetKey("OrderDatabase:Orders");
         private readonly RedisKey publishedOrdersKey = RedisHelper.GetKey("OrderDatabase:PublishedOrders");
         private readonly RedisKey entryKey = RedisHelper.GetKey("OrderDatabase:Entry");
+        private readonly RedisKey entryKeyV2 = RedisHelper.GetKey("OrderDatabase:EntryV2");
 
         public RedisCachedOrderDatabase(IConnectionMultiplexer connection, ITrsysReadModelContext db)
         {
@@ -32,17 +33,17 @@ namespace Trsys.Web.Infrastructure.ReadModel.Caching
             await UpdateCacheAsync();
         }
 
-        public async Task<OrdersTextEntry> FindEntryAsync()
+        public async Task<OrdersTextEntry> FindEntryAsync(string version)
         {
             var cache = connection.GetDatabase();
-            var value = await cache.StringGetAsync(entryKey);
+            var value = await cache.StringGetAsync(version == "v1" ? entryKey : entryKeyV2);
             if (value.HasValue)
             {
                 return JsonConvert.DeserializeObject<OrdersTextEntry>(value.ToString());
             }
             else
             {
-                var orderEntry = await db.FindEntryAsync();
+                var orderEntry = await db.FindEntryAsync(version);
                 await cache.StringSetAsync(entryKey, JsonConvert.SerializeObject(orderEntry));
                 return orderEntry;
             }

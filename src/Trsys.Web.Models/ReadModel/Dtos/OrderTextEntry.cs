@@ -22,6 +22,17 @@ namespace Trsys.Web.Models.ReadModel.Dtos
             };
         }
 
+        public static OrdersTextEntry CreateV2(List<PublishedOrder> orders)
+        {
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Time}:{o.Price}:{o.Lots}:{o.AccountBalance}"));
+            return new OrdersTextEntry
+            {
+                Hash = CalculateHash(responseText),
+                Text = responseText,
+                Tickets = orders.Select(o => o.TicketNo).ToArray(),
+            };
+        }
+
         private static string CalculateHash(string text)
         {
             var sha1 = System.Security.Cryptography.SHA1.Create();

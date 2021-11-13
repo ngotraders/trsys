@@ -84,7 +84,7 @@ namespace Trsys.Web.Controllers
         [RequireKeyType("Subscriber")]
         public async Task<IActionResult> GetOrders([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Secret-Token")] string token)
         {
-            var cacheEntry = await mediator.Send(new GetOrderTextEntry());
+            var cacheEntry = await mediator.Send(new GetOrderTextEntry("v2"));
             if (cacheEntry == null)
             {
                 throw new InvalidOperationException("Cache entry not found.");
@@ -118,7 +118,7 @@ namespace Trsys.Web.Controllers
             {
                 foreach (var item in text.Split("@"))
                 {
-                    var publishedOrder = PublishedOrder.Parse(item);
+                    var publishedOrder = PublishedOrder.ParseV2(item);
                     if (publishedOrder == null)
                     {
                         return BadRequest();

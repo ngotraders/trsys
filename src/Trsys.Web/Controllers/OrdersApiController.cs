@@ -31,7 +31,7 @@ namespace Trsys.Web.Controllers
         [RequireToken("Subscriber")]
         public async Task<IActionResult> GetOrders()
         {
-            var cacheEntry = await mediator.Send(new GetOrderTextEntry());
+            var cacheEntry = await mediator.Send(new GetOrderTextEntry("v1"));
             if (cacheEntry == null)
             {
                 throw new InvalidOperationException("Cache entry not found.");

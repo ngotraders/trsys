@@ -35,7 +35,7 @@ namespace Trsys.Web.Controllers
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
             }
 
-            var order = await mediator.Send(new GetOrderTextEntry());
+            var order = await mediator.Send(new GetOrderTextEntry("v2"));
             model.CacheOrderText = order?.Text;
             var pagedResult = await mediator.Send(new GetSecretKeysWithPagination(page ?? 1, perPage ?? 20));
             model.SecretKeys = pagedResult.List;

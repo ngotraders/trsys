@@ -31,9 +31,17 @@ namespace Trsys.Web.Infrastructure.ReadModel.Database
             await db.SaveChangesAsync();
         }
 
-        public async Task<OrdersTextEntry> FindEntryAsync()
+        public async Task<OrdersTextEntry> FindEntryAsync(string version)
         {
-            return OrdersTextEntry.Create(await SearchPublishedOrderAsync());
+            switch (version)
+            {
+                case "v1":
+                    return OrdersTextEntry.Create(await SearchPublishedOrderAsync());
+                case "v2":
+                    return OrdersTextEntry.CreateV2(await SearchPublishedOrderAsync());
+                default:
+                    throw new ArgumentException(null, nameof(version));
+            }
         }
 
         public async Task RemoveAsync(string id)
