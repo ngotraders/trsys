@@ -119,6 +119,7 @@ namespace Trsys.Web
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.UseInitialization(task);
             app.UseSession();
             app.UseRouting();

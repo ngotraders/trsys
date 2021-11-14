@@ -11,20 +11,20 @@
     </div>
 }
 
-<h1 class="mb-3">ログイン</h1>
+<h1 class="h2 mb-3 font-weight-bold">@ViewBag.Title</h1>
 
 <form method="post">
     <div style="max-width: 40rem">
         <div class="mb-2">
-            <label>ユーザー名</label>
-            <input type="text" name="Username" value="@Model.Username" />
+            <label class="form-label">ユーザー名</label>
+            <input class="form-control" type="text" name="Username" value="@Model.Username" />
         </div>
         <div class="mb-3">
-            <label>パスワード</label>
-            <input type="password" name="Password" value="@Model.Password" />
+            <label class="form-label">パスワード</label>
+            <input class="form-control" type="password" name="Password" value="@Model.Password" />
         </div>
         <div>
-            <button class="primary">ログイン</button>
+            <button class="btn btn-primary">ログイン</button>
         </div>
     </div>
 </form>
