@@ -53,7 +53,7 @@ const IndexPage = (props: IndexPageProps) => {
           <li>WebRequest を許可するURLリストにチェックを入れる</li>
           <li>
             +新しい URL を追加をダブルクリックし、
-            <code>https://copy-trading-system.azurewebsites.net</code>{" "}
+            <code>https://dev-copy-trading-system.azurewebsites.net</code>{" "}
             を入力する
           </li>
         </ol>
