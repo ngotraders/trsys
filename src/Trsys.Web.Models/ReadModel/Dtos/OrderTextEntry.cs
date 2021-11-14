@@ -24,7 +24,7 @@ namespace Trsys.Web.Models.ReadModel.Dtos
 
         public static OrdersTextEntry CreateV2(List<PublishedOrder> orders)
         {
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Time}:{o.Price}:{o.Lots}:{o.AccountBalance}"));
+            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Time}:{o.Price}:{o.Percentage}"));
             return new OrdersTextEntry
             {
                 Hash = CalculateHash(responseText),

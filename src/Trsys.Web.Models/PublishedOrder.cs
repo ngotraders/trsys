@@ -20,13 +20,15 @@ namespace Trsys.Web.Models
             set { _Lots = value.Normalize(); }
         }
         public long Time { get; set; }
-        
+
         private decimal _AccountBalance;
-        public decimal AccountBalance
+        public decimal BalanceInSymbol
         {
             get { return _AccountBalance; }
             set { _AccountBalance = value.Normalize(); }
         }
+
+        public decimal Percentage => BalanceInSymbol == 0 ? 0 : Lots / BalanceInSymbol;
 
         public static PublishedOrder Parse(string orderText)
         {
@@ -54,7 +56,7 @@ namespace Trsys.Web.Models
 
         public static PublishedOrder ParseV2(string orderText)
         {
-            if (!Regex.IsMatch(orderText, @"^\d+:[A-Z]+:[01]:\d+(\.\d+)?:\d+(\.\d+)?:\d+:\d+(\.\d+)?$"))
+            if (!Regex.IsMatch(orderText, @"^\d+:[A-Z]+:[01]:\d+:\d+(\.\d+)?:\d+(\.\d+)?:\d+(\.\d+)?$"))
             {
                 return null;
             }
@@ -62,19 +64,19 @@ namespace Trsys.Web.Models
             var ticketNo = splitted[0];
             var symbol = splitted[1];
             var orderType = (OrderType)int.Parse(splitted[2]);
-            var price = splitted[3];
-            var lots = splitted[4];
-            var time = splitted[5];
-            var accountBalance = splitted[6];
+            var time = splitted[3];
+            var price = splitted[4];
+            var lots = splitted[5];
+            var balanceInSymbol = splitted[6];
             return new PublishedOrder()
             {
                 TicketNo = int.Parse(ticketNo),
                 Symbol = symbol,
                 OrderType = orderType,
+                Time = string.IsNullOrEmpty(time) ? default : long.Parse(time),
                 Price = string.IsNullOrEmpty(price) ? default : decimal.Parse(price),
                 Lots = string.IsNullOrEmpty(lots) ? default : decimal.Parse(lots),
-                Time = string.IsNullOrEmpty(time) ? default : long.Parse(time),
-                AccountBalance = string.IsNullOrEmpty(price) ? default : decimal.Parse(accountBalance),
+                BalanceInSymbol = string.IsNullOrEmpty(price) ? default : decimal.Parse(balanceInSymbol),
             };
         }
     }

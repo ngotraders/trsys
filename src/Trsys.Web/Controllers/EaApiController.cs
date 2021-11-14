@@ -66,7 +66,7 @@ namespace Trsys.Web.Controllers
         [Route("api/ea/token/release")]
         [HttpPost]
         [Consumes("text/plain")]
-        public async Task<IActionResult> PostTokenRelease([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Ea-Type")] string keyType, string token)
+        public async Task<IActionResult> PostTokenRelease([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Ea-Type")] string keyType, [FromHeader(Name = "X-Secret-Token")] string token)
         {
             var secretKey = await mediator.Send(new FindByCurrentToken(token));
             if (secretKey == null)
