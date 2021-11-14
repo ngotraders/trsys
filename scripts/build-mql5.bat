@@ -1,4 +1,4 @@
-SET PATH=C:\Program Files\OANDA MetaTrader 5;%PATH
+SET PATH=C:\Program Files\MetaTrader 5;%PATH
 pushd %~dp0
 metaeditor64.exe /compile:"..\mql5\TrsysPublisher.mq5"
 move ..\mql5\TrsysPublisher.ex5 ..\static\downloads

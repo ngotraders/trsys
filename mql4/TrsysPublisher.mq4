@@ -4,14 +4,15 @@ bool DEBUG = false;
 bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
-string Endpoint = "https://copy-trading-system.azurewebsites.net";
+string Endpoint = "https://dev-copy-trading-system.azurewebsites.net";
 string Type = "Publisher";
-string Version = "20210609";
+string Version = "20211109";
 
-input double PercentOfFreeMargin = 98;
+input double PercentOfBalance = 100;
 input int Slippage = 10;
 
-double Percent = MathMax(0, MathMin(100, PercentOfFreeMargin));
+double DEFAULT_ORDER_PERCENTAGE = 0.98;
+double Percent = MathMax(0, MathMin(100, PercentOfBalance)) / 100;
 
 //+------------------------------------------------------------------+
 //| Custom classes                                                   |
@@ -227,6 +228,7 @@ struct PositionInfo {
    int order_type;
    double price_open;
    double volume;
+   double balance_in_symbol;
    datetime position_time;
    
    string ToString() {
@@ -253,12 +255,17 @@ class PositionManager {
    PendingOrderList m_opening_ticket_no_list;
    PendingOrderList m_closing_ticket_no_list;
 
-   double m_calculate_volume(string symbol, int order_type, double current_price) {
+   double m_calculate_volume(string symbol, int order_type, double current_price, double percentage) {
       double one_lot = 0;
       double step = 0;
       double account_free_margin = 0;
-      m_fetch_calculate_volume_params(symbol, order_type, current_price, one_lot, step, account_free_margin);
+      double account_balance = 0;
+      double order_percentage = percentage;
+      m_fetch_calculate_volume_params(symbol, order_type, current_price, one_lot, step, account_free_margin, account_balance);
       if (account_free_margin == 0) {
+         return 0;
+      }
+      if (account_balance == 0) {
          return 0;
       }
       if (one_lot == 0) {
@@ -269,20 +276,27 @@ class PositionManager {
          step = 1;
          m_logger.WriteLog("WARN", "CalculateVolume: Step is 0. using 1 as lot step, Symbol = " + symbol);
       }
-      double lots = MathFloor(account_free_margin * Percent / 100 / one_lot / step ) * step;
+      if (order_percentage == 0) {
+         order_percentage = DEFAULT_ORDER_PERCENTAGE * Percent;
+      } else {
+         order_percentage = order_percentage * Percent;
+      }
+      double lotsFree = MathFloor(account_free_margin / one_lot / step) * step;
+      double lots = MathFloor(account_balance * order_percentage / one_lot / step ) * step;
       m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step));
-      m_logger.WriteLog("DEBUG", "CalculateVolume: Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(Percent) + ", Calculated volume = " + DoubleToString(lots));
-      return lots;
+      m_logger.WriteLog("DEBUG", "CalculateVolume: Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(Percent) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+      return MathMin(lotsFree, lots);
    };
 #ifdef __MQL5__
-   void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin) {
+   void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin, double &account_balance) {
       ENUM_ORDER_TYPE mt5_order_type = m_convert_to_local_order_type(order_type);
       // fetch one lot cost
       if (!OrderCalcMargin(mt5_order_type, symbol, 1, current_price, one_lot)) {
          m_logger.WriteLog("DEBUG", "OrderCalcMargin returned false");
       }
       step = SymbolInfoDouble(symbol,SYMBOL_VOLUME_STEP);
-      account_free_margin = AccountInfoDouble(ACCOUNT_FREEMARGIN);
+      account_free_margin = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
+      account_balance = AccountInfoDouble(ACCOUNT_BALANCE);
    };
    string m_find_symbol(string symbol_str) {
       for (int i = 0; i < SymbolsTotal(true); i++) {
@@ -430,6 +444,12 @@ class PositionManager {
          info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
          info.volume = PositionGetDouble(POSITION_VOLUME);
          info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
+         double one_lot;
+         if (OrderCalcMargin((ENUM_ORDER_TYPE) info.order_type, info.symbol, 1, info.price_open, one_lot)) {
+            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
+         } else {
+            info.balance_in_symbol = 0;
+         }
          list.Add(info);
       }
       if (list.Length() == 0) {
@@ -494,13 +514,14 @@ class PositionManager {
    };
 #endif
 #ifdef __MQL4__
-   void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin) {
+   void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin, double &account_balance) {
       if (MarketInfo(symbol, MODE_MARGINREQUIRED) < 0) {
          RefreshRates();
       }
       one_lot             = MarketInfo(symbol, MODE_MARGINREQUIRED); //!-lot cost
       step                = MarketInfo(symbol, MODE_LOTSTEP);        // Step in volume changing
       account_free_margin = AccountFreeMargin();                     // Free margin
+      account_balance     = AccountBalance();                        // Total Balance
    };
    string m_find_symbol(string symbol_str) {
       for (int i = 0; i < SymbolsTotal(true); i++) {
@@ -607,6 +628,13 @@ class PositionManager {
          info.price_open = OrderOpenPrice();
          info.volume = OrderLots();
          info.position_time = (datetime)OrderOpenTime();
+         double one_lot;
+         if (MarketInfo(info.symbol, MODE_MARGINREQUIRED) < 0) {
+            one_lot = MarketInfo(info.symbol, MODE_MARGINREQUIRED);
+            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
+         } else {
+            info.balance_in_symbol = 0;
+         }
          list.Add(info);
       }
       if (list.Length() == 0) {
@@ -660,7 +688,7 @@ public:
    int GetPositions(PositionInfo &arr_positions[], bool includeAll = false) {
       return m_get_positions(arr_positions, includeAll);
    };
-   bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type) {
+   bool CreatePosition(long server_ticket_no, string server_symbol, int server_order_type, double percentage) {
       if (m_opening_ticket_no_list.ExistsServerTicket(server_ticket_no)) {
          return true;
       }
@@ -681,7 +709,7 @@ public:
          return true;
       }
 
-      double order_lots = m_calculate_volume(symbol, order_type, order_price);
+      double order_lots = m_calculate_volume(symbol, order_type, order_price, percentage);
       double min_lots = m_get_min_volume(symbol); // Min. amount of lots
       double max_lots = m_get_max_volume(symbol); // Max amount of lotsr
       if (order_lots == 0) {
@@ -796,26 +824,32 @@ struct CopyTradeInfo {
    long server_ticket_no;
    string symbol;
    int order_type;
+   long timestamp;
+   double price;
+   double percentage;
    CopyTradeInfo() { 
       server_ticket_no = 0;
       symbol = "";
       order_type = -1;
    };
-   static CopyTradeInfo Create(long server_ticket_no, string symbol, int order_type) {
+   static CopyTradeInfo Create(long server_ticket_no, string symbol, int order_type, long timestamp, double price, double percentage) {
       CopyTradeInfo info;
       info.server_ticket_no = server_ticket_no;
       info.symbol = symbol;
       info.order_type = order_type;
+      info.timestamp = timestamp;
+      info.price = price;
+      info.percentage = percentage;
       return info;
    };
    static CopyTradeInfo Parse(string copy_trade_string, string &parse_error) {
       string splittedValues[];
-      if (StringSplit(copy_trade_string, StringGetCharacter(":", 0), splittedValues) < 3) {
+      if (StringSplit(copy_trade_string, StringGetCharacter(":", 0), splittedValues) != 6) {
          parse_error = "Invalid Data: " + copy_trade_string;
          CopyTradeInfo info;
          return info;
       }
-      return Create((long) StringToInteger(splittedValues[0]), splittedValues[1], (int) StringToInteger(splittedValues[2]));
+      return Create((long) StringToInteger(splittedValues[0]), splittedValues[1], (int) StringToInteger(splittedValues[2]), StringToInteger(splittedValues[3]), StringToDouble(splittedValues[4]), StringToDouble(splittedValues[5]));
    };
    
    string ToString() {
@@ -926,7 +960,7 @@ class RemoteOrderState {
       for (int i = 0; i < arr_position_count; i++) {
          PositionInfo info = arr_position[i];
          if (m_index_of(info.server_ticket_no) >= 0) continue;
-         m_orders.Add(CopyTradeInfo::Create(info.server_ticket_no, info.symbol, info.order_type));
+         m_orders.Add(CopyTradeInfo::Create(info.server_ticket_no, info.symbol, info.order_type, 0, 0, 0));
       }
    };
    int m_index_of(long server_ticket_no) {
@@ -1240,7 +1274,7 @@ class TrsysClient {
       string response_headers;
       string response_data;
       int error_code;
-      int res = m_send_web_request(m_post_secret_key_status, "POST", Endpoint + "/api/token", request_headers, request_data, response_headers, response_data, error_code);
+      int res = m_send_web_request(m_post_secret_key_status, "POST", Endpoint + "/api/ea/token/generate", request_headers, request_data, response_headers, response_data, error_code);
       if(res != 200) {
          m_state.SetKeyIsValid(false);
          m_secret_token = NULL;
@@ -1259,7 +1293,7 @@ class TrsysClient {
       string response_data;
       int error_code;
    
-      int res = m_send_web_request(m_post_token_release_status, "POST", Endpoint + "/api/token/" + m_secret_token + "/release", request_headers, request_data, response_headers, response_data, error_code);
+      int res = m_send_web_request(m_post_token_release_status, "POST", Endpoint + "/api/ea/token/release", request_headers, request_data, response_headers, response_data, error_code);
       if(res != 200) {
          return -1;
       }
@@ -1342,7 +1376,7 @@ public:
          request_headers += "\r\nIf-None-Match: " + m_get_orders_etag;
       }
 
-      int res = m_send_web_request(m_get_orders_status, "GET", Endpoint + "/api/orders", request_headers, request_data, response_headers, response_data, error_code);
+      int res = m_send_web_request(m_get_orders_status, "GET", Endpoint + "/api/ea/orders", request_headers, request_data, response_headers, response_data, error_code);
       if (res == 304) {
          response = m_get_orders_etag_response;
          return 200;
@@ -1385,7 +1419,7 @@ public:
       string response_data;
       int error_code;
 
-      int res = m_send_web_request(m_post_orders_status, "POST", Endpoint + "/api/orders", request_headers, request_data, response_headers, response_data, error_code);
+      int res = m_send_web_request(m_post_orders_status, "POST", Endpoint + "/api/ea/orders", request_headers, request_data, response_headers, response_data, error_code);
       if(res != 200) {
          return -1;
       }
@@ -1416,7 +1450,7 @@ public:
          request_data = request_data + logs[i] + "\r\n";
       }
    
-      int res = m_send_web_request(m_post_log_status, "POST", Endpoint + "/api/logs", request_headers, request_data, response_headers, response_data, error_code);
+      int res = m_send_web_request(m_post_log_status, "POST", Endpoint + "/api/ea/logs", request_headers, request_data, response_headers, response_data, error_code);
       if(res != 202) {
          return -1;
       }
@@ -2127,7 +2161,7 @@ void OnTimer()
          if (send_data != NULL) {
             send_data += "@";
          }
-         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(arr_positions[i].volume)+":"+StringFormat("%i",arr_positions[i].position_time);
+         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(arr_positions[i].volume)+":"+DoubleToString(arr_positions[i].balance_in_symbol);
       }
       int res = client.PostOrders(send_data);
       if (res == 200) {
