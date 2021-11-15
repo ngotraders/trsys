@@ -473,6 +473,12 @@ class PositionManager {
             info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
             info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
             info.volume = PositionGetDouble(POSITION_VOLUME);
+            double one_lot;
+            if (OrderCalcMargin((ENUM_ORDER_TYPE) info.order_type, info.symbol, 1, info.price_open, one_lot)) {
+               info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
+            } else {
+               info.balance_in_symbol = 0;
+            }
             return true;
          }
          Sleep(10);
@@ -628,12 +634,10 @@ class PositionManager {
          info.price_open = OrderOpenPrice();
          info.volume = OrderLots();
          info.position_time = (datetime)OrderOpenTime();
-         double one_lot;
          if (MarketInfo(info.symbol, MODE_MARGINREQUIRED) < 0) {
-            one_lot = MarketInfo(info.symbol, MODE_MARGINREQUIRED);
-            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
-         } else {
             info.balance_in_symbol = 0;
+         } else {
+            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
          }
          list.Add(info);
       }
@@ -658,6 +662,11 @@ class PositionManager {
             info.price_open = OrderOpenPrice();
             info.volume = OrderLots();
             info.position_time = (datetime)OrderOpenTime();
+            if (MarketInfo(info.symbol, MODE_MARGINREQUIRED) < 0) {
+               info.balance_in_symbol = 0;
+            } else {
+               info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
+            }
             return true;
          }
          Sleep(10);
@@ -1287,7 +1296,7 @@ class TrsysClient {
    
    int m_post_token_release()
    {
-      string request_headers = m_generate_header("POST", false);
+      string request_headers = m_generate_header("POST", true);
       string request_data;
       string response_headers;
       string response_data;
@@ -2163,6 +2172,7 @@ void OnTimer()
          }
          send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(arr_positions[i].volume)+":"+DoubleToString(arr_positions[i].balance_in_symbol);
       }
+      Print(send_data);
       int res = client.PostOrders(send_data);
       if (res == 200) {
          for (int i = 0; i < localDiff.ClosedCount(); i++) {
