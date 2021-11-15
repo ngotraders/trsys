@@ -2142,6 +2142,7 @@ void OnDeinit(const int reason)
    delete client;
    delete state;
    delete logger;
+   Comment("");
 }
 //+------------------------------------------------------------------+
 //| Expert tick function                                             |
