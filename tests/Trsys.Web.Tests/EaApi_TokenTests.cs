@@ -13,17 +13,20 @@ using Trsys.Web.Models.WriteModel.Notifications;
 namespace Trsys.Web.Tests
 {
     [TestClass]
-    public class TokenApiTests
+    public class EaApi_TokenTests
     {
         private const string VALID_KEY = "VALID_KEY";
-        private const string VALID_VERSION = "20210331";
+        private const string VALID_VERSION = "20211109";
 
         [TestMethod]
         public async Task PostApiToken_should_return_ok_given_valid_secret_key()
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             using (var scope = server.Services.CreateScope())
             {
@@ -31,7 +34,7 @@ namespace Trsys.Web.Tests
                 var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
                 await mediator.Send(new GenerateSecretTokenCommand(id));
             }
-            var res = await client.PostAsync("/api/token", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             using (var scope = server.Services.CreateScope())
@@ -47,9 +50,12 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
-            var res = await client.PostAsync("/api/token", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+
+            var res = await client.PostAsync("/api/ea/token/generate", new StringContent("INVALID_SECRET_KEY", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
         }
@@ -59,7 +65,10 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             using (var scope = server.Services.CreateScope())
             {
@@ -67,7 +76,7 @@ namespace Trsys.Web.Tests
                 await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null));
             }
 
-            var res = await client.PostAsync("/api/token", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
         }
@@ -77,7 +86,10 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             using (var scope = server.Services.CreateScope())
             {
@@ -87,7 +99,7 @@ namespace Trsys.Web.Tests
                 await mediator.Publish(new SecretKeyConnected(id));
             }
 
-            var res = await client.PostAsync("/api/token", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("SecretKeyInUse", await res.Content.ReadAsStringAsync());
         }
@@ -97,7 +109,6 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
             var token = default(string);
             using (var scope = server.Services.CreateScope())
@@ -108,7 +119,12 @@ namespace Trsys.Web.Tests
                 await mediator.Publish(new SecretKeyConnected(id));
             }
 
-            var res = await client.PostAsync("/api/token/" + token + "/release", new StringContent("", Encoding.UTF8, "text/plain"));
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+
+            var res = await client.PostAsync("/api/ea/token/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             using (var scope = server.Services.CreateScope())
@@ -123,9 +139,19 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
 
-            var res = await client.PostAsync("/api/token/INVALID_TOKEN/release", new StringContent("", Encoding.UTF8, "text/plain"));
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Secret-Token", "INVALID_TOKEN");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var mediator = server.Services.GetRequiredService<IMediator>();
+                var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            }
+
+            var res = await client.PostAsync("/api/ea/token/release", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidToken", await res.Content.ReadAsStringAsync());
         }

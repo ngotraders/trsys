@@ -12,10 +12,10 @@ using Trsys.Web.Models.WriteModel.Commands;
 namespace Trsys.Web.Tests
 {
     [TestClass]
-    public class OrderApiTests
+    public class EaApi_OrdersTests
     {
         private const string VALID_KEY = "VALID_KEY";
-        private const string VALID_VERSION = "20210331";
+        private const string VALID_VERSION = "20211109";
 
         [TestMethod]
         public async Task GetApiOrders_should_return_ok_given_no_data_exists()
@@ -27,10 +27,12 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
-            var res = await client.GetAsync("/api/orders");
+            var res = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual("", await res.Content.ReadAsStringAsync());
         }
@@ -45,23 +47,25 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             await mediator.Send(new PublishOrderCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.Buy,
-                    Price = 1,
-                    Lots = 2,
                     Time = 1617271883,
+                    Price = 1,
+                    Percentage = 0.1m,
                 }
             }));
 
-            var res = await client.GetAsync("/api/orders");
+            var res = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1:2:1617271883", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1617271883:1:0.1", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -74,31 +78,33 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             await mediator.Send(new PublishOrderCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.Buy,
-                    Price = 1.2m,
-                    Lots = 2.2m,
                     Time = 1617271883,
+                    Price = 1.2m,
+                    Percentage = 0.4m,
                 },
                 new PublishedOrder() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.Sell,
-                    Price = 0,
-                    Lots = 0,
                     Time = 1617271884,
+                    Price = 0,
+                    Percentage = 0.5m,
                 }
             }));
 
-            var res = await client.GetAsync("/api/orders");
+            var res = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1.2:2.2:1617271883@2:EURUSD:1:0:0:1617271884", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1617271883:1.2:0.4@2:EURUSD:1:1617271884:0:0.5", await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -111,40 +117,42 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             await mediator.Send(new PublishOrderCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
                     OrderType = OrderType.Buy,
-                    Price = 1,
-                    Lots = 2,
                     Time = 1617271872,
+                    Price = 1,
+                    Percentage = 0.4m,
                 },
                 new PublishedOrder() {
                     TicketNo = 2,
                     Symbol = "EURUSD",
                     OrderType = OrderType.Sell,
-                    Price = 180,
-                    Lots = 20,
                     Time = 1617271873,
+                    Price = 180,
+                    Percentage = 0.4m,
                 }
             }));
 
-            var res1 = await client.GetAsync("/api/orders");
+            var res1 = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.OK, res1.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1:2:1617271872@2:EURUSD:1:180:20:1617271873", await res1.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1617271872:1:0.4@2:EURUSD:1:1617271873:180:0.4", await res1.Content.ReadAsStringAsync());
 
             client.DefaultRequestHeaders.Add("If-None-Match", "\"INVALID_TAG\"");
-            var res2 = await client.GetAsync("/api/orders");
+            var res2 = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
-            Assert.AreEqual("1:USDJPY:0:1:2:1617271872@2:EURUSD:1:180:20:1617271873", await res2.Content.ReadAsStringAsync());
+            Assert.AreEqual("1:USDJPY:0:1617271872:1:0.4@2:EURUSD:1:1617271873:180:0.4", await res2.Content.ReadAsStringAsync());
             Assert.AreEqual(res1.Headers.ETag, res2.Headers.ETag);
 
             client.DefaultRequestHeaders.Add("If-None-Match", res2.Headers.ETag.Tag);
-            var res3 = await client.GetAsync("/api/orders");
+            var res3 = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.NotModified, res3.StatusCode);
         }
 
@@ -153,9 +161,16 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", "InvalidToken");
-            var res = await client.GetAsync("/api/orders");
+
+            var res = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
         }
 
@@ -169,10 +184,12 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", "20210330");
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", "20210330");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.GetAsync("/api/orders");
+            var res = await client.GetAsync("/api/ea/orders");
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
             Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
         }
@@ -187,10 +204,12 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var orders = await mediator.Send(new GetPublishedOrders());
@@ -207,10 +226,12 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var orders = await mediator.Send(new GetPublishedOrders());
@@ -219,9 +240,9 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(1, orders[0].TicketNo);
             Assert.AreEqual("USDJPY", orders[0].Symbol);
             Assert.AreEqual(OrderType.Buy, orders[0].OrderType);
-            Assert.AreEqual(1, orders[0].Price);
-            Assert.AreEqual(2, orders[0].Lots);
-            Assert.AreEqual(3, orders[0].Time);
+            Assert.AreEqual(1, orders[0].Time);
+            Assert.AreEqual(2, orders[0].Price);
+            Assert.AreEqual(3, orders[0].Percentage);
         }
 
         [TestMethod]
@@ -234,10 +255,12 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:0.1:1.2:1@2:EURUSD:1:1.2:2.00:100", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY:0:1:0.2:0.3@2:EURUSD:1:100:2.00:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var orders = await mediator.Send(new GetPublishedOrders());
@@ -249,9 +272,16 @@ namespace Trsys.Web.Tests
         {
             var server = TestHelper.CreateServer();
             var client = server.CreateClient();
-            client.DefaultRequestHeaders.Add("Version", VALID_VERSION);
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", "InvalidToken");
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:2@2:EURUSD:1:0.023", Encoding.UTF8, "text/plain"));
+
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY:0:1:0.2:0.3@2:EURUSD:1:100:2.00:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.Unauthorized, res.StatusCode);
         }
 
@@ -265,11 +295,13 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
             var token = await mediator.Send(new GenerateSecretTokenCommand(id));
 
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/orders", new StringContent("1:USDJPY:0:120.23@2:EURUSD:1:0.0001", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY:0:1:0.2:0.3@2:EURUSD:1:100:2.00:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
-            Assert.AreEqual("InvalidVersion", await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("X-Ea-Version is not set.", await res.Content.ReadAsStringAsync());
         }
     }
 }

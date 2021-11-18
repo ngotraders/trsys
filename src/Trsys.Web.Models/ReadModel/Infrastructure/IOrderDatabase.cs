@@ -10,7 +10,7 @@ namespace Trsys.Web.Models.ReadModel.Infrastructure
         Task AddAsync(OrderDto order);
         Task RemoveAsync(string id);
         Task RemoveBySecretKeyAsync(Guid id);
-        Task<OrdersTextEntry> FindEntryAsync(string version);
+        Task<OrdersTextEntry> FindEntryAsync();
         Task<List<OrderDto>> SearchAsync();
         Task<List<PublishedOrder>> SearchPublishedOrderAsync();
     }

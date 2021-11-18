@@ -13,7 +13,6 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
     {
         private readonly BlockingTaskQueue queue = new();
         private OrdersTextEntry Entry = OrdersTextEntry.Create(new List<PublishedOrder>());
-        private OrdersTextEntry EntryV2 = OrdersTextEntry.CreateV2(new List<PublishedOrder>());
 
         private readonly List<OrderDto> All = new();
         private readonly Dictionary<string, OrderDto> ById = new();
@@ -36,7 +35,6 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                     }
                     list.Add(order);
                     Entry = OrdersTextEntry.Create(List);
-                    EntryV2 = OrdersTextEntry.CreateV2(List);
                 }
             });
 
@@ -56,7 +54,6 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                         list.Remove(item);
                     }
                     Entry = OrdersTextEntry.Create(List);
-                    EntryV2 = OrdersTextEntry.CreateV2(List);
                 }
             });
         }
@@ -75,22 +72,13 @@ namespace Trsys.Web.Infrastructure.ReadModel.InMemory
                         ByTicketNo.Remove(item.TicketNo);
                     }
                     Entry = OrdersTextEntry.Create(List);
-                    EntryV2 = OrdersTextEntry.CreateV2(List);
                 }
             });
         }
 
-        public Task<OrdersTextEntry> FindEntryAsync(string version)
+        public Task<OrdersTextEntry> FindEntryAsync()
         {
-            switch (version)
-            {
-                case "v1":
-                    return Task.FromResult(Entry);
-                case "v2":
-                    return Task.FromResult(EntryV2); 
-                default:
-                    throw new ArgumentException(null, nameof(version));
-            }
+            return Task.FromResult(Entry);
         }
 
         public Task<List<OrderDto>> SearchAsync()

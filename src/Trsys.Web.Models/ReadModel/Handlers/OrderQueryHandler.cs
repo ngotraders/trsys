@@ -47,7 +47,7 @@ namespace Trsys.Web.Models.ReadModel.Handlers
 
         public Task<OrdersTextEntry> Handle(GetOrderTextEntry request, CancellationToken cancellationToken = default)
         {
-            return db.FindEntryAsync(request.Version);
+            return db.FindEntryAsync();
         }
 
         public Task<List<OrderDto>> Handle(GetOrders request, CancellationToken cancellationToken = default)

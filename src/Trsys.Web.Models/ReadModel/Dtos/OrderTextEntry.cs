@@ -13,17 +13,6 @@ namespace Trsys.Web.Models.ReadModel.Dtos
 
         public static OrdersTextEntry Create(List<PublishedOrder> orders)
         {
-            var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Price}:{o.Lots}:{o.Time}"));
-            return new OrdersTextEntry
-            {
-                Hash = CalculateHash(responseText),
-                Text = responseText,
-                Tickets = orders.Select(o => o.TicketNo).ToArray(),
-            };
-        }
-
-        public static OrdersTextEntry CreateV2(List<PublishedOrder> orders)
-        {
             var responseText = string.Join("@", orders.Select(o => $"{o.TicketNo}:{o.Symbol}:{(int)o.OrderType}:{o.Time}:{o.Price}:{o.Percentage}"));
             return new OrdersTextEntry
             {

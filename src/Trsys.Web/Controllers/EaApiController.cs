@@ -19,10 +19,10 @@ namespace Trsys.Web.Controllers
     [ApiController]
     public class EaApiController : ControllerBase
     {
-        private readonly ILogger<LogsApiController> logger;
+        private readonly ILogger<EaApiController> logger;
         private readonly IMediator mediator;
 
-        public EaApiController(ILogger<LogsApiController> logger, IMediator mediator)
+        public EaApiController(ILogger<EaApiController> logger, IMediator mediator)
         {
             this.logger = logger;
             this.mediator = mediator;
@@ -84,7 +84,7 @@ namespace Trsys.Web.Controllers
         [RequireKeyType("Subscriber")]
         public async Task<IActionResult> GetOrders([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Secret-Token")] string token)
         {
-            var cacheEntry = await mediator.Send(new GetOrderTextEntry("v2"));
+            var cacheEntry = await mediator.Send(new GetOrderTextEntry());
             if (cacheEntry == null)
             {
                 throw new InvalidOperationException("Cache entry not found.");
@@ -118,7 +118,7 @@ namespace Trsys.Web.Controllers
             {
                 foreach (var item in text.Split("@"))
                 {
-                    var publishedOrder = PublishedOrder.ParseV2(item);
+                    var publishedOrder = PublishedOrder.Parse(item);
                     if (publishedOrder == null)
                     {
                         return BadRequest();
