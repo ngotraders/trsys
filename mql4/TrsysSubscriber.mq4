@@ -287,8 +287,7 @@ class PositionManager {
       }
       double lotsFree = MathFloor(account_free_margin / one_lot / step) * step;
       double lots = MathFloor(account_balance * order_percentage / one_lot / step ) * step;
-      m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step));
-      m_logger.WriteLog("DEBUG", "CalculateVolume: Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(Percent) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+      m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(order_percentage) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
       return MathMin(lotsFree, lots);
    };
 #ifdef __MQL5__
