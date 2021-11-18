@@ -8,11 +8,11 @@ string Endpoint = "https://dev-copy-trading-system.azurewebsites.net";
 string Type = "Publisher";
 string Version = "20211109";
 
-input double PercentOfBalance = 100;
-input int Slippage = 10;
+input double OrderPercentage = 98;
+int Slippage = 10;
 
 double DEFAULT_ORDER_PERCENTAGE = 0.98;
-double Percent = MathMax(0, MathMin(100, PercentOfBalance)) / 100;
+double Percent = MathMax(0, MathMin(100, OrderPercentage)) / 100;
 
 //+------------------------------------------------------------------+
 //| Custom classes                                                   |
@@ -134,7 +134,11 @@ class EaState {
          Comment("Trsys" + Type + ": シークレットキーが異常です。");
          return;
       }
-      Comment("Trsys" + Type + ": 正常");
+      if (Type == "Publisher") {
+         Comment("Trsys" + Type + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
+      } else {
+         Comment("Trsys" + Type + ": 正常");
+      }
    };
 public:
    EaState() {
@@ -226,10 +230,10 @@ struct PositionInfo {
    long local_ticket_no;
    string symbol;
    int order_type;
+   datetime position_time;
    double price_open;
    double volume;
-   double balance_in_symbol;
-   datetime position_time;
+   double percentage;
    
    string ToString() {
       return "POSITION:" + IntegerToString(server_ticket_no) + "/" + IntegerToString(local_ticket_no) + "/" + symbol + "/" + IntegerToString(order_type);
@@ -441,14 +445,14 @@ class PositionManager {
          info.local_ticket_no = local_ticket_no;
          info.symbol = PositionGetString(POSITION_SYMBOL);
          info.order_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
+         info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
          info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
          info.volume = PositionGetDouble(POSITION_VOLUME);
-         info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
          double one_lot;
          if (OrderCalcMargin((ENUM_ORDER_TYPE) info.order_type, info.symbol, 1, info.price_open, one_lot)) {
-            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
+            info.percentage = info.volume / AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
          } else {
-            info.balance_in_symbol = 0;
+            info.percentage = 0;
          }
          list.Add(info);
       }
@@ -470,14 +474,14 @@ class PositionManager {
             info.local_ticket_no = PositionGetInteger(POSITION_TICKET);
             info.symbol = PositionGetString(POSITION_SYMBOL);
             info.order_type = m_convert_from_position_type((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE));
-            info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
             info.position_time = (datetime)PositionGetInteger(POSITION_TIME);
+            info.price_open = PositionGetDouble(POSITION_PRICE_OPEN);
             info.volume = PositionGetDouble(POSITION_VOLUME);
             double one_lot;
             if (OrderCalcMargin((ENUM_ORDER_TYPE) info.order_type, info.symbol, 1, info.price_open, one_lot)) {
-               info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
+               info.percentage = info.volume / AccountInfoDouble(ACCOUNT_BALANCE) / one_lot;
             } else {
-               info.balance_in_symbol = 0;
+               info.percentage = 0;
             }
             return true;
          }
@@ -631,13 +635,13 @@ class PositionManager {
          info.local_ticket_no = OrderTicket();
          info.symbol = OrderSymbol();
          info.order_type = m_convert_from_position_type((ENUM_ORDER_TYPE)OrderType());
+         info.position_time = (datetime)OrderOpenTime();
          info.price_open = OrderOpenPrice();
          info.volume = OrderLots();
-         info.position_time = (datetime)OrderOpenTime();
          if (MarketInfo(info.symbol, MODE_MARGINREQUIRED) < 0) {
-            info.balance_in_symbol = 0;
+            info.percentage = 0;
          } else {
-            info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
+            info.percentage = info.volume / AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
          }
          list.Add(info);
       }
@@ -659,13 +663,13 @@ class PositionManager {
             info.local_ticket_no = OrderTicket();
             info.symbol = OrderSymbol();
             info.order_type = m_convert_from_position_type((ENUM_ORDER_TYPE)OrderType());
+            info.position_time = (datetime)OrderOpenTime();
             info.price_open = OrderOpenPrice();
             info.volume = OrderLots();
-            info.position_time = (datetime)OrderOpenTime();
             if (MarketInfo(info.symbol, MODE_MARGINREQUIRED) < 0) {
-               info.balance_in_symbol = 0;
+               info.percentage = 0;
             } else {
-               info.balance_in_symbol = AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
+               info.percentage = info.volume / AccountInfoDouble(ACCOUNT_BALANCE) / MarketInfo(info.symbol, MODE_MARGINREQUIRED);
             }
             return true;
          }
@@ -2171,9 +2175,8 @@ void OnTimer()
          if (send_data != NULL) {
             send_data += "@";
          }
-         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(arr_positions[i].volume)+":"+DoubleToString(arr_positions[i].balance_in_symbol);
+         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(Percent);
       }
-      Print(send_data);
       int res = client.PostOrders(send_data);
       if (res == 200) {
          for (int i = 0; i < localDiff.ClosedCount(); i++) {
