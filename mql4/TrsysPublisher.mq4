@@ -120,6 +120,7 @@ class EaState {
    bool m_ea_enabled;
    bool m_has_server_connection;
    bool m_key_is_valid;
+   string m_env;
    long m_start_time;
    void m_update_comment() {
       if (!m_ea_enabled) {
@@ -130,14 +131,15 @@ class EaState {
          Comment("Trsys" + Type + ": サーバーと通信できません。");
          return;
       }
+      string envText = StringFind(m_env, "Development") >= 0 ? "<検証環境>" : "";
       if (!m_key_is_valid) {
-         Comment("Trsys" + Type + ": シークレットキーが異常です。");
+         Comment("Trsys" + Type + envText + ": シークレットキーが異常です。");
          return;
       }
       if (Type == "Publisher") {
-         Comment("Trsys" + Type + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
+         Comment("Trsys" + Type + envText + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
       } else {
-         Comment("Trsys" + Type + ": 正常");
+         Comment("Trsys" + Type + envText + ": 正常" + envText);
       }
    };
 public:
@@ -147,17 +149,28 @@ public:
       m_key_is_valid = false;
    };
    bool IsEaEnabled() {
-      m_ea_enabled = MQLInfoInteger(MQL_TRADE_ALLOWED) == 1 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) == 1 && AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) == 1 && TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) == 1;
-      m_update_comment();
+      bool ea_enabled = MQLInfoInteger(MQL_TRADE_ALLOWED) == 1 && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) == 1 && AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) == 1 && TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) == 1;
+      if (m_ea_enabled != ea_enabled) {
+         m_ea_enabled = ea_enabled;
+         m_update_comment();
+      }
       return m_ea_enabled;
    };
    void SetServerConnection(bool has_server_connection) {
-      m_has_server_connection = has_server_connection;
-      m_update_comment();
+      if (m_has_server_connection != has_server_connection) {
+         m_has_server_connection = has_server_connection;
+         m_update_comment();
+      }
    };
    void SetKeyIsValid(bool key_is_valid) {
       m_key_is_valid = key_is_valid;
       m_update_comment();
+   };
+   void SetEnvironment(string env) {
+      if (m_env != env) {
+         m_env = env;
+         m_update_comment();
+      }
    };
    void Begin() {
       if (PERFORMANCE) {
@@ -1332,6 +1345,24 @@ class TrsysClient {
          status.SetErrorCode(error_code);
          return res;
       }
+      string tmp_header = response_headers;
+      while (tmp_header != "") {
+         string line;
+         int eol_pos = StringFind(tmp_header, "\r\n");
+         if (eol_pos < 0) {
+            line = tmp_header;
+            tmp_header = "";
+         } else {
+            line = StringSubstr(tmp_header, 0, eol_pos);
+            tmp_header = StringSubstr(tmp_header, eol_pos + 2);
+         }
+         if (StringCompare(StringSubstr(line, 0, 14), "X-Environment:", false) == 0) {
+            string env = StringSubstr(line, 14);
+            StringTrimRight(env);
+            StringTrimLeft(env);
+            m_state.SetEnvironment(env);
+         }
+      }
       if (res > 500) {
          m_state.SetServerConnection(false);
       } else {
@@ -1340,10 +1371,12 @@ class TrsysClient {
       error_code = -1;
       status.SetErrorCode(error_code);
       status.SetStatusCode(res);
-      if (res == 401) {
+      if (res >= 400) {
          m_state.SetKeyIsValid(false);
          m_secret_token = NULL;
          return res;
+      } else {
+         m_state.SetKeyIsValid(true);
       }
       response_data_string = CharArrayToString(response_data, 0, WHOLE_ARRAY, CP_UTF8);
       return res;
