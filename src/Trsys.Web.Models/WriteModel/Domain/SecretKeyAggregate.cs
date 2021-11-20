@@ -20,17 +20,17 @@ namespace Trsys.Web.Models.WriteModel.Domain
 
         public string Token => _token;
 
-        private HashSet<int> _publishedOrderTickets = new HashSet<int>();
-        private HashSet<int> _subscribedOrderTickets = new HashSet<int>();
+        private readonly HashSet<int> _publishedOrderTickets = new();
+        private readonly HashSet<int> _subscribedOrderTickets = new();
 
         public void Apply(SecretKeyCreated e) => _key = e.Key;
-        public void Apply(SecretKeyApproved e) => _approved = true;
-        public void Apply(SecretKeyRevoked e) => _approved = false;
+        public void Apply(SecretKeyApproved _) => _approved = true;
+        public void Apply(SecretKeyRevoked _) => _approved = false;
         public void Apply(SecretKeyKeyTypeChanged e) => _keyType = e.KeyType;
         public void Apply(SecretKeyDescriptionChanged e) => _description = e.Description;
         public void Apply(SecretKeyTokenGenerated e) => _token = e.Token;
-        public void Apply(SecretKeyTokenInvalidated e) => _token = null;
-        public void Apply(SecretKeyDeleted e) => _deleted = true;
+        public void Apply(SecretKeyTokenInvalidated _) => _token = null;
+        public void Apply(SecretKeyDeleted _) => _deleted = true;
 
         public void Apply(OrderPublisherOpenedOrder e) => _publishedOrderTickets.Add(e.Order.TicketNo);
         public void Apply(OrderPublisherClosedOrder e) => _publishedOrderTickets.Remove(e.TicketNo);

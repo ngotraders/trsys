@@ -104,7 +104,6 @@ namespace Trsys.Web.Models.WriteModel.Handlers
         public async Task<Unit> Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
-            var token = item.Token;
             if (request.Approve.HasValue)
             {
                 if (!request.Approve.Value)

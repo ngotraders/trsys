@@ -69,12 +69,10 @@ namespace Trsys.Web.Models
 
         public static async Task SeedDataAsync(IApplicationBuilder app)
         {
-            using (var scope = app.ApplicationServices.CreateScope())
-            {
-                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-                await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
-            }
+            using var scope = app.ApplicationServices.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+            await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
         }
 
         private static async Task InitializeWriteModelAsync(ISecretKeyConnectionManager tokenManager)
@@ -84,8 +82,8 @@ namespace Trsys.Web.Models
 
         private static async Task<long> InitializeReadModelAsync(IStreamStore store, long position, IMessageDispatcher dispatcher)
         {
-            var nextPosition = 0L;
             var page = await store.ReadAllForwards(position, 1000, true);
+            long nextPosition;
             while (true)
             {
                 nextPosition = page.NextPosition;

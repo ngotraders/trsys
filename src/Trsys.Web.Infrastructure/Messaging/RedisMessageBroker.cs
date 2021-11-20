@@ -119,7 +119,7 @@ namespace Trsys.Web.Infrastructure.Messaging
             await connection.GetSubscriber().PublishAsync(messageChannel, id);
             var streamIdsList = streamIds.ToArray();
             logger.LogDebug("Waiting streamIds to apply: {streamId}", streamIdsList);
-            await Task.Run(() => WaitFor(streamIds));
+            await Task.Run(() => WaitFor(streamIds), cancellationToken);
             logger.LogDebug("StreamIds applied: {streamId}", streamIdsList);
         }
 
@@ -127,10 +127,10 @@ namespace Trsys.Web.Infrastructure.Messaging
         {
             var tcs = new TaskCompletionSource<bool>(isDisposed);
             var semaphore = new SemaphoreSlim(1);
-            EventHandler<EventArgs> OnStreamArrived = async (s, e) =>
+            async void OnStreamArrived(object s, EventArgs e)
             {
                 await CheckStreamIds(streamIds, tcs, semaphore);
-            };
+            }
             try
             {
                 StreamArrived += OnStreamArrived;

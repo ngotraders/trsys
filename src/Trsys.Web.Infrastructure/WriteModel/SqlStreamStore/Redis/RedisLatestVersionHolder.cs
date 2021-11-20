@@ -9,7 +9,7 @@ namespace Trsys.Web.Infrastructure.WriteModel.SqlStreamStore.Redis
 {
     public class RedisLatestStreamVersionHolder : ILatestStreamVersionHolder
     {
-        private IConnectionMultiplexer connection;
+        private readonly IConnectionMultiplexer connection;
 
         public RedisLatestStreamVersionHolder(IConnectionMultiplexer connection)
         {

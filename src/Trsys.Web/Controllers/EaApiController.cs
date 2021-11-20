@@ -66,7 +66,7 @@ namespace Trsys.Web.Controllers
         [Route("api/ea/token/release")]
         [HttpPost]
         [Consumes("text/plain")]
-        public async Task<IActionResult> PostTokenRelease([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Ea-Type")] string keyType, [FromHeader(Name = "X-Secret-Token")] string token)
+        public async Task<IActionResult> PostTokenRelease([FromHeader(Name = "X-Secret-Token")] string token)
         {
             var secretKey = await mediator.Send(new FindByCurrentToken(token));
             if (secretKey == null)
@@ -82,7 +82,7 @@ namespace Trsys.Web.Controllers
         [Produces("text/plain")]
         [RequireToken]
         [RequireKeyType("Subscriber")]
-        public async Task<IActionResult> GetOrders([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Secret-Token")] string token)
+        public async Task<IActionResult> GetOrders()
         {
             var cacheEntry = await mediator.Send(new GetOrderTextEntry());
             if (cacheEntry == null)
@@ -111,7 +111,7 @@ namespace Trsys.Web.Controllers
         [Consumes("text/plain")]
         [RequireToken]
         [RequireKeyType("Publisher")]
-        public async Task<IActionResult> PostOrders([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Secret-Token")] string token, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
+        public async Task<IActionResult> PostOrders([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
         {
             var orders = new List<PublishedOrder>();
             if (!string.IsNullOrEmpty(text))
@@ -144,11 +144,11 @@ namespace Trsys.Web.Controllers
             var logText = text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (!string.IsNullOrEmpty(key))
             {
-                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", key, keyType, version, logText);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}/Token:{token}, {@text}", key, keyType, version, token ?? "None", logText);
             }
             else
             {
-                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}, {@text}", User.Identity.Name ?? "Unknown", "Unknown", version ?? "Unknown", logText);
+                logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}/Token:{token}, {@text}", User.Identity.Name ?? "Unknown", "Unknown", version ?? "Unknown", token ?? "None", logText);
             }
             return Accepted();
         }

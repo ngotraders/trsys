@@ -16,7 +16,7 @@ namespace LoadTesting
         const double LENGTH_OF_TEST_MINUTES = 3;
         const string ENDPOINT_URL = "https://localhost:5001";
 
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             //// using var server = Trsys.Web.Program.CreateHostBuilder(args).Build();
             //// server.StartAsync().Wait();

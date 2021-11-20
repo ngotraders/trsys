@@ -17,7 +17,7 @@ namespace Trsys.Web.Infrastructure.Messaging
 
         public async Task Enqueue(PublishingMessageEnvelope notification, CancellationToken cancellationToken)
         {
-            await queue.WaitAsync();
+            await queue.WaitAsync(cancellationToken);
             try
             {
                 foreach (var n in notification.Payload)
