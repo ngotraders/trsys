@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +22,11 @@ namespace Trsys.Web.Filters
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            if (env.IsDevelopment())
+            {
+                context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+            }
             var key = (string)context.HttpContext.Request.Headers["X-Ea-Id"];
             var type = (string)context.HttpContext.Request.Headers["X-Ea-Type"];
             var version = (string)context.HttpContext.Request.Headers["X-Ea-Version"];
