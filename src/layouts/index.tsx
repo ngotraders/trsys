@@ -30,6 +30,25 @@ const Header = () => (
         </Link>
       </h1>
     </div>
+    <Devenv />
+  </div>
+);
+
+const Devenv = () => (
+  <div
+    style={{
+      background: "green",
+    }}
+  >
+    <div
+      style={{
+        margin: "0 auto",
+        maxWidth: 960,
+        padding: "0.5rem 1.0875rem",
+      }}
+    >
+      <h3 style={{ margin: 0, color: "white" }}>検証環境</h3>
+    </div>
   </div>
 );
 
