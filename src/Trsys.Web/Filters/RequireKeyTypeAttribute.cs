@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System.Security.Claims;
 using Trsys.Web.Models;
 
@@ -28,6 +31,14 @@ namespace Trsys.Web.Filters
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
+            var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            if (env.IsDevelopment())
+            {
+                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
+                {
+                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                }
+            }
             if (!context.HttpContext.User.HasClaim(claim => claim.Type == ClaimTypes.Role && claim.Value == KeyTypeStr))
             {
                 context.Result = new BadRequestObjectResult("InvalidKeyType");

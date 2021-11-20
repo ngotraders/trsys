@@ -1,7 +1,9 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Queries;
@@ -31,6 +33,14 @@ namespace Trsys.Web.Filters
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            if (env.IsDevelopment())
+            {
+                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
+                {
+                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                }
+            }
             var token = context.HttpContext.Request.Headers["X-Secret-Token"];
             if (string.IsNullOrEmpty(token))
             {

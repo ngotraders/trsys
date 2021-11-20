@@ -25,7 +25,10 @@ namespace Trsys.Web.Filters
             var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
             if (env.IsDevelopment())
             {
-                context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
+                {
+                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                }
             }
             var key = (string)context.HttpContext.Request.Headers["X-Ea-Id"];
             var type = (string)context.HttpContext.Request.Headers["X-Ea-Type"];
