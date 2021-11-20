@@ -7,10 +7,10 @@ namespace Trsys.Web.Models.WriteModel.Domain
 {
     public class WorldStateAggregate : AggregateRoot
     {
-        public static Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
+        public static readonly Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
 
-        private Dictionary<string, Guid> _secretKeys = new Dictionary<string, Guid>();
-        private Dictionary<string, Guid> _userNames = new Dictionary<string, Guid>();
+        private readonly Dictionary<string, Guid> _secretKeys = new();
+        private readonly Dictionary<string, Guid> _userNames = new();
         public void Apply(WorldStateSecretKeyIdGenerated e) => _secretKeys.Add(e.Key, e.SecretKeyId);
         public void Apply(WorldStateSecretKeyDeleted e) => _secretKeys.Remove(e.Key);
         public void Apply(WorldStateUserIdGenerated e) => _userNames.Add(e.Username, e.UserId);
