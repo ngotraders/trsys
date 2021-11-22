@@ -139,7 +139,7 @@ class EaState {
       if (Type == "Publisher") {
          Comment("Trsys" + Type + envText + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
       } else {
-         Comment("Trsys" + Type + envText + ": 正常" + envText);
+         Comment("Trsys" + Type + envText + ": 正常");
       }
    };
 public:
@@ -1344,6 +1344,24 @@ class TrsysClient {
          error_code = GetLastError();
          status.SetErrorCode(error_code);
          return res;
+      }
+      string tmp_header = response_headers;
+      while (tmp_header != "") {
+         string line;
+         int eol_pos = StringFind(tmp_header, "\r\n");
+         if (eol_pos < 0) {
+            line = tmp_header;
+            tmp_header = "";
+         } else {
+            line = StringSubstr(tmp_header, 0, eol_pos);
+            tmp_header = StringSubstr(tmp_header, eol_pos + 2);
+         }
+         if (StringCompare(StringSubstr(line, 0, 14), "X-Environment:", false) == 0) {
+            string env = StringSubstr(line, 14);
+            StringTrimRight(env);
+            StringTrimLeft(env);
+            m_state.SetEnvironment(env);
+         }
       }
       if (res > 500) {
          m_state.SetServerConnection(false);

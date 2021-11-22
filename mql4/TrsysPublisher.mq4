@@ -139,7 +139,7 @@ class EaState {
       if (Type == "Publisher") {
          Comment("Trsys" + Type + envText + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
       } else {
-         Comment("Trsys" + Type + envText + ": 正常" + envText);
+         Comment("Trsys" + Type + envText + ": 正常");
       }
    };
 public:
