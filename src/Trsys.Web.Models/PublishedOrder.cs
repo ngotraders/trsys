@@ -24,7 +24,7 @@ namespace Trsys.Web.Models
 
         public static PublishedOrder Parse(string orderText)
         {
-            if (!Regex.IsMatch(orderText, @"^\d+:[A-Z]+:[01]:\d+:\d+(\.\d+)?:\d+(\.\d+)??$"))
+            if (!Regex.IsMatch(orderText, @"^\d+:[A-Za-z0-9]+:[01]:\d+:\d+(\.\d+)?:\d+(\.\d+)??$"))
             {
                 return null;
             }

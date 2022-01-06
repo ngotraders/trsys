@@ -231,14 +231,14 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
-            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY:0:1:2:3", Encoding.UTF8, "text/plain"));
+            var res = await client.PostAsync("/api/ea/orders", new StringContent("1:USDJPY0jp:0:1:2:3", Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
 
             var orders = await mediator.Send(new GetPublishedOrders());
 
             Assert.AreEqual(1, orders.Count);
             Assert.AreEqual(1, orders[0].TicketNo);
-            Assert.AreEqual("USDJPY", orders[0].Symbol);
+            Assert.AreEqual("USDJPY0jp", orders[0].Symbol);
             Assert.AreEqual(OrderType.Buy, orders[0].OrderType);
             Assert.AreEqual(1, orders[0].Time);
             Assert.AreEqual(2, orders[0].Price);
