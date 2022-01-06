@@ -6,7 +6,7 @@ bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string Type = "Publisher";
-string Version = "20211109";
+string Version = "20220109";
 
 input double OrderPercentage = 98;
 int Slippage = 10;
@@ -2207,7 +2207,11 @@ void OnTimer()
          if (send_data != NULL) {
             send_data += "@";
          }
-         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+StringSubstr(arr_positions[i].symbol,0,6)+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(Percent);
+         string symbol = arr_positions[i].symbol;
+         if (StringFind(symbol, ".", 1) > -1) {
+            symbol = StringSubstr(symbol, 0, StringFind(symbol, ".", 1));
+         }
+         send_data += IntegerToString(arr_positions[i].local_ticket_no)+":"+symbol+":"+IntegerToString(arr_positions[i].order_type)+":"+StringFormat("%i",arr_positions[i].position_time)+":"+DoubleToString(arr_positions[i].price_open)+":"+DoubleToString(Percent);
       }
       int res = client.PostOrders(send_data);
       if (res == 200) {
