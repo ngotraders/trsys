@@ -87,7 +87,7 @@ public:
       }
       ArrayResize(str_array, peak_length);
       for (int i = 0; i < peak_length; i++) {
-         str_array[i] = m_queue[m_current_index + i];
+         str_array[i] = m_queue[(m_current_index + length) % MAX_QUEUE_COUNT];
       }
       return peak_length;
    };
