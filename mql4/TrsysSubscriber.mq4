@@ -2151,6 +2151,7 @@ LocalOrderState *localOrders = NULL;
 int OnInit()
 {
 //--- create timer
+   Percent = MathMax(0, MathMin(100, PercentOfBalance)) / 100;
    EventSetMillisecondTimer(100);
    logger = new Logger();
    state = new EaState();
