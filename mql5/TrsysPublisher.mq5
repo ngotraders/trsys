@@ -6,7 +6,7 @@ bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string Type = "Publisher";
-string Version = "20220109";
+string Version = "20230918";
 
 input double OrderPercentage = 98;
 int Slippage = 10;
@@ -1714,8 +1714,10 @@ string ErrorCodeToString(int error_code) {
           return "The names of the dynamic and the static resource match";
       case ERR_RESOURCE_NOT_FOUND:
           return "Resource with this name has not been found in EX5";
+#ifdef __MQL4__
       case ERR_RESOURCE_UNSUPPOTED_TYPE:
           return "Unsupported resource type or its size exceeds 16 Mb";
+#endif
       case ERR_RESOURCE_NAME_IS_TOO_LONG:
           return "The resource name exceeds 63 characters";
       case ERR_MATH_OVERFLOW:
