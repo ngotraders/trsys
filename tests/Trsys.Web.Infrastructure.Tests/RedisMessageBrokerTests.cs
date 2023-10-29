@@ -23,8 +23,8 @@ namespace Trsys.Web.Infrastructure.Tests
         {
             var store = new List<SecretKeyConnected>();
             using var services = new ServiceCollection()
-                .AddSingleton<List<SecretKeyConnected>>(store)
-                .AddMediatR(typeof(TestHandler1))
+                .AddSingleton(store)
+                .AddMediatR(config => config.RegisterServicesFromAssemblyContaining<TestHandler1>())
                 .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();
@@ -40,7 +40,7 @@ namespace Trsys.Web.Infrastructure.Tests
         public async Task When_message_publish_and_mediatr_handler_throws_Then_publish_completes()
         {
             using var services = new ServiceCollection()
-                .AddMediatR(typeof(TestHandler2))
+                .AddMediatR(config => config.RegisterServicesFromAssemblyContaining<TestHandler2>())
                 .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();
@@ -56,7 +56,7 @@ namespace Trsys.Web.Infrastructure.Tests
         {
             var store = new List<SecretKeyConnected>();
             using var services = new ServiceCollection()
-                .AddMediatR(typeof(TestHandler1))
+                .AddMediatR(config => config.RegisterServicesFromAssemblyContaining<TestHandler1>())
                 .AddSingleton<IMessageDispatcher, MessageDispatcher>()
                 .AddLogging()
                 .BuildServiceProvider();

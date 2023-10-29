@@ -58,7 +58,7 @@ namespace Trsys.Web
                     options.ReturnUrlParameter = "returnUrl";
                 });
 
-            services.AddMediatR(typeof(Startup).Assembly);
+            services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");

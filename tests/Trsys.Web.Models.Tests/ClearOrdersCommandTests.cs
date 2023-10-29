@@ -40,7 +40,7 @@ namespace Trsys.Web.Models.Tests
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", "description", true));
-            await mediator.Send(new PublishOrderCommand(id, new[] { PublishedOrder.Parse("1:USDJPY:0:1:2:1617271883") }));
+            await mediator.Send(new PublishOrdersCommand(id, new[] { PublishedOrder.Parse("1:USDJPY:0:1:2:1617271883") }));
             await mediator.Send(new ClearOrdersCommand(id));
 
             var store = services.GetRequiredService<IEventStore>();

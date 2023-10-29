@@ -101,7 +101,7 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             return secretKeyId;
         }
 
-        public async Task<Unit> Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
+        public async Task Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             if (request.Approve.HasValue)
@@ -129,7 +129,6 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             }
             await repository.Save(item, item.Version, cancellationToken);
             await connectionManager.ReleaseAsync(item.Id);
-            return Unit.Value;
         }
 
         public async Task<string> Handle(GenerateSecretTokenCommand request, CancellationToken cancellationToken)
@@ -144,16 +143,15 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             return token;
         }
 
-        public async Task<Unit> Handle(InvalidateSecretTokenCommand request, CancellationToken cancellationToken)
+        public async Task Handle(InvalidateSecretTokenCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.InvalidateToken(request.Token);
             await repository.Save(item, item.Version, cancellationToken);
             await connectionManager.ReleaseAsync(request.Id);
-            return Unit.Value;
         }
 
-        public async Task<Unit> Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
+        public async Task Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.Delete();
@@ -162,7 +160,6 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             var state = await repository.GetWorldState();
             state.DeleteSecretKey(item.Key, item.Id);
             await repository.Save(state, null, cancellationToken);
-            return Unit.Value;
         }
     }
 }

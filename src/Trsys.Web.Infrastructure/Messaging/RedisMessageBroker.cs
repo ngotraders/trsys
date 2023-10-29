@@ -20,7 +20,7 @@ namespace Trsys.Web.Infrastructure.Messaging
         private readonly ISubscriber subscriber;
         private readonly RedisKey streamsKey = RedisHelper.GetKey("Message:Streams");
         private EventHandler<EventArgs> StreamArrived;
-        private readonly RedisChannel messageChannel = (string)RedisHelper.GetKey("Message:Subscription");
+        private readonly RedisChannel messageChannel = RedisChannel.Literal("Message:Subscription");
         private RedisValue? lastReadStream;
         private int isProcessing = 0;
         private readonly IMessageDispatcher dispatcher;

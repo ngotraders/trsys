@@ -50,12 +50,11 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             return userId;
         }
 
-        public async Task<Unit> Handle(ChangePasswordHashCommand request, CancellationToken cancellationToken)
+        public async Task Handle(ChangePasswordHashCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<UserAggregate>(request.Id, cancellationToken);
             item.ChangePasswordHash(request.PasswordHash);
             await repository.Save(item, item.Version, cancellationToken);
-            return Unit.Value;
         }
     }
 }

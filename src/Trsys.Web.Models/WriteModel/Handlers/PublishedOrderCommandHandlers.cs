@@ -8,7 +8,7 @@ using Trsys.Web.Models.WriteModel.Domain;
 namespace Trsys.Web.Models.WriteModel.Handlers
 {
     public class PublishedOrderCommandHandlers :
-        IRequestHandler<PublishOrderCommand>
+        IRequestHandler<PublishOrdersCommand>
     {
         private readonly IRepository repository;
 
@@ -17,12 +17,11 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             this.repository = repository;
         }
 
-        public async Task<Unit> Handle(PublishOrderCommand request, CancellationToken cancellationToken = default)
+        public async Task Handle(PublishOrdersCommand request, CancellationToken cancellationToken = default)
         {
             var publisher = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             publisher.Publish(request.PublishedOrders);
             await repository.Save(publisher, null, cancellationToken);
-            return Unit.Value;
         }
     }
 }

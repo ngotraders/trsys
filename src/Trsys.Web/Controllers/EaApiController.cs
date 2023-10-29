@@ -101,7 +101,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            _ = Task.Run(() => mediator.Send(new FetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets)));
+            await mediator.Send(new FetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets));
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -127,7 +127,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await mediator.Send(new PublishOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
+            await mediator.Send(new PublishOrdersCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
             return Ok();
         }
 

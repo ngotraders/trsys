@@ -27,7 +27,10 @@ namespace Trsys.Web.Infrastructure
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             // MediatR dependencies
-            services.AddMediatR(Assembly.Load("Trsys.Web.Models"));
+            services.AddMediatR(config =>
+            {
+                config.RegisterServicesFromAssembly(Assembly.Load("Trsys.Web.Models"));
+            });
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingPipelineBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryPipelineBehavior<,>));
 

@@ -14,7 +14,7 @@ namespace Trsys.Web.Infrastructure.Logging
         {
             this.logger = logger;
         }
-        public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
+        public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
             if (request.GetType().FullName.StartsWith("Trsys.Web.Models.ReadModel.Queries"))
             {

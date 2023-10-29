@@ -18,12 +18,11 @@ namespace Trsys.Web.Models.WriteModel.Handlers
             this.repository = repository;
         }
 
-        public async Task<Unit> Handle(ClearOrdersCommand request, CancellationToken cancellationToken = default)
+        public async Task Handle(ClearOrdersCommand request, CancellationToken cancellationToken = default)
         {
             var publisher = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             publisher.Publish(new List<PublishedOrder>());
             await repository.Save(publisher, null, cancellationToken);
-            return Unit.Value;
         }
     }
 }

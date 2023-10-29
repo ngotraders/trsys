@@ -52,7 +52,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
-            await mediator.Send(new PublishOrderCommand(id, new[] {
+            await mediator.Send(new PublishOrdersCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
@@ -83,7 +83,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
-            await mediator.Send(new PublishOrderCommand(id, new[] {
+            await mediator.Send(new PublishOrdersCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",
@@ -122,7 +122,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
-            await mediator.Send(new PublishOrderCommand(id, new[] {
+            await mediator.Send(new PublishOrdersCommand(id, new[] {
                 new PublishedOrder() {
                     TicketNo = 1,
                     Symbol = "USDJPY",

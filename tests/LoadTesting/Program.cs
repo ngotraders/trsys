@@ -1,6 +1,7 @@
 ﻿using NBomber;
 using NBomber.Contracts;
 using NBomber.CSharp;
+using NBomber.Data.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +13,9 @@ namespace LoadTesting
 
     class Program
     {
-        const int COUNT_OF_CLIENTS = 30;
+        const int COUNT_OF_CLIENTS = 100;
         const double LENGTH_OF_TEST_MINUTES = 3;
-        const string ENDPOINT_URL = "https://localhost:5001";
+        const string ENDPOINT_URL = "https://localhost:44326";
 
         static void Main(string[] _)
         {
@@ -23,24 +24,21 @@ namespace LoadTesting
             // using var server = new ProcessRunner("dotnet", "Trsys.Web.dll");
 
             var secretKeys = WithRetry(() => GenerateSecretKeys(COUNT_OF_CLIENTS + 1)).Result;
-            var feeds = Feed.CreateConstant("secret_keys", FeedData.FromSeq(secretKeys).ShuffleData());
+            var feeds = DataFeed.Constant(secretKeys);
             var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
             var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First())).ToList();
             var publisher = new Publisher(ENDPOINT_URL, secretKeys.First(), orderProvider);
             orderProvider.SetStart();
 
-            var step1 = Step.Create("publisher", feeds, context => publisher.ExecuteAsync());
-            var step2 = Step.Create("subscriber", feeds, context => subscribers[context.CorrelationId.CopyNumber % COUNT_OF_CLIENTS].ExecuteAsync());
-
-            var scenario1 = ScenarioBuilder
-                .CreateScenario("pub", step1)
+            var scenario1 = Scenario
+                .Create("publisher", context => publisher.ExecuteAsync())
                 .WithInit(async context =>
                 {
                     await publisher.InitializeAsync();
                     await publisher.ExecuteAsync();
                 })
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(1, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
+                .WithLoadSimulations(LoadSimulation.NewInject(1, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
                 .WithClean(async context =>
                 {
                     await Task.WhenAll(publisher.FinalizeAsync());
@@ -48,11 +46,11 @@ namespace LoadTesting
                 });
 
 
-            var scenario2 = ScenarioBuilder
-                .CreateScenario("sub", step2)
+            var scenario2 = Scenario
+                .Create("subscriber", context => subscribers[context.InvocationNumber % COUNT_OF_CLIENTS].ExecuteAsync())
                 .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitializeAsync())))
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
-                .WithLoadSimulations(LoadSimulation.NewInjectPerSec(10 * COUNT_OF_CLIENTS, TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
+                .WithLoadSimulations(LoadSimulation.NewInject(10 * COUNT_OF_CLIENTS, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))
                 .WithClean(async context =>
                 {
                     await Task.WhenAll(subscribers.Select(subscriber => subscriber.FinalizeAsync()));
