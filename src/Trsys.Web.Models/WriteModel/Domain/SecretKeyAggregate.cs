@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using Trsys.Web.Models.Events;
 
 namespace Trsys.Web.Models.WriteModel.Domain
@@ -141,7 +142,7 @@ namespace Trsys.Web.Models.WriteModel.Domain
             }
         }
 
-        public void Publish(IEnumerable<PublishedOrder> orders)
+        public void ReplaceOrders(IEnumerable<PublishedOrder> orders)
         {
             EnsureNotDeleted();
             var tickets = orders.Select(o => o.TicketNo).ToList();
@@ -176,6 +177,23 @@ namespace Trsys.Web.Models.WriteModel.Domain
             foreach (var ticket in added.OrderBy(e => e))
             {
                 ApplyChange(new OrderSubscriberOpenedOrder(Id, ticket));
+            }
+        }
+
+        public void OpenOrder(PublishedOrder publishedOrder)
+        {
+            if (_publishedOrderTickets.Any(t => t == publishedOrder.TicketNo))
+            {
+                throw new InvalidOperationException("Ticket no already exists.");
+            }
+            ApplyChange(new OrderPublisherOpenedOrder(Id, publishedOrder));
+        }
+
+        public void CloseOrder(int ticketNo)
+        {
+            if (_publishedOrderTickets.Any(t => t == ticketNo))
+            {
+                ApplyChange(new OrderPublisherClosedOrder(Id, ticketNo));
             }
         }
     }

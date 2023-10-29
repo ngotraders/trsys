@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Web.Models.WriteModel.Commands
 {
-    public class ClearOrdersCommand : IRequest, IRetryableRequest
+    public class OrdersClearCommand : IRequest, IRetryableRequest
     {
-        public ClearOrdersCommand(Guid id)
+        public OrdersClearCommand(Guid id)
         {
             Id = id;
         }

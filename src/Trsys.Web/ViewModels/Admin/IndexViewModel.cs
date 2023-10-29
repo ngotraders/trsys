@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Trsys.Web.Models;
 using Trsys.Web.Models.ReadModel.Dtos;
 
@@ -19,5 +20,16 @@ namespace Trsys.Web.ViewModels.Admin
         public int SecretKeysPerPage { get; set; }
         public string CacheOrderText { get; set; }
         public string EaSiteUrl { get; set; }
+
+        public string NewOrderSecretKey { get; set; }
+        public int? NewOrderTicketNo { get; set; }
+        public string NewOrderSymbol { get; set; }
+        public OrderType? NewOrderType { get; set; }
+        public DateTimeOffset? NewOrderTime { get; set; }
+        public decimal? NewOrderPrice { get; set; }
+        public decimal? NewOrderPercentage { get; set; }
+
+        public string CloseOrderSecretKey { get; set; }
+        public int? CloseOrderTicketNo { get; set; }
     }
 }

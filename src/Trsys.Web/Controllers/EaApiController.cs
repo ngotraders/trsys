@@ -127,7 +127,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await mediator.Send(new PublishOrdersCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
+            await mediator.Send(new OrdersReplaceCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
             return Ok();
         }
 
