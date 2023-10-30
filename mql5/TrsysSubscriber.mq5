@@ -6,17 +6,37 @@ bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
 string Type = "Subscriber";
-string Version = "20230918";
+string Version = "20231030";
 
-input double PercentOfBalance = 100;
+enum EnumLotCalculationType {
+  EnumLotCalculationTypeLot, // Lot
+  EnumLotCalculationTypePercentage, // Percentage
+  EnumLotCalculationTypeFollowPublisher // PublisherPercentage
+};
+
+input EnumLotCalculationType LotCalculationType = EnumLotCalculationTypeFollowPublisher;
+input double LotCalculationValue = 98;
+
 input int Slippage = 10;
 
 double DEFAULT_ORDER_PERCENTAGE = 0.98;
-double Percent = MathMax(0, MathMin(100, PercentOfBalance)) / 100;
 
 //+------------------------------------------------------------------+
 //| Custom classes                                                   |
 //+------------------------------------------------------------------+
+struct PublisherConfiguration {
+   double OrderPercentageToSendSubscriber;
+};
+
+PublisherConfiguration publisherConfig;
+
+struct SubscriberConfiguration {
+   EnumLotCalculationType LotCalculationType;
+   double LotCalculationValue;
+};
+
+SubscriberConfiguration subscriberConfig;
+
 template<typename T>
 class List {
    T m_array[];
@@ -32,12 +52,22 @@ public:
       m_actual_array_length = 4;
       m_resize();
    };
+   ~List() {
+      ArrayFree(m_array);
+   };
    void Add(T &item) {
       m_count++;
       if (m_count > m_actual_array_length) {
          m_resize();
       }
       m_array[m_count - 1] = item;
+   };
+   void Update(int index, T &item) {
+      if (index >= m_count) {
+         Print("index must under the count");
+         return;
+      }
+      m_array[index] = item;
    };
    void Remove(int index) {
       if (index >= m_count) {
@@ -72,6 +102,9 @@ public:
       m_current_index = 0;
       m_count = 0;
    };
+   ~LogQueue() {
+      ArrayFree(m_queue);
+   };
    void Enqueue(string item) {
       if (m_count + 1 > MAX_QUEUE_COUNT) {
          Print("LogQueue:log message truncated, " + item);
@@ -87,7 +120,7 @@ public:
       }
       ArrayResize(str_array, peak_length);
       for (int i = 0; i < peak_length; i++) {
-         str_array[i] = m_queue[m_current_index + i];
+         str_array[i] = m_queue[(m_current_index + i) % MAX_QUEUE_COUNT];
       }
       return peak_length;
    };
@@ -137,9 +170,15 @@ class EaState {
          return;
       }
       if (Type == "Publisher") {
-         Comment("Trsys" + Type + envText + ": 正常 (取引割合: " + DoubleToString(Percent * 100) + "%)");
+         Comment("Trsys" + Type + envText + ": 正常 (取引割合: " + DoubleToString(publisherConfig.OrderPercentageToSendSubscriber * 100) + "%)");
       } else {
-         Comment("Trsys" + Type + envText + ": 正常");
+         if (subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot) {
+            Comment("Trsys" + Type + envText + ": 正常 (固定ロット: " + DoubleToString(subscriberConfig.LotCalculationValue) + ")");
+         } else if(subscriberConfig.LotCalculationType == EnumLotCalculationTypePercentage) {
+            Comment("Trsys" + Type + envText + ": 正常 (固定割合: " + DoubleToString(subscriberConfig.LotCalculationValue * 100) + "%)");
+         } else {
+            Comment("Trsys" + Type + envText + ": 正常 (Pub指定割合: " + DoubleToString(subscriberConfig.LotCalculationValue * 100) + "%)");
+         }
       }
    };
 public:
@@ -277,7 +316,6 @@ class PositionManager {
       double step = 0;
       double account_free_margin = 0;
       double account_balance = 0;
-      double order_percentage = percentage;
       m_fetch_calculate_volume_params(symbol, order_type, current_price, one_lot, step, account_free_margin, account_balance);
       if (account_free_margin == 0) {
          return 0;
@@ -293,15 +331,26 @@ class PositionManager {
          step = 1;
          m_logger.WriteLog("WARN", "CalculateVolume: Step is 0. using 1 as lot step, Symbol = " + symbol);
       }
-      if (order_percentage == 0) {
-         order_percentage = DEFAULT_ORDER_PERCENTAGE * Percent;
-      } else {
-         order_percentage = order_percentage * Percent;
-      }
       double lotsFree = MathFloor(account_free_margin / one_lot / step) * step;
-      double lots = MathFloor(account_balance * order_percentage / one_lot / step ) * step;
-      m_logger.WriteLog("DEBUG", "CalculateVolume: Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(order_percentage) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
-      return MathMin(lotsFree, lots);
+      if (subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot) {
+         double lots = subscriberConfig.LotCalculationValue;
+         if (lotsFree < lots) {
+            m_logger.WriteLog("ERROR", "CalculateVolume: Fixed lots less than free lots. Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+            return 0;
+         }
+         m_logger.WriteLog("DEBUG", "CalculateVolume: Fixed Lots. Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+         return lots;
+      } else if(subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot) {
+         double order_percentage = subscriberConfig.LotCalculationValue;
+         double lots = MathFloor(account_balance * order_percentage / one_lot / step) * step;
+         m_logger.WriteLog("DEBUG", "CalculateVolume: Fixed Percentage. Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(order_percentage) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+         return MathMin(lotsFree, lots);
+      } else {
+         double order_percentage = (percentage == 0 ? DEFAULT_ORDER_PERCENTAGE : percentage) * (subscriberConfig.LotCalculationValue);
+         double lots = MathFloor(account_balance * order_percentage / one_lot / step) * step;
+         m_logger.WriteLog("DEBUG", "CalculateVolume: Publisher Percentage. Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Percentage = " + DoubleToString(order_percentage) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
+         return MathMin(lotsFree, lots);
+      }
    };
 #ifdef __MQL5__
    void m_fetch_calculate_volume_params(string symbol, int order_type, double current_price, double &one_lot, double &step, double &account_free_margin, double &account_balance) {
@@ -720,18 +769,18 @@ public:
       string symbol = m_find_symbol(server_symbol);
       if (symbol == NULL) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Symbol not found. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
-         return true;
+         return false;
       }
       
       double order_price = m_get_current_price(symbol, server_order_type);
       if (order_price <= 0) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Could not retrieve order price. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", LocalSymbol = " + symbol);
-         return true;
+         return false;
       }
       int order_type = server_order_type;
       if (order_type != 0 && order_type != 1) {
          m_logger.WriteLog("ERROR", "OrderSend fail: Invalid OrderType. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
-         return true;
+         return false;
       }
 
       double order_lots = m_calculate_volume(symbol, order_type, order_price, percentage);
@@ -739,11 +788,11 @@ public:
       double max_lots = m_get_max_volume(symbol); // Max amount of lotsr
       if (order_lots == 0) {
          m_logger.WriteLog("WARN", "OrderSend fail: Calculated order lot was 0. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type));
-         return true;
+         return false;
       }
       if (order_lots < min_lots) {
          m_logger.WriteLog("WARN", "OrderSend fail: Not enough margin. ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", Calculated lots = " + DoubleToString(order_lots));
-         return true;
+         return false;
       }
       m_logger.WriteLog("DEBUG", "OrderSend executing: ServerOrder = " + IntegerToString(server_ticket_no) + "/" + server_symbol + "/" + IntegerToString(server_order_type) + ", Calculated lots = " + DoubleToString(order_lots));
       bool success = false;
@@ -1185,6 +1234,36 @@ public:
       if (index > -1) {
          m_orders.Remove(index);
       }
+   };
+};
+
+class FailedOrderList {
+   List<CopyTradeInfo> *m_copy_trade_info_list;
+public:
+   FailedOrderList() {
+      m_copy_trade_info_list = new List<CopyTradeInfo>();
+   };
+   ~FailedOrderList() {
+      delete m_copy_trade_info_list;
+   };
+   void Failed(CopyTradeInfo &copy_trade_info) {
+      m_copy_trade_info_list.Add(copy_trade_info);
+   };
+   void Remove(CopyTradeInfo &copy_trade_info) {
+      for (int i = 0; i < m_copy_trade_info_list.Length(); i++) {
+         if (m_copy_trade_info_list.Get(i).server_ticket_no == copy_trade_info.server_ticket_no) {
+            m_copy_trade_info_list.Remove(i);
+         }
+      };
+   };
+   int ServerTicketNoFailedCount(long server_ticket_no) {
+      int failed_count = 0;
+      for (int i = 0; i < m_copy_trade_info_list.Length(); i++) {
+         if (m_copy_trade_info_list.Get(i).server_ticket_no == server_ticket_no) {
+            failed_count++;
+         }
+      };
+      return failed_count;
    };
 };
 
@@ -2146,6 +2225,7 @@ TrsysClient *client = NULL;
 PositionManager *positionManager = NULL;
 RemoteOrderState *remoteOrders = NULL;
 LocalOrderState *localOrders = NULL;
+FailedOrderList *failedOrders = NULL;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
@@ -2153,7 +2233,8 @@ LocalOrderState *localOrders = NULL;
 int OnInit()
 {
 //--- create timer
-   Percent = MathMax(0, MathMin(100, PercentOfBalance)) / 100;
+   subscriberConfig.LotCalculationType = LotCalculationType;
+   subscriberConfig.LotCalculationValue = LotCalculationType == EnumLotCalculationTypeLot ? LotCalculationValue : LotCalculationValue / 100.0;
    EventSetMillisecondTimer(100);
    logger = new Logger();
    state = new EaState();
@@ -2161,6 +2242,7 @@ int OnInit()
    positionManager = new PositionManager(logger);
    remoteOrders = new RemoteOrderState(positionManager);
    localOrders = new LocalOrderState(positionManager);
+   failedOrders = new FailedOrderList();
    logger.WriteLog("DEBUG", "Init");
    client.PostLog(logger);
 //---
@@ -2175,6 +2257,7 @@ void OnDeinit(const int reason)
    logger.WriteLog("DEBUG", "Deinit. Reason = " + IntegerToString(reason));
    client.PostLog(logger);
    EventKillTimer();
+   delete failedOrders;
    delete localOrders;
    delete remoteOrders;
    delete positionManager;
@@ -2234,29 +2317,32 @@ void OnTimer()
          logger.WriteLog("DEBUG", "Server order closed. ServerOrder = " + closedInfo.ToString());
          long arr_close_ticket_no[];
          int close_order_count = localOrders.FindByServerTicketNo(closedInfo.server_ticket_no, arr_close_ticket_no);
-         bool do_not_close = false;
-         if (close_order_count > 0) {
-            for (int j = 0; j < close_order_count; j++) {
-               if (!positionManager.ClosePosition(closedInfo.server_ticket_no, closedInfo.symbol, closedInfo.order_type, arr_close_ticket_no[j])) {
-                  do_not_close = true;
-               }
-            }
-         }
-         if (!do_not_close) {
+         if (close_order_count == 0) {
             remoteOrders.Remove(closedInfo.server_ticket_no);
+            failedOrders.Remove(closedInfo);
+            continue;
+         }
+         for (int j = 0; j < close_order_count; j++) {
+            positionManager.ClosePosition(closedInfo.server_ticket_no, closedInfo.symbol, closedInfo.order_type, arr_close_ticket_no[j]);
          }
       }
       for (int i = 0; i < serverDiff.OpenedCount(); i++) {
          CopyTradeInfo openedInfo = serverDiff.GetOpened(i);
          logger.WriteLog("DEBUG", "Server order opened. ServerOrder = " + openedInfo.ToString());
-         bool do_not_open = false;
-         if (!localOrders.ExistsServerTicketNo(openedInfo.server_ticket_no)) {
-            if (!positionManager.CreatePosition(openedInfo.server_ticket_no, openedInfo.symbol, openedInfo.order_type, openedInfo.percentage)) {
-               do_not_open = true;
-            }
-         }
-         if (!do_not_open) {
+         if (localOrders.ExistsServerTicketNo(openedInfo.server_ticket_no)) {
             remoteOrders.Add(openedInfo);
+            continue;
+         }
+         int failed_count = failedOrders.ServerTicketNoFailedCount(openedInfo.server_ticket_no);
+         if (failed_count >= 3) {
+            logger.WriteLog("DEBUG", "Order failed. Skipping order. ServerOrder = " + openedInfo.ToString());
+            remoteOrders.Add(openedInfo);
+            continue;
+         }
+         if (positionManager.CreatePosition(openedInfo.server_ticket_no, openedInfo.symbol, openedInfo.order_type, openedInfo.percentage)) {
+            failedOrders.Remove(openedInfo);
+         } else {
+            failedOrders.Failed(openedInfo);
          }
       }
    }
