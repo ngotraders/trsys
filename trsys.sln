@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31112.23
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{41CB898A-B997-43A3-8A0D-9857AE82E7FA}"
 EndProject
@@ -17,9 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trsys.Models", "src\Trsys.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trsys.Models.Tests", "tests\Trsys.Models.Tests\Trsys.Models.Tests.csproj", "{DDC45510-FAE8-4EF9-B5A0-97D0DD5AD13D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsys.Infrastructure", "src\Trsys.Infrastructure\Trsys.Infrastructure.csproj", "{B574E675-376B-4DF6-8435-CFE0B10BB23A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trsys.Infrastructure", "src\Trsys.Infrastructure\Trsys.Infrastructure.csproj", "{B574E675-376B-4DF6-8435-CFE0B10BB23A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsys.Infrastructure.Tests", "tests\Trsys.Infrastructure.Tests\Trsys.Infrastructure.Tests.csproj", "{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trsys.Infrastructure.Tests", "tests\Trsys.Infrastructure.Tests\Trsys.Infrastructure.Tests.csproj", "{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "trsys-frontend", "src\trsys-frontend\trsys-frontend.esproj", "{E55C1B90-7384-4B71-8822-11A606915A08}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -115,6 +117,24 @@ Global
 		{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5}.Release|x64.Build.0 = Release|Any CPU
 		{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5}.Release|x86.ActiveCfg = Release|Any CPU
 		{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5}.Release|x86.Build.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x64.Build.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x64.Deploy.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x86.Build.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Debug|x86.Deploy.0 = Debug|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x64.ActiveCfg = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x64.Build.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x64.Deploy.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x86.ActiveCfg = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x86.Build.0 = Release|Any CPU
+		{E55C1B90-7384-4B71-8822-11A606915A08}.Release|x86.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +147,7 @@ Global
 		{DDC45510-FAE8-4EF9-B5A0-97D0DD5AD13D} = {EA8B721E-79AC-4D9B-9506-402BC5D87B29}
 		{B574E675-376B-4DF6-8435-CFE0B10BB23A} = {41CB898A-B997-43A3-8A0D-9857AE82E7FA}
 		{0D01447E-D6FB-423E-86EF-AE2EB5D8B9D5} = {EA8B721E-79AC-4D9B-9506-402BC5D87B29}
+		{E55C1B90-7384-4B71-8822-11A606915A08} = {41CB898A-B997-43A3-8A0D-9857AE82E7FA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5702F9E8-98AB-4354-BB7F-ADE5C90411B1}
