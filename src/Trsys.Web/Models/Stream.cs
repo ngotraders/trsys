@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Trsys.Web.Models
+namespace Trsys.Models
 {
     public partial class Stream
     {

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web
 {

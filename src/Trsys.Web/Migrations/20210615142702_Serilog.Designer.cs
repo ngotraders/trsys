@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web.Migrations
 {
@@ -22,7 +22,7 @@ namespace Trsys.Web.Migrations
                 .HasAnnotation("ProductVersion", "5.0.5")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("Trsys.Web.Models.Log", b =>
+            modelBuilder.Entity("Trsys.Models.Log", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,7 +54,7 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Logs");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
+            modelBuilder.Entity("Trsys.Models.Message", b =>
                 {
                     b.Property<long>("Position")
                         .ValueGeneratedOnAdd()
@@ -99,7 +99,7 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
+            modelBuilder.Entity("Trsys.Models.Stream", b =>
                 {
                     b.Property<int>("IdInternal")
                         .ValueGeneratedOnAdd()
@@ -152,9 +152,9 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Streams");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
+            modelBuilder.Entity("Trsys.Models.Message", b =>
                 {
-                    b.HasOne("Trsys.Web.Models.Stream", "StreamIdInternalNavigation")
+                    b.HasOne("Trsys.Models.Stream", "StreamIdInternalNavigation")
                         .WithMany("Messages")
                         .HasForeignKey("StreamIdInternal")
                         .HasConstraintName("FK_Events_Streams")
@@ -163,7 +163,7 @@ namespace Trsys.Web.Migrations
                     b.Navigation("StreamIdInternalNavigation");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
+            modelBuilder.Entity("Trsys.Models.Stream", b =>
                 {
                     b.Navigation("Messages");
                 });

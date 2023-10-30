@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Trsys.Web.Models
+namespace Trsys.Models
 {
     public class TrsysContext : DbContext, IDataProtectionKeyContext
     {

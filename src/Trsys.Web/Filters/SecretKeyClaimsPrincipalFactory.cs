@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web.Filters
 {

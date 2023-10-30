@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trsys.Web.Models
+namespace Trsys.Models
 {
     public class Log
     {

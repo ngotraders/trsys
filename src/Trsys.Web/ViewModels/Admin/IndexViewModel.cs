@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Trsys.Web.Models;
-using Trsys.Web.Models.ReadModel.Dtos;
+using Trsys.Models;
+using Trsys.Models.ReadModel.Dtos;
 
 namespace Trsys.Web.ViewModels.Admin
 {

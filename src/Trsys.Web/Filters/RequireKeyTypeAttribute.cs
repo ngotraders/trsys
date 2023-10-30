@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Security.Claims;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web.Filters
 {

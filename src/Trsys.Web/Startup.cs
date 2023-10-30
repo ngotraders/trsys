@@ -13,9 +13,9 @@ using StackExchange.Redis;
 using System;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Infrastructure;
+using Trsys.Infrastructure;
 using Trsys.Web.Middlewares;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web
 {

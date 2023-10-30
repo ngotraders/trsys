@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
+using Trsys.Models;
 using Trsys.Web.ViewModels.Logs;
 
 namespace Trsys.Web.Controllers

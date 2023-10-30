@@ -8,9 +8,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
-using Trsys.Web.Models.ReadModel.Queries;
-using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Models;
+using Trsys.Models.ReadModel.Queries;
+using Trsys.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Filters
 {
