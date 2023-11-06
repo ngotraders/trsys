@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trsys.Models;
 
@@ -11,9 +12,11 @@ using Trsys.Models;
 namespace Trsys.Web.Migrations
 {
     [DbContext(typeof(TrsysContext))]
-    partial class TrsysContextModelSnapshot : ModelSnapshot
+    [Migration("20231106144549_UpdateTypes")]
+    partial class UpdateTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
