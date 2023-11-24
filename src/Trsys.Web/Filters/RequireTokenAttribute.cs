@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
-using Trsys.Web.Models;
-using Trsys.Web.Models.ReadModel.Queries;
-using Trsys.Web.Models.WriteModel.Notifications;
+using Trsys.Models;
+using Trsys.Models.ReadModel.Queries;
+using Trsys.Models.WriteModel.Notifications;
 
 namespace Trsys.Web.Filters
 {

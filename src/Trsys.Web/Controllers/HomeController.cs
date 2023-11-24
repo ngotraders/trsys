@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Models.ReadModel.Queries;
-using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Models.ReadModel.Queries;
+using Trsys.Models.WriteModel.Commands;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers

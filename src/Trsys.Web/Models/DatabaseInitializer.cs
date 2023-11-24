@@ -7,11 +7,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
-using Trsys.Web.Models.Messaging;
-using Trsys.Web.Models.WriteModel.Commands;
-using Trsys.Web.Models.WriteModel.Infrastructure;
+using Trsys.Models.Messaging;
+using Trsys.Models.WriteModel.Commands;
+using Trsys.Models.WriteModel.Infrastructure;
 
-namespace Trsys.Web.Models
+namespace Trsys.Models
 {
     public static class DatabaseInitializer
     {

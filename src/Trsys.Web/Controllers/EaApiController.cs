@@ -8,9 +8,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Trsys.Web.Filters;
-using Trsys.Web.Models;
-using Trsys.Web.Models.ReadModel.Queries;
-using Trsys.Web.Models.WriteModel.Commands;
+using Trsys.Models;
+using Trsys.Models.ReadModel.Queries;
+using Trsys.Models.WriteModel.Commands;
 
 namespace Trsys.Web.Controllers
 {

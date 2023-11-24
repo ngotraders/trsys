@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Trsys.Web.Models;
+using Trsys.Models;
+
+#nullable disable
 
 namespace Trsys.Web.Migrations
 {
@@ -15,17 +17,19 @@ namespace Trsys.Web.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("ProductVersion", "5.0.8")
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .UseCollation("SQL_Latin1_General_CP1_CI_AS")
+                .HasAnnotation("ProductVersion", "7.0.13")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FriendlyName")
                         .HasColumnType("nvarchar(max)");
@@ -38,12 +42,13 @@ namespace Trsys.Web.Migrations
                     b.ToTable("DataProtectionKeys");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Log", b =>
+            modelBuilder.Entity("Trsys.Models.Log", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Exception")
                         .HasColumnType("nvarchar(max)");
@@ -70,12 +75,13 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Logs");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
+            modelBuilder.Entity("Trsys.Models.Message", b =>
                 {
                     b.Property<long>("Position")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Position"));
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime");
@@ -115,19 +121,20 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
+            modelBuilder.Entity("Trsys.Models.Stream", b =>
                 {
                     b.Property<int>("IdInternal")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdInternal"));
 
                     b.Property<string>("Id")
                         .IsRequired()
                         .HasMaxLength(42)
                         .IsUnicode(false)
                         .HasColumnType("char(42)")
-                        .IsFixedLength(true);
+                        .IsFixedLength();
 
                     b.Property<string>("IdOriginal")
                         .IsRequired()
@@ -168,18 +175,18 @@ namespace Trsys.Web.Migrations
                     b.ToTable("Streams");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Message", b =>
+            modelBuilder.Entity("Trsys.Models.Message", b =>
                 {
-                    b.HasOne("Trsys.Web.Models.Stream", "StreamIdInternalNavigation")
+                    b.HasOne("Trsys.Models.Stream", "StreamIdInternalNavigation")
                         .WithMany("Messages")
                         .HasForeignKey("StreamIdInternal")
-                        .HasConstraintName("FK_Events_Streams")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Events_Streams");
 
                     b.Navigation("StreamIdInternalNavigation");
                 });
 
-            modelBuilder.Entity("Trsys.Web.Models.Stream", b =>
+            modelBuilder.Entity("Trsys.Models.Stream", b =>
                 {
                     b.Navigation("Messages");
                 });

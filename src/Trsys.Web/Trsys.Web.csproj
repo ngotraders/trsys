@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Trsys.Web.Infrastructure\Trsys.Web.Infrastructure.csproj" />
-    <ProjectReference Include="..\Trsys.Web.Models\Trsys.Web.Models.csproj" />
+    <ProjectReference Include="..\Trsys.Infrastructure\Trsys.Infrastructure.csproj" />
+    <ProjectReference Include="..\Trsys.Models\Trsys.Models.csproj" />
   </ItemGroup>
 
 </Project>

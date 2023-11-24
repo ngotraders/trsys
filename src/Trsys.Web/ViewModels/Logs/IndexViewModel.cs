@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Trsys.Web.Models;
+using Trsys.Models;
 
 namespace Trsys.Web.ViewModels.Logs
 {
