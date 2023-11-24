@@ -46,14 +46,82 @@ namespace Trsys.Web.Controllers
             return View(model);
         }
 
+        [HttpPost("orders/new")]
+        public async Task<IActionResult> PostOrderNew(IndexViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.NewOrderSecretKey))
+            {
+                model.ErrorMessage = "シークレットキーが指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            var secretKey = await mediator.Send(new FindBySecretKey(model.NewOrderSecretKey));
+            if (secretKey == null || (secretKey.KeyType & SecretKeyType.Publisher) != SecretKeyType.Publisher)
+            {
+                model.ErrorMessage = "シークレットキーが不正です。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            if (string.IsNullOrEmpty(model.NewOrderSymbol))
+            {
+                model.ErrorMessage = "通貨ペアが指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            if (!model.NewOrderType.HasValue || (model.NewOrderType.Value != OrderType.Sell && model.NewOrderType.Value != OrderType.Buy))
+            {
+                model.ErrorMessage = "取引が指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            if (!model.NewOrderPrice.HasValue)
+            {
+                model.ErrorMessage = "価格が指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            var ticketNo = model.NewOrderTicketNo ?? Random.Shared.Next(1, short.MaxValue);
+            await mediator.Send(new OrderOpenCommand(secretKey.Id, new PublishedOrder()
+            {
+                TicketNo = ticketNo,
+                Symbol = model.NewOrderSymbol,
+                OrderType = model.NewOrderType.Value,
+                Time = (model.NewOrderTime ?? DateTimeOffset.Now).ToUnixTimeSeconds(),
+                Price = model.NewOrderPrice.Value,
+                Percentage = model.NewOrderPercentage.GetValueOrDefault(98),
+            }));
+            model.SuccessMessage = $"注文{ticketNo}を作成しました。";
+            return SaveModelAndRedirectToIndex(model);
+        }
+
+        [HttpPost("orders/close")]
+        public async Task<IActionResult> PostOrderClose(IndexViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.CloseOrderSecretKey))
+            {
+                model.ErrorMessage = "シークレットキーが指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            var secretKey = await mediator.Send(new FindBySecretKey(model.CloseOrderSecretKey));
+            if (secretKey == null || (secretKey.KeyType & SecretKeyType.Publisher) != SecretKeyType.Publisher)
+            {
+                model.ErrorMessage = "シークレットキーが不正です。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            if (!model.CloseOrderTicketNo.HasValue)
+            {
+                model.ErrorMessage = "チケットNoが指定されていません。";
+                return SaveModelAndRedirectToIndex(model);
+            }
+            await mediator.Send(new OrderCloseCommand(secretKey.Id, model.CloseOrderTicketNo.Value));
+            model.SuccessMessage = $"注文{model.CloseOrderTicketNo.Value}を削除しました。";
+            return SaveModelAndRedirectToIndex(model);
+        }
+
         [HttpPost("orders/clear")]
         public async Task<IActionResult> PostOrdersClear(IndexViewModel model)
         {
             var orders = await mediator.Send(new GetOrders());
             foreach (var id in orders.Select(o => o.SecretKeyId).Distinct().ToList())
             {
-                await mediator.Send(new ClearOrdersCommand(id));
+                await mediator.Send(new OrdersClearCommand(id));
             }
+            model.SuccessMessage = $"注文をクリアしました。";
             return SaveModelAndRedirectToIndex(model);
         }
 
