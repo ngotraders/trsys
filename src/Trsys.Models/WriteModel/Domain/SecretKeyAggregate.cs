@@ -131,6 +131,11 @@ namespace Trsys.Models.WriteModel.Domain
             {
                 throw new InvalidOperationException("Cannot delete secret key if approved.");
             }
+
+            foreach (var ticket in _publishedOrderTickets.OrderBy(e => e))
+            {
+                ApplyChange(new OrderPublisherClosedOrder(Id, ticket));
+            }
             ApplyChange(new SecretKeyDeleted(Id));
         }
 

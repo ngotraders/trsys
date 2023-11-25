@@ -9,5 +9,6 @@ namespace Trsys.Models.ReadModel.Dtos
         public string Username { get; set; }
         public string PasswordHash { get; set; }
         public string Role { get; set; }
+        public string EmailAddress { get; set; }
     }
 }
