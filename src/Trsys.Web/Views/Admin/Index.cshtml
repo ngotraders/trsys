@@ -1,3 +1,5 @@
+@using Microsoft.Extensions.Hosting
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment env
 @using Trsys.Models
 @using System.Linq
 @model Trsys.Web.ViewModels.Admin.IndexViewModel
@@ -28,7 +30,7 @@
     <a href="@Url.Action("Index", "Events")">イベント</a>
 </div>
 
-<form method="post" action="/admin/keys/new">
+<form method="post">
     @if (!string.IsNullOrEmpty(Model.CacheOrderText))
     {
         <h1 class="h2 mb-3 font-weight-bold">注文キャッシュ</h1>
@@ -99,7 +101,7 @@
             </div>
         }
         <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered" style="table-layout: fixed; min-width: 60em">
+            <table class="table table-sm table-bordered" style="table-layout: fixed">
                 <colgroup>
                     <col style="width: 12em" />
                     <col />
@@ -228,5 +230,58 @@
     else
     {
         <p>使用可能なシークレットキーはありません。</p>
+    }
+
+    @if (env.IsDevelopment())
+    {
+        <div>
+            <h2>新規注文</h2>
+            <div class="mb-4 d-flex align-items-end">
+                <div class="pr-2">
+                    <label>シークレットキー</label>
+                    <input class="form-control" type="text" name="NewOrderSecretKey" value="@Model.NewOrderSecretKey" />
+                </div>
+                <div class="pr-2">
+                    <label>チケットNo</label>
+                    <input class="form-control" type="text" name="NewOrderTicketNo" value="@Model.NewOrderTicketNo" />
+                </div>
+                <div class="pr-2">
+                    <label>通貨ペア</label>
+                    <input class="form-control" type="text" name="NewOrderSymbol" value="@Model.NewOrderSymbol" />
+                </div>
+                <div class="pr-2">
+                    <label>取引</label>
+                    <select class="form-control" name="NewOrderType">
+                        <option value="">---</option>
+                        <option value="@OrderType.Buy" @(Model.NewOrderType == OrderType.Buy ? "selected" : "")>BUY</option>
+                        <option value="@OrderType.Sell" @(Model.NewOrderType == OrderType.Sell ? "selected" : "")>SELL</option>
+                    </select>
+                </div>
+                <div class="pr-2">
+                    <label>価格</label>
+                    <input class="form-control" type="text" name="NewOrderPrice" value="@Model.NewOrderPrice" />
+                </div>
+                <div>
+                    <button class="btn btn-outline-secondary btn-block" formaction="/admin/orders/new">注文生成</button>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h2>注文削除</h2>
+            <div class="mb-4 d-flex align-items-end">
+                <div class="pr-2">
+                    <label>シークレットキー</label>
+                    <input class="form-control" type="text" name="CloseOrderSecretKey" value="@Model.CloseOrderSecretKey" />
+                </div>
+                <div class="pr-2">
+                    <label>チケットNo</label>
+                    <input class="form-control" type="text" name="CloseOrderTicketNo" value="@Model.CloseOrderTicketNo" />
+                </div>
+                <div>
+                    <button class="btn btn-outline-secondary btn-block" formaction="/admin/orders/close">注文削除</button>
+                </div>
+            </div>
+        </div>
     }
 </form>
