@@ -24,6 +24,10 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                 {
                     All.Add(order);
                     ByPublisherTicketNo[order.TicketNo.ToString()] = order;
+                    while (All.Count > 10)
+                    {
+                        All.RemoveAt(0);
+                    }
                 }
             });
 
