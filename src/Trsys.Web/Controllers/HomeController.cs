@@ -70,10 +70,30 @@ namespace Trsys.Web.Controllers
             return Redirect(returnUrl ?? "/");
         }
 
-        [HttpGet("changeUserInfo")]
-        public IActionResult ChangeUserInfo()
+        [HttpGet("userInfo")]
+        public async Task<IActionResult> UserInfo()
         {
-            var model = new ChangeUserInfoViewModel();
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            var model = new UserInfoViewModel()
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Name = user.Name,
+                Role = user.Role,
+                EmailAddress = user.EmailAddress,
+            };
+            return View(model);
+        }
+
+        [HttpGet("changeUserInfo")]
+        public async Task<IActionResult> ChangeUserInfo()
+        {
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            var model = new ChangeUserInfoViewModel()
+            {
+                Name = user.Name,
+                EmailAddress = user.EmailAddress
+            };
             return View(model);
         }
 
@@ -92,7 +112,7 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "予期せぬエラーが発生しました。";
                 return View("ChangeUserInfo", model);
             }
-            await mediator.Send(new UserUpdateCommand(user.Id, model.Name, model.EmailAddress));
+            await mediator.Send(new UserUpdateUserInfoCommand(user.Id, model.Name, model.EmailAddress));
             return Redirect("/");
         }
 

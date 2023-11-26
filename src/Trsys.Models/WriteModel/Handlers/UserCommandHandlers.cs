@@ -12,6 +12,7 @@ namespace Trsys.Models.WriteModel.Handlers
     public class UserCommandHandlers :
         IRequestHandler<UserCreateIfNotExistsCommand, Guid>,
         IRequestHandler<UserCreateCommand, Guid>,
+        IRequestHandler<UserUpdateUserInfoCommand>,
         IRequestHandler<UserChangePasswordHashCommand>
     {
         private readonly IRepository repository;
@@ -48,6 +49,14 @@ namespace Trsys.Models.WriteModel.Handlers
             await repository.Save(item, item.Version, cancellationToken);
             await repository.Save(state, null, cancellationToken);
             return userId;
+        }
+
+
+        public async Task Handle(UserUpdateUserInfoCommand request, CancellationToken cancellationToken = default)
+        {
+            var item = await repository.Get<UserAggregate>(request.Id, cancellationToken);
+            item.UpdateUserInfo(request.Name, request.EmailAddress);
+            await repository.Save(item, item.Version, cancellationToken);
         }
 
         public async Task Handle(UserChangePasswordHashCommand request, CancellationToken cancellationToken)
