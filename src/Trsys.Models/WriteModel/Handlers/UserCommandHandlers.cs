@@ -10,9 +10,9 @@ using Trsys.Models.WriteModel.Extensions;
 namespace Trsys.Models.WriteModel.Handlers
 {
     public class UserCommandHandlers :
-        IRequestHandler<CreateUserIfNotExistsCommand, Guid>,
-        IRequestHandler<CreateUserCommand, Guid>,
-        IRequestHandler<ChangePasswordHashCommand>
+        IRequestHandler<UserCreateIfNotExistsCommand, Guid>,
+        IRequestHandler<UserCreateCommand, Guid>,
+        IRequestHandler<UserChangePasswordHashCommand>
     {
         private readonly IRepository repository;
 
@@ -21,7 +21,7 @@ namespace Trsys.Models.WriteModel.Handlers
             this.repository = repository;
         }
 
-        public async Task<Guid> Handle(CreateUserIfNotExistsCommand request, CancellationToken cancellationToken = default)
+        public async Task<Guid> Handle(UserCreateIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
             if (state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
@@ -36,7 +36,7 @@ namespace Trsys.Models.WriteModel.Handlers
         }
 
 
-        public async Task<Guid> Handle(CreateUserCommand request, CancellationToken cancellationToken = default)
+        public async Task<Guid> Handle(UserCreateCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
             if (!state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
@@ -50,7 +50,7 @@ namespace Trsys.Models.WriteModel.Handlers
             return userId;
         }
 
-        public async Task Handle(ChangePasswordHashCommand request, CancellationToken cancellationToken)
+        public async Task Handle(UserChangePasswordHashCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<UserAggregate>(request.Id, cancellationToken);
             item.ChangePasswordHash(request.PasswordHash);

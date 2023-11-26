@@ -43,7 +43,7 @@ namespace Trsys.Web.Controllers
                 var secretKey = await mediator.Send(new FindBySecretKey(key));
                 if (secretKey == null)
                 {
-                    await mediator.Send(new CreateSecretKeyIfNotExistsCommand(null, key, null));
+                    await mediator.Send(new SecretKeyCreateIfNotExistsCommand(null, key, null));
                     return BadRequest("InvalidSecretKey");
                 }
                 else if (!secretKey.IsApproved)
@@ -54,7 +54,7 @@ namespace Trsys.Web.Controllers
                 {
                     return BadRequest("SecretKeyInUse");
                 }
-                var token = await mediator.Send(new GenerateSecretTokenCommand(secretKey.Id));
+                var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(secretKey.Id));
                 return Ok(token);
             }
             catch
@@ -73,7 +73,7 @@ namespace Trsys.Web.Controllers
             {
                 return BadRequest("InvalidToken");
             }
-            await mediator.Send(new InvalidateSecretTokenCommand(secretKey.Id, token));
+            await mediator.Send(new SecretKeyInvalidateSecretTokenCommand(secretKey.Id, token));
             return Ok(token);
         }
 
@@ -101,7 +101,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await mediator.Send(new FetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets));
+            await mediator.Send(new SubscriberFetchOrderCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), cacheEntry.Tickets));
             HttpContext.Response.Headers["ETag"] = $"\"{cacheEntry.Hash}\"";
             return Ok(cacheEntry.Text);
         }
@@ -127,7 +127,7 @@ namespace Trsys.Web.Controllers
                 }
             }
 
-            await mediator.Send(new OrdersReplaceCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
+            await mediator.Send(new PublisherReplaceOrdersCommand(Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value), orders));
             return Ok();
         }
 

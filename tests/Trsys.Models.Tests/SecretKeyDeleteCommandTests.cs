@@ -12,15 +12,15 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class DeleteSecretKeyCommandTests
+    public class SecretKeyDeleteCommandTests
     {
         [TestMethod]
         public async Task Given_approved_Then_deletion_fails()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new DeleteSecretKeyCommand(id)));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyDeleteCommand(id)));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -38,8 +38,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
-            await mediator.Send(new DeleteSecretKeyCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(null, null, null));
+            await mediator.Send(new SecretKeyDeleteCommand(id));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -55,9 +55,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new DeleteSecretKeyCommand(id)));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyDeleteCommand(id)));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

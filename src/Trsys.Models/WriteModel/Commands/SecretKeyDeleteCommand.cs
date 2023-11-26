@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class DeleteSecretKeyCommand : IRequest, IRetryableRequest
+    public class SecretKeyDeleteCommand : IRequest, IRetryableRequest
     {
-        public DeleteSecretKeyCommand(Guid id)
+        public SecretKeyDeleteCommand(Guid id)
         {
             Id = id;
         }

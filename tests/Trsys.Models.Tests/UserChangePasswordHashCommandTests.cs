@@ -11,15 +11,15 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class ChangePasswordHashCommandTests
+    public class UserChangePasswordHashCommandTests
     {
         [TestMethod]
         public async Task When_changing_with_same_password_Then_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateUserCommand("user", "username", "password", "Administrator"));
-            await mediator.Send(new ChangePasswordHashCommand(id, "password"));
+            var id = await mediator.Send(new UserCreateCommand("user", "username", "password", "Administrator"));
+            await mediator.Send(new UserChangePasswordHashCommand(id, "password"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -37,8 +37,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateUserCommand("user", "username", "password", "Administrator"));
-            await mediator.Send(new ChangePasswordHashCommand(id, "newPassword"));
+            var id = await mediator.Send(new UserCreateCommand("user", "username", "password", "Administrator"));
+            await mediator.Send(new UserChangePasswordHashCommand(id, "newPassword"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

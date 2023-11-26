@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class CreateUserCommand : IRequest<Guid>, IRetryableRequest
+    public class UserCreateCommand : IRequest<Guid>, IRetryableRequest
     {
-        public CreateUserCommand(string name, string username, string passwordHash, string role)
+        public UserCreateCommand(string name, string username, string passwordHash, string role)
         {
             Name = name;
             Username = username;

@@ -11,24 +11,24 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class OrdersReplaceCommandTests
+    public class PublisherReplaceOrdersCommandTests
     {
         [TestMethod]
         public async Task When_replace_order_Given_no_order_is_present_Then_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", "description", true));
-            await mediator.Send(new OrdersReplaceCommand(id, new[]
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", "description", true));
+            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
             {
                 PublishedOrder.Parse("1:USDJPY:0:1617271883:100:20")
             }));
-            await mediator.Send(new OrdersReplaceCommand(id, new[]
+            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
             {
                 PublishedOrder.Parse("1:USDJPY:0:1617271883:100:20"),
                 PublishedOrder.Parse("2:EURJPY:1:1617271884:50:98")
             }));
-            await mediator.Send(new OrdersReplaceCommand(id, new[]
+            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
             {
                 PublishedOrder.Parse("2:EURJPY:1:1617271884:50:98")
             }));

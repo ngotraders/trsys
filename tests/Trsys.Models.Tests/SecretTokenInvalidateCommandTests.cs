@@ -14,16 +14,16 @@ using Trsys.Models.WriteModel.Notifications;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class InvalidateSecretTokenCommandTests
+    public class SecretTokenInvalidateCommandTests
     {
         [TestMethod]
         public async Task Given_token_is_same_as_generated_Then_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
-            await mediator.Send(new InvalidateSecretTokenCommand(id, token));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+            await mediator.Send(new SecretKeyInvalidateSecretTokenCommand(id, token));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -45,9 +45,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new InvalidateSecretTokenCommand(id, "InvalidToken")));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyInvalidateSecretTokenCommand(id, "InvalidToken")));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -67,10 +67,10 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
             await mediator.Publish(new SecretKeyConnected(id));
-            await mediator.Send(new InvalidateSecretTokenCommand(id, token));
+            await mediator.Send(new SecretKeyInvalidateSecretTokenCommand(id, token));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

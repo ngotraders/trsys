@@ -42,13 +42,13 @@ namespace Trsys.Infrastructure
         }
         public static IServiceCollection AddEmailSender(this IServiceCollection services, EmailSenderConfiguration configuration)
         {
-            if (!string.IsNullOrEmpty(configuration.Host))
+            if (configuration == null || string.IsNullOrEmpty(configuration.Host))
             {
-                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
+                services.AddSingleton<IEmailSender, DummyEmailSender>();
             }
             else
             {
-                services.AddSingleton<IEmailSender, DummyEmailSender>();
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
             }
             return services;
         }

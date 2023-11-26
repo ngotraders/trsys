@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class InvalidateSecretTokenCommand : IRequest, IRetryableRequest
+    public class SecretKeyInvalidateSecretTokenCommand : IRequest, IRetryableRequest
     {
-        public InvalidateSecretTokenCommand(Guid id, string token)
+        public SecretKeyInvalidateSecretTokenCommand(Guid id, string token)
         {
             Id = id;
             Token = token;

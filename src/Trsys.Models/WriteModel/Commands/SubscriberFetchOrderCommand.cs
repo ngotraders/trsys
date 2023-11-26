@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class FetchOrderCommand : IRequest, IRetryableRequest
+    public class SubscriberFetchOrderCommand : IRequest, IRetryableRequest
     {
-        public FetchOrderCommand(Guid id, int[] tickets)
+        public SubscriberFetchOrderCommand(Guid id, int[] tickets)
         {
             Id = id;
             Tickets = tickets;

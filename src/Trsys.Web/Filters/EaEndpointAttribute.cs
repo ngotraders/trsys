@@ -59,7 +59,7 @@ namespace Trsys.Web.Filters
             var secretKey = await mediator.Send(new FindBySecretKey(key));
             if (secretKey == null)
             {
-                await mediator.Send(new CreateSecretKeyIfNotExistsCommand(secretKeyTypes.TryGetValue(type, out var keyType) ? keyType : null, key, null));
+                await mediator.Send(new SecretKeyCreateIfNotExistsCommand(secretKeyTypes.TryGetValue(type, out var keyType) ? keyType : null, key, null));
                 context.Result = new BadRequestObjectResult("InvalidSecretKey");
                 return;
             }

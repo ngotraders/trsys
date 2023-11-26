@@ -1,4 +1,3 @@
-using CQRSlite.Domain;
 using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,19 +8,18 @@ using System.Threading.Tasks;
 using Trsys.Infrastructure;
 using Trsys.Models.Events;
 using Trsys.Models.WriteModel.Commands;
-using Trsys.Models.WriteModel.Extensions;
 
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class CreateSecretKeyCommandTests
+    public class SecretKeyCreateIfNotExistsCommandTests
     {
         [TestMethod]
         public async Task When_KeyType_Key_and_Description_specified_Then_creation_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
+            var id = await mediator.Send(new SecretKeyCreateIfNotExistsCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -40,7 +38,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
+            var id = await mediator.Send(new SecretKeyCreateIfNotExistsCommand(SecretKeyType.Publisher, null, null, true));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -58,7 +56,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, null, null, true)));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyCreateIfNotExistsCommand(null, null, null, true)));
         }
 
         [TestMethod]
@@ -66,7 +64,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
+            var id = await mediator.Send(new SecretKeyCreateIfNotExistsCommand(null, null, null));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -81,8 +79,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new CreateSecretKeyCommand(null, "TEST_KEY", null)));
+            var id = await mediator.Send(new SecretKeyCreateIfNotExistsCommand(null, "TEST_KEY", null));
+            Assert.AreEqual(id, await mediator.Send(new SecretKeyCreateIfNotExistsCommand(null, "TEST_KEY", null)));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -90,29 +88,6 @@ namespace Trsys.Models.Tests
             Assert.AreEqual(1, events.Count);
             Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
             Assert.AreEqual("TEST_KEY", ((SecretKeyCreated)events[0]).Key);
-        }
-
-        [TestMethod]
-        public async Task Given_Key_already_exists_and_not_aggregate_created_Then_creation_succeeds()
-        {
-            using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
-            var repository = services.GetRequiredService<IRepository>();
-            var state = await repository.GetWorldState();
-            state.GenerateSecretKeyIdIfNotExists("TEST_KEY", out var id);
-            await repository.Save(state);
-            var mediator = services.GetRequiredService<IMediator>();
-            await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "TEST_KEY", "description"));
-
-            var store = services.GetRequiredService<IEventStore>();
-            var events = (await store.Get(id, 0)).ToList();
-
-            Assert.AreEqual(3, events.Count);
-            Assert.AreEqual(typeof(SecretKeyCreated), events[0].GetType());
-            Assert.AreEqual("TEST_KEY", ((SecretKeyCreated)events[0]).Key);
-            Assert.AreEqual(typeof(SecretKeyKeyTypeChanged), events[1].GetType());
-            Assert.AreEqual(SecretKeyType.Publisher, ((SecretKeyKeyTypeChanged)events[1]).KeyType);
-            Assert.AreEqual(typeof(SecretKeyDescriptionChanged), events[2].GetType());
-            Assert.AreEqual("description", ((SecretKeyDescriptionChanged)events[2]).Description);
         }
     }
 }

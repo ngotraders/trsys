@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class OrderOpenCommand : IRequest, IRetryableRequest
+    public class PublisherOpenOrderCommand : IRequest, IRetryableRequest
     {
-        public OrderOpenCommand(Guid id, PublishedOrder publishedOrder)
+        public PublisherOpenOrderCommand(Guid id, PublishedOrder publishedOrder)
         {
             Id = id;
             PublishedOrder = publishedOrder;

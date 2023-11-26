@@ -31,8 +31,8 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var mediator = server.Services.GetRequiredService<IMediator>();
-                var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
-                await mediator.Send(new GenerateSecretTokenCommand(id));
+                var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+                await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
             }
             var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
@@ -73,7 +73,7 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var mediator = server.Services.GetRequiredService<IMediator>();
-                await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null));
+                await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null));
             }
 
             var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
@@ -94,8 +94,8 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var mediator = server.Services.GetRequiredService<IMediator>();
-                var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
-                var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+                var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+                var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
                 await mediator.Publish(new SecretKeyConnected(id));
             }
 
@@ -114,8 +114,8 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var mediator = server.Services.GetRequiredService<IMediator>();
-                var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
-                token = await mediator.Send(new GenerateSecretTokenCommand(id));
+                var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+                token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
                 await mediator.Publish(new SecretKeyConnected(id));
             }
 
@@ -148,7 +148,7 @@ namespace Trsys.Web.Tests
             using (var scope = server.Services.CreateScope())
             {
                 var mediator = server.Services.GetRequiredService<IMediator>();
-                var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+                var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
             }
 
             var res = await client.PostAsync("/api/ea/token/release", new StringContent("", Encoding.UTF8, "text/plain"));

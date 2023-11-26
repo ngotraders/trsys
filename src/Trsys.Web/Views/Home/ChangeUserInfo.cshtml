@@ -1,0 +1,30 @@
+﻿@model Trsys.Web.ViewModels.Home.ChangeUserInfoViewModel
+
+@{
+    ViewBag.Title = "ユーザー情報変更";
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger mb-4">
+        @Model.ErrorMessage
+    </div>
+}
+
+<h1 class="h2 mb-3 font-weight-bold">@ViewBag.Title</h1>
+
+<form method="post">
+    <div style="max-width: 40rem">
+        <div class="mb-2">
+            <label class="form-label">名前</label>
+            <input class="form-control" type="text" name="NewPassword" value="@Model.Name" autocomplete="new-password" />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">メールアドレス</label>
+            <input class="form-control" type="text" name="NewPassword" value="@Model.EmailAddress" autocomplete="new-password" />
+        </div>
+        <div>
+            <button class="btn btn-primary">変更</button>
+        </div>
+    </div>
+</form>

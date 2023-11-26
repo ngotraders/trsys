@@ -14,15 +14,15 @@ using Trsys.Models.WriteModel.Notifications;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class UpdateSecretKeyCommandTests
+    public class SecretKeyUpdateCommandTests
     {
         [TestMethod]
         public async Task When_KeyType_and_Description_not_specified_Then_modification_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
-            await mediator.Send(new UpdateSecretKeyCommand(id, null, null));
+            var id = await mediator.Send(new SecretKeyCreateCommand(null, null, null));
+            await mediator.Send(new SecretKeyUpdateCommand(id, null, null));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -37,8 +37,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
-            await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, "description"));
+            var id = await mediator.Send(new SecretKeyCreateCommand(null, null, null));
+            await mediator.Send(new SecretKeyUpdateCommand(id, SecretKeyType.Publisher, "description"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -57,8 +57,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(null, null, null));
-            await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, true));
+            var id = await mediator.Send(new SecretKeyCreateCommand(null, null, null));
+            await mediator.Send(new SecretKeyUpdateCommand(id, SecretKeyType.Publisher, null, true));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -76,8 +76,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            await mediator.Send(new UpdateSecretKeyCommand(id, null, "description", null));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            await mediator.Send(new SecretKeyUpdateCommand(id, null, "description", null));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -97,8 +97,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Subscriber, null, true)));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyUpdateCommand(id, SecretKeyType.Subscriber, null, true)));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -116,8 +116,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, false));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            await mediator.Send(new SecretKeyUpdateCommand(id, SecretKeyType.Publisher, null, false));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -136,10 +136,10 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
             await mediator.Publish(new SecretKeyConnected(id));
-            await mediator.Send(new UpdateSecretKeyCommand(id, SecretKeyType.Publisher, null, false));
+            await mediator.Send(new SecretKeyUpdateCommand(id, SecretKeyType.Publisher, null, false));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

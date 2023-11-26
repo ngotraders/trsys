@@ -12,15 +12,15 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class FetchOrderCommandTests
+    public class SubscriberFetchOrderCommandTests
     {
         [TestMethod]
         public async Task When_published_order_fetched_by_subscriber_Given_no_orders_Then_nothing_happens()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, Array.Empty<int>()));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, Array.Empty<int>()));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -38,8 +38,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 1 }));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 1 }));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -59,9 +59,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 1 }));
-            await mediator.Send(new FetchOrderCommand(id, Array.Empty<int>()));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 1 }));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, Array.Empty<int>()));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -83,8 +83,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 1, 2 }));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 1, 2 }));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -106,9 +106,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 1, 2 }));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 2 }));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 1, 2 }));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 2 }));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -132,9 +132,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", null, true));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 1, 2 }));
-            await mediator.Send(new FetchOrderCommand(id, new int[] { 3,4 }));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 1, 2 }));
+            await mediator.Send(new SubscriberFetchOrderCommand(id, new int[] { 3,4 }));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();

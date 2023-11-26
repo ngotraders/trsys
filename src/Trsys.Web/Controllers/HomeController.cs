@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Trsys.Web.Configurations;
 using Trsys.Models.ReadModel.Queries;
 using Trsys.Models.WriteModel.Commands;
+using Trsys.Web.Configurations;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers
@@ -70,6 +70,32 @@ namespace Trsys.Web.Controllers
             return Redirect(returnUrl ?? "/");
         }
 
+        [HttpGet("changeUserInfo")]
+        public IActionResult ChangeUserInfo()
+        {
+            var model = new ChangeUserInfoViewModel();
+            return View(model);
+        }
+
+        [HttpPost("changeUserInfo")]
+        public async Task<IActionResult> ChangeUserInfoExecute(ChangeUserInfoViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.ErrorMessage = "入力に誤りがあります。";
+                return View("ChangeUserInfo", model);
+            }
+
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            if (user == null)
+            {
+                model.ErrorMessage = "予期せぬエラーが発生しました。";
+                return View("ChangeUserInfo", model);
+            }
+            await mediator.Send(new UserUpdateCommand(user.Id, model.Name, model.EmailAddress));
+            return Redirect("/");
+        }
+
         [HttpGet("changePassword")]
         public IActionResult ChangePassword()
         {
@@ -98,7 +124,7 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "予期せぬエラーが発生しました。";
                 return View("ChangePassword", model);
             }
-            await mediator.Send(new ChangePasswordHashCommand(user.Id, passwordHasher.Hash(model.NewPassword)));
+            await mediator.Send(new UserChangePasswordHashCommand(user.Id, passwordHasher.Hash(model.NewPassword)));
             return Redirect("/");
         }
 

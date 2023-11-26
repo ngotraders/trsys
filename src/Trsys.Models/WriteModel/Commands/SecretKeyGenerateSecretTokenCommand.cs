@@ -3,9 +3,9 @@ using System;
 
 namespace Trsys.Models.WriteModel.Commands
 {
-    public class OrdersClearCommand : IRequest, IRetryableRequest
+    public class SecretKeyGenerateSecretTokenCommand : IRequest<string>, IRetryableRequest
     {
-        public OrdersClearCommand(Guid id)
+        public SecretKeyGenerateSecretTokenCommand(Guid id)
         {
             Id = id;
         }

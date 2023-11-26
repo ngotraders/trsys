@@ -11,15 +11,15 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Models.Tests
 {
     [TestClass]
-    public class OrdersClearCommandTests
+    public class PublisherClearOrdersCommandTests
     {
         [TestMethod]
         public async Task When_clear_order_Given_no_order_is_present_Then_succeeds()
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", "description", true));
-            await mediator.Send(new OrdersClearCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", "description", true));
+            await mediator.Send(new PublisherClearOrdersCommand(id));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -39,9 +39,9 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, "KEY", "description", true));
-            await mediator.Send(new OrdersReplaceCommand(id, new[] { PublishedOrder.Parse("1:USDJPY:0:1:2:1617271883") }));
-            await mediator.Send(new OrdersClearCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", "description", true));
+            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[] { PublishedOrder.Parse("1:USDJPY:0:1:2:1617271883") }));
+            await mediator.Send(new PublisherClearOrdersCommand(id));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
