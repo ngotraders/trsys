@@ -21,7 +21,7 @@
     </div>
 }
 
-<div class="float-right">
+<div class="float-md-right">
     @if (!string.IsNullOrEmpty(Model.EaSiteUrl))
     {
         <a href="@Model.EaSiteUrl">EAのダウンロード</a>
@@ -100,15 +100,15 @@
                 }
             </div>
         }
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered" style="table-layout: fixed;min-width: 87em">
                 <colgroup>
                     <col style="width: 12em" />
                     <col />
                     <col />
                     <col style="width: 4em" />
                     <col style="width: 4em" />
-                    <col style="width: 16em" />
+                    <col style="width: 17em" />
                 </colgroup>
                 <thead>
                     <tr>
@@ -154,33 +154,33 @@
                                 <span class="secret-key">@key.Key</span>
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
                             </td>
-                            <td class="align-baseline secret-key"><input class="form-control" type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
-                            <td class="align-baseline">@(key.IsConnected ? "○" : "-")</td>
+                            <td class="align-baseline p-1"><input class="form-control" type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
+                            <td class="align-baseline text-center">@(key.IsConnected ? "○" : "-")</td>
                             @if (key.IsApproved)
                             {
-                                <td class="align-baseline">有効</td>
+                                <td class="align-baseline text-center">有効</td>
                             }
                             else
                             {
-                                <td class="align-baseline">無効</td>
+                                <td class="align-baseline text-center">無効</td>
                             }
-                            <td class="align-baseline p-0">
+                            <td class="align-baseline p-1">
                                 <div class="d-flex justify-content-between">
-                                    <div class="flex-grow-1 m-1">
+                                    <div class="flex-grow-1 mr-1">
                                         <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/update">変更</button>
                                     </div>
                                     @if (key.IsApproved)
                                     {
-                                        <div class="flex-grow-1 m-1">
+                                        <div class="flex-grow-1 mr-1">
                                             <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/revoke">無効化</button>
                                         </div>
-                                        <div class="flex-grow-1 m-1">
+                                        <div class="flex-grow-1">
                                             <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
                                         </div>
                                     }
                                     else
                                     {
-                                        <div class="flex-grow-1 m-1">
+                                        <div class="flex-grow-1 mr-1">
                                             @if (key.KeyType.HasValue)
                                             {
                                                 <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/approve">有効化</button>
@@ -190,7 +190,7 @@
                                                 <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
                                             }
                                         </div>
-                                        <div class="flex-grow-1 m-1">
+                                        <div class="flex-grow-1">
                                             <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/delete">削除</button>
                                         </div>
                                     }
