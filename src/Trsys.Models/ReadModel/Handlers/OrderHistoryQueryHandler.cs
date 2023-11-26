@@ -47,7 +47,10 @@ namespace Trsys.Models.ReadModel.Handlers
             };
 
             await db.AddAsync(order);
-            await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeOpenedMessage(order));
+            if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
+            {
+                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeOpenedMessage(order));
+            }
         }
 
         public async Task Handle(OrderPublisherClosedOrder notification, CancellationToken cancellationToken = default)
@@ -59,7 +62,10 @@ namespace Trsys.Models.ReadModel.Handlers
             }
             order.ClosePublishedAt = notification.TimeStamp;
             await db.UpdateAsync(order);
-            await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeClosedMessage(order));
+            if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
+            {
+                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeClosedMessage(order));
+            }
         }
 
         public async Task Handle(OrderSubscriberOpenedOrder notification, CancellationToken cancellationToken)

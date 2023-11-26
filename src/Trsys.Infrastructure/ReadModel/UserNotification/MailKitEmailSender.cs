@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -30,7 +29,7 @@ namespace Trsys.Infrastructure.ReadModel.UserNotification
 
             using (var client = new SmtpClient())
             {
-                client.Connect(configuration.Host, configuration.Port, configuration.UseSsl ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None);
+                client.Connect(configuration.Host, configuration.Port ?? 25, (configuration.UseSsl ?? false) ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None);
 
                 if (!string.IsNullOrEmpty(configuration.AuthenticationUser))
                 {
@@ -55,19 +54,5 @@ namespace Trsys.Infrastructure.ReadModel.UserNotification
                 client.Disconnect(true);
             }
         }
-    }
-
-    public class EmailSenderConfiguration
-    {
-        public string Host { get; set; }
-        public int Port { get; set; }
-        public bool UseSsl { get; set; }
-        public string AuthenticationUser { get; set; }
-        public string AuthenticationPassword { get; set; }
-        public string MailFrom { get; set; }
-        public string AuthenticationClientId { get; set; }
-        public string AuthenticationAuthority { get; set; }
-        public string AuthenticationClientSecret { get; set; }
-        public List<string> AuthenticationScopes { get; set; }
     }
 }

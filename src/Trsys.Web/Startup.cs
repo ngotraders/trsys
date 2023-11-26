@@ -14,6 +14,8 @@ using Trsys.Web.Configurations;
 using Trsys.Infrastructure;
 using Trsys.Web.Middlewares;
 using Trsys.Models;
+using Trsys.Infrastructure.ReadModel.UserNotification;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Trsys.Web
 {
@@ -71,10 +73,7 @@ namespace Trsys.Web
                 });
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
-            services.AddEmailSender(config =>
-            {
-                // TODO
-            });
+            services.AddEmailSender(Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
             services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
             if (!string.IsNullOrEmpty(sqlserverConnection))
             {

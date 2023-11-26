@@ -28,11 +28,23 @@ namespace Trsys.Infrastructure
     {
         public static IServiceCollection AddEmailSender(this IServiceCollection services, Action<EmailSenderConfiguration> action)
         {
-            var config = new EmailSenderConfiguration();
-            action?.Invoke(config);
-            if (!string.IsNullOrEmpty(config.Host))
+            var configuration = new EmailSenderConfiguration();
+            action?.Invoke(configuration);
+            if (!string.IsNullOrEmpty(configuration.Host))
             {
-                services.AddSingleton<IEmailSender>(new MailKitEmailSender(config));
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
+            }
+            else
+            {
+                services.AddSingleton<IEmailSender, DummyEmailSender>();
+            }
+            return services;
+        }
+        public static IServiceCollection AddEmailSender(this IServiceCollection services, EmailSenderConfiguration configuration)
+        {
+            if (!string.IsNullOrEmpty(configuration.Host))
+            {
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
             }
             else
             {
