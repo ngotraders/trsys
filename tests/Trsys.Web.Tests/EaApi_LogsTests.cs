@@ -23,8 +23,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
             client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
@@ -42,8 +42,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
-            var token = await mediator.Send(new GenerateSecretTokenCommand(id));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
             client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
@@ -61,7 +61,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
-            await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
             client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
@@ -79,7 +79,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
-            await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
+            await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, VALID_KEY, null, true));
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
             client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");

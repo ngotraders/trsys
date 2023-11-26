@@ -12,12 +12,12 @@ using Trsys.Models.WriteModel.Infrastructure;
 namespace Trsys.Models.WriteModel.Handlers
 {
     public class SecretKeyCommandHandlers :
-        IRequestHandler<CreateSecretKeyCommand, Guid>,
-        IRequestHandler<CreateSecretKeyIfNotExistsCommand, Guid>,
-        IRequestHandler<UpdateSecretKeyCommand>,
-        IRequestHandler<GenerateSecretTokenCommand, string>,
-        IRequestHandler<InvalidateSecretTokenCommand>,
-        IRequestHandler<DeleteSecretKeyCommand>
+        IRequestHandler<SecretKeyCreateCommand, Guid>,
+        IRequestHandler<SecretKeyCreateIfNotExistsCommand, Guid>,
+        IRequestHandler<SecretKeyUpdateCommand>,
+        IRequestHandler<SecretKeyGenerateSecretTokenCommand, string>,
+        IRequestHandler<SecretKeyInvalidateSecretTokenCommand>,
+        IRequestHandler<SecretKeyDeleteCommand>
     {
         private readonly IRepository repository;
         private readonly ISecretKeyConnectionManager connectionManager;
@@ -28,7 +28,7 @@ namespace Trsys.Models.WriteModel.Handlers
             this.connectionManager = connectionManager;
         }
 
-        public async Task<Guid> Handle(CreateSecretKeyIfNotExistsCommand request, CancellationToken cancellationToken = default)
+        public async Task<Guid> Handle(SecretKeyCreateIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
@@ -65,7 +65,7 @@ namespace Trsys.Models.WriteModel.Handlers
             return secretKeyId;
         }
 
-        public async Task<Guid> Handle(CreateSecretKeyCommand request, CancellationToken cancellationToken = default)
+        public async Task<Guid> Handle(SecretKeyCreateCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
             var key = request.Key ?? Guid.NewGuid().ToString();
@@ -101,7 +101,7 @@ namespace Trsys.Models.WriteModel.Handlers
             return secretKeyId;
         }
 
-        public async Task Handle(UpdateSecretKeyCommand request, CancellationToken cancellationToken)
+        public async Task Handle(SecretKeyUpdateCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             if (request.Approve.HasValue)
@@ -131,7 +131,7 @@ namespace Trsys.Models.WriteModel.Handlers
             await connectionManager.ReleaseAsync(item.Id);
         }
 
-        public async Task<string> Handle(GenerateSecretTokenCommand request, CancellationToken cancellationToken)
+        public async Task<string> Handle(SecretKeyGenerateSecretTokenCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             if (!string.IsNullOrEmpty(item.Token) && await connectionManager.IsConnectedAsync(request.Id))
@@ -143,7 +143,7 @@ namespace Trsys.Models.WriteModel.Handlers
             return token;
         }
 
-        public async Task Handle(InvalidateSecretTokenCommand request, CancellationToken cancellationToken)
+        public async Task Handle(SecretKeyInvalidateSecretTokenCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.InvalidateToken(request.Token);
@@ -151,7 +151,7 @@ namespace Trsys.Models.WriteModel.Handlers
             await connectionManager.ReleaseAsync(request.Id);
         }
 
-        public async Task Handle(DeleteSecretKeyCommand request, CancellationToken cancellationToken)
+        public async Task Handle(SecretKeyDeleteCommand request, CancellationToken cancellationToken)
         {
             var item = await repository.Get<SecretKeyAggregate>(request.Id, cancellationToken);
             item.Delete();

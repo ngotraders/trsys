@@ -24,6 +24,16 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
+        public Task UpdateUserInfoAsync(Guid id, string name, string emailAddress)
+        {
+            return queue.Enqueue(() =>
+            {
+                var user = ById[id];
+                user.Name = name;
+                user.EmailAddress = emailAddress;
+            });
+        }
+
         public Task UpdatePasswordHashAsync(Guid id, string passwordHash)
         {
             return queue.Enqueue(() =>

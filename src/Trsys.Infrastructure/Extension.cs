@@ -5,10 +5,12 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
 using StackExchange.Redis;
+using System;
 using System.Reflection;
 using Trsys.Infrastructure.Logging;
 using Trsys.Infrastructure.Messaging;
 using Trsys.Infrastructure.ReadModel.InMemory;
+using Trsys.Infrastructure.ReadModel.UserNotification;
 using Trsys.Infrastructure.WriteModel;
 using Trsys.Infrastructure.WriteModel.SqlStreamStore;
 using Trsys.Infrastructure.WriteModel.SqlStreamStore.InMemory;
@@ -24,6 +26,33 @@ namespace Trsys.Infrastructure
 {
     public static class Extension
     {
+        public static IServiceCollection AddEmailSender(this IServiceCollection services, Action<EmailSenderConfiguration> action)
+        {
+            var configuration = new EmailSenderConfiguration();
+            action?.Invoke(configuration);
+            if (!string.IsNullOrEmpty(configuration.Host))
+            {
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
+            }
+            else
+            {
+                services.AddSingleton<IEmailSender, DummyEmailSender>();
+            }
+            return services;
+        }
+        public static IServiceCollection AddEmailSender(this IServiceCollection services, EmailSenderConfiguration configuration)
+        {
+            if (configuration == null || string.IsNullOrEmpty(configuration.Host))
+            {
+                services.AddSingleton<IEmailSender, DummyEmailSender>();
+            }
+            else
+            {
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
+            }
+            return services;
+        }
+
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
             // MediatR dependencies
@@ -48,6 +77,9 @@ namespace Trsys.Infrastructure
 
             // message dispatching
             services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
+
+            // User notification
+            services.AddSingleton<IUserNotificationDispatcher, EmailMessageUserNotificationDispatcher>();
 
             return services;
         }
@@ -88,6 +120,7 @@ namespace Trsys.Infrastructure
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
             services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
+            services.AddSingleton<IOrderHistoryDatabase, InMemoryOrderHistoryDatabase>();
             services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
 
             if (string.IsNullOrEmpty(sqlserverConnection))

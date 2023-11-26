@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Trsys.Web.Configurations;
 using Trsys.Models.ReadModel.Queries;
 using Trsys.Models.WriteModel.Commands;
+using Trsys.Web.Configurations;
 using Trsys.Web.ViewModels.Home;
 
 namespace Trsys.Web.Controllers
@@ -70,6 +70,52 @@ namespace Trsys.Web.Controllers
             return Redirect(returnUrl ?? "/");
         }
 
+        [HttpGet("userInfo")]
+        public async Task<IActionResult> UserInfo()
+        {
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            var model = new UserInfoViewModel()
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Name = user.Name,
+                Role = user.Role,
+                EmailAddress = user.EmailAddress,
+            };
+            return View(model);
+        }
+
+        [HttpGet("changeUserInfo")]
+        public async Task<IActionResult> ChangeUserInfo()
+        {
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            var model = new ChangeUserInfoViewModel()
+            {
+                Name = user.Name,
+                EmailAddress = user.EmailAddress
+            };
+            return View(model);
+        }
+
+        [HttpPost("changeUserInfo")]
+        public async Task<IActionResult> ChangeUserInfoExecute(ChangeUserInfoViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.ErrorMessage = "入力に誤りがあります。";
+                return View("ChangeUserInfo", model);
+            }
+
+            var user = await mediator.Send(new FindByUsername(User.Identity.Name));
+            if (user == null)
+            {
+                model.ErrorMessage = "予期せぬエラーが発生しました。";
+                return View("ChangeUserInfo", model);
+            }
+            await mediator.Send(new UserUpdateUserInfoCommand(user.Id, model.Name, model.EmailAddress));
+            return Redirect("/");
+        }
+
         [HttpGet("changePassword")]
         public IActionResult ChangePassword()
         {
@@ -98,7 +144,7 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "予期せぬエラーが発生しました。";
                 return View("ChangePassword", model);
             }
-            await mediator.Send(new ChangePasswordHashCommand(user.Id, passwordHasher.Hash(model.NewPassword)));
+            await mediator.Send(new UserChangePasswordHashCommand(user.Id, passwordHasher.Hash(model.NewPassword)));
             return Redirect("/");
         }
 

@@ -8,6 +8,7 @@ namespace Trsys.Models.ReadModel.Infrastructure
     public interface IUserDatabase
     {
         Task AddAsync(UserDto user);
+        Task UpdateUserInfoAsync(Guid id, string name, string emailAddress);
         Task UpdatePasswordHashAsync(Guid id, string passwordHash);
         Task<List<UserDto>> SearchAsync();
         Task<UserDto> FindByIdAsync(Guid id);

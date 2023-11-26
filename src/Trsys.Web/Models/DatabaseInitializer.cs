@@ -72,7 +72,7 @@ namespace Trsys.Models
             using var scope = app.ApplicationServices.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-            await mediator.Send(new CreateUserIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
+            await mediator.Send(new UserCreateIfNotExistsCommand("管理者", "admin", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
         }
 
         private static async Task InitializeWriteModelAsync(ISecretKeyConnectionManager tokenManager)

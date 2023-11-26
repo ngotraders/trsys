@@ -76,7 +76,7 @@ namespace Trsys.Web.Controllers
                 return SaveModelAndRedirectToIndex(model);
             }
             var ticketNo = model.NewOrderTicketNo ?? Random.Shared.Next(1, short.MaxValue);
-            await mediator.Send(new OrderOpenCommand(secretKey.Id, new PublishedOrder()
+            await mediator.Send(new PublisherOpenOrderCommand(secretKey.Id, new PublishedOrder()
             {
                 TicketNo = ticketNo,
                 Symbol = model.NewOrderSymbol,
@@ -108,7 +108,7 @@ namespace Trsys.Web.Controllers
                 model.ErrorMessage = "チケットNoが指定されていません。";
                 return SaveModelAndRedirectToIndex(model);
             }
-            await mediator.Send(new OrderCloseCommand(secretKey.Id, model.CloseOrderTicketNo.Value));
+            await mediator.Send(new PublisherCloseOrderCommand(secretKey.Id, model.CloseOrderTicketNo.Value));
             model.SuccessMessage = $"注文{model.CloseOrderTicketNo.Value}を削除しました。";
             return SaveModelAndRedirectToIndex(model);
         }
@@ -119,7 +119,7 @@ namespace Trsys.Web.Controllers
             var orders = await mediator.Send(new GetOrders());
             foreach (var id in orders.Select(o => o.SecretKeyId).Distinct().ToList())
             {
-                await mediator.Send(new OrdersClearCommand(id));
+                await mediator.Send(new PublisherClearOrdersCommand(id));
             }
             model.SuccessMessage = $"注文をクリアしました。";
             return SaveModelAndRedirectToIndex(model);
@@ -136,7 +136,7 @@ namespace Trsys.Web.Controllers
 
             try
             {
-                var id = await mediator.Send(new CreateSecretKeyCommand(model.KeyType.Value, model.Key, model.Description));
+                var id = await mediator.Send(new SecretKeyCreateCommand(model.KeyType.Value, model.Key, model.Description));
                 var result = await mediator.Send(new GetSecretKey(id));
                 model.SuccessMessage = $"シークレットキー: {result.Key} を作成しました。";
                 model.KeyType = null;
@@ -163,7 +163,7 @@ namespace Trsys.Web.Controllers
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
+                await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
@@ -186,7 +186,7 @@ namespace Trsys.Web.Controllers
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, true));
+                await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, true));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を有効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
@@ -210,7 +210,7 @@ namespace Trsys.Web.Controllers
                     return SaveModelAndRedirectToIndex(model);
                 }
                 var token = secretKey.Token;
-                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, false));
+                await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, false));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を無効化しました。";
                 return SaveModelAndRedirectToIndex(model);
             }
@@ -232,7 +232,7 @@ namespace Trsys.Web.Controllers
                     model.ErrorMessage = $"シークレットキーを変更できません。";
                     return SaveModelAndRedirectToIndex(model);
                 }
-                await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
+                await mediator.Send(new SecretKeyDeleteCommand(secretKey.Id));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を削除しました。";
                 return SaveModelAndRedirectToIndex(model);
             }

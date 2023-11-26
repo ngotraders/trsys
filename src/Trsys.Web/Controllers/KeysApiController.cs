@@ -50,7 +50,7 @@ namespace Trsys.Web.Controllers
             }
             try
             {
-                var id = await mediator.Send(new CreateSecretKeyCommand(request.KeyType, request.Key, request.Description, request.IsApproved));
+                var id = await mediator.Send(new SecretKeyCreateCommand(request.KeyType, request.Key, request.Description, request.IsApproved));
                 var result = await mediator.Send(new GetSecretKey(id));
                 return CreatedAtAction("GetKey", new { key = result.Key }, new { key = result.Key });
             }
@@ -104,7 +104,7 @@ namespace Trsys.Web.Controllers
             }
             try
             {
-                await mediator.Send(new UpdateSecretKeyCommand(secretKey.Id, request.KeyType, request.Description, request.IsApproved));
+                await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, request.KeyType, request.Description, request.IsApproved));
                 var result = await mediator.Send(new GetSecretKey(secretKey.Id));
                 return Ok();
             }
@@ -128,7 +128,7 @@ namespace Trsys.Web.Controllers
             }
             try
             {
-                await mediator.Send(new DeleteSecretKeyCommand(secretKey.Id));
+                await mediator.Send(new SecretKeyDeleteCommand(secretKey.Id));
                 return Ok();
             }
             catch (Exception e)

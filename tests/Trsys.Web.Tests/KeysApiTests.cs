@@ -85,7 +85,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             await client.LoginAsync();
             var mediator = server.Services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new CreateSecretKeyCommand(SecretKeyType.Publisher, null, null));
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null));
             var key = await mediator.Send(new GetSecretKey(id));
 
             var res = await client.GetAsync($"/api/keys/{key.Key}");

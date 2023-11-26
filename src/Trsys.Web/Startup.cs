@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -9,13 +8,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System;
 using System.Threading.Tasks;
 using Trsys.Web.Configurations;
 using Trsys.Infrastructure;
 using Trsys.Web.Middlewares;
 using Trsys.Models;
+using Trsys.Infrastructure.ReadModel.UserNotification;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Trsys.Web
 {
@@ -73,6 +73,7 @@ namespace Trsys.Web
                 });
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
+            services.AddEmailSender(Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
             services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
             if (!string.IsNullOrEmpty(sqlserverConnection))
             {

@@ -36,3 +36,9 @@ services:
       - ./docker/sqlserver/secrets:/var/opt/mssql/secrets
     ports:
       - 1433:1433
+  smtp:
+    image: maildev/maildev
+    ports:
+      - 1080:1080
+      - 1025:1025
+    

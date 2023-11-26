@@ -34,6 +34,7 @@ namespace Trsys.Models.Messaging
             typeof(SecretKeyTokenInvalidated),
             typeof(SecretKeyConnected),
             typeof(UserCreated),
+            typeof(UserUserInfoUpdated),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),
             typeof(WorldStateSecretKeyDeleted),
