@@ -1,22 +1,14 @@
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
-using MailKit.Security;
 using MimeKit;
 
 namespace Trsys.Infrastructure.ReadModel.UserNotification
 {
-    public interface IEmailSender
-    {
-        Task SendEmailAsync(string emailAddress, string subject, string body);
-    }
-
-    public class EmailSender : IEmailSender
+    public class MailKitEmailSender : IEmailSender
     {
         private readonly EmailSenderConfiguration configuration;
 
-        public EmailSender(EmailSenderConfiguration configuration)
+        public MailKitEmailSender(EmailSenderConfiguration configuration)
         {
             this.configuration = configuration;
         }

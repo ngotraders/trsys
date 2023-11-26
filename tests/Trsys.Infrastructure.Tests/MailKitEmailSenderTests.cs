@@ -6,7 +6,7 @@ namespace Trsys.Infrastructure.Tests
 {
     [TestClass]
     [Ignore]
-    public class EmailSenderTests
+    public class MailKitEmailSenderTests
     {
         [TestMethod]
         public async Task When_sending_email_then_mail_sent()
@@ -20,7 +20,7 @@ namespace Trsys.Infrastructure.Tests
                 // AuthenticationPassword = "password",
                 MailFrom = "test@smtp",
             };
-            var sut = new EmailSender(configuration);
+            var sut = new MailKitEmailSender(configuration);
             await sut.SendEmailAsync("target@smtp", "subject", "body");
         }
     }

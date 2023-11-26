@@ -30,7 +30,14 @@ namespace Trsys.Infrastructure
         {
             var config = new EmailSenderConfiguration();
             action?.Invoke(config);
-            services.AddSingleton<IEmailSender>(new EmailSender(config));
+            if (!string.IsNullOrEmpty(config.Host))
+            {
+                services.AddSingleton<IEmailSender>(new MailKitEmailSender(config));
+            }
+            else
+            {
+                services.AddSingleton<IEmailSender, DummyEmailSender>();
+            }
             return services;
         }
 
