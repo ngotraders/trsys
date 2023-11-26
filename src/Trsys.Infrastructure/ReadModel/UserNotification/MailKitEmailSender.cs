@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.Identity.Client;
 using MimeKit;
 
 namespace Trsys.Infrastructure.ReadModel.UserNotification
@@ -27,11 +30,25 @@ namespace Trsys.Infrastructure.ReadModel.UserNotification
 
             using (var client = new SmtpClient())
             {
-                client.Connect(configuration.Host, configuration.Port, configuration.UseSsl);
+                client.Connect(configuration.Host, configuration.Port, configuration.UseSsl ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None);
 
                 if (!string.IsNullOrEmpty(configuration.AuthenticationUser))
                 {
-                    client.Authenticate(configuration.AuthenticationUser, configuration.AuthenticationPassword);
+                    if (string.IsNullOrEmpty(configuration.AuthenticationAuthority))
+                    {
+                        client.Authenticate(configuration.AuthenticationUser, configuration.AuthenticationPassword);
+                    }
+                    else
+                    {
+                        var confidentialClientApplication = ConfidentialClientApplicationBuilder.Create(configuration.AuthenticationClientId)
+                            .WithAuthority(configuration.AuthenticationAuthority)
+                            .WithClientSecret(configuration.AuthenticationClientSecret)
+                            .Build();
+
+                        var authToken = await confidentialClientApplication.AcquireTokenForClient(configuration.AuthenticationScopes).ExecuteAsync();
+                        var oauth2 = new SaslMechanismOAuth2(configuration.AuthenticationUser, authToken.AccessToken);
+                        client.Authenticate(oauth2);
+                    }
                 }
 
                 await client.SendAsync(message);
@@ -48,5 +65,9 @@ namespace Trsys.Infrastructure.ReadModel.UserNotification
         public string AuthenticationUser { get; set; }
         public string AuthenticationPassword { get; set; }
         public string MailFrom { get; set; }
+        public string AuthenticationClientId { get; set; }
+        public string AuthenticationAuthority { get; set; }
+        public string AuthenticationClientSecret { get; set; }
+        public List<string> AuthenticationScopes { get; set; }
     }
 }
