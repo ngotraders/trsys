@@ -14,7 +14,7 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
 
         private readonly List<OrderHistoryDto> All = new();
         private readonly Dictionary<string, OrderHistoryDto> ById = new();
-        private readonly Dictionary<string, OrderHistoryDto> ByPublisherTicketNo = new();
+        private readonly Dictionary<int, OrderHistoryDto> ByPublisherTicketNo = new();
 
         public Task AddAsync(OrderHistoryDto order)
         {
@@ -23,34 +23,103 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                 if (ById.TryAdd(order.Id, order))
                 {
                     All.Add(order);
-                    ByPublisherTicketNo[order.TicketNo.ToString()] = order;
+                    ByPublisherTicketNo[order.TicketNo] = order;
                     while (All.Count > 10)
                     {
                         All.RemoveAt(0);
                     }
                 }
             });
-
         }
 
-        public Task UpdateAsync(OrderHistoryDto order)
+        public Task<OrderHistoryDto> UpdateClosePublishedAtAsync(string id, DateTimeOffset closePublishedAt)
         {
             return queue.Enqueue(() =>
             {
-                if (ById.TryGetValue(order.Id, out var item))
+                if (ById.TryGetValue(id, out var item))
                 {
-                    ById.Remove(item.Id);
-                    All.Remove(item);
-                    if (ById.TryAdd(order.Id, order))
-                    {
-                        All.Add(order);
-                    }
-                    return;
+                    item.ClosePublishedAt = closePublishedAt;
+                    return item;
                 }
                 throw new InvalidOperationException();
             });
         }
 
+        public Task<OrderHistoryDto> AddSubscriberOrderHistoryAsync(string id, string subscriberId, DateTimeOffset openDeliveredAt)
+        {
+            return queue.Enqueue(() =>
+            {
+                if (ById.TryGetValue(id, out var item))
+                {
+                    item.SubscriberOrderHistories.Add(new SubscriberOrderHistoryDto()
+                    {
+                        SubscriberId = subscriberId,
+                        OpenDeliveredAt = openDeliveredAt
+                    });
+                    return item;
+                }
+                throw new InvalidOperationException();
+            });
+        }
+
+        public Task<OrderHistoryDto> UpdateSubscriberOrderHistoryClosedDeliveredAtAsync(string id, string subscriberId, DateTimeOffset closeDeliveredAt)
+        {
+            return queue.Enqueue(() =>
+            {
+                if (ById.TryGetValue(id, out var item))
+                {
+                    var subscriber = item.SubscriberOrderHistories.FirstOrDefault(s => s.SubscriberId == subscriberId);
+                    if (subscriber != null)
+                    {
+                        subscriber.ClosedDeliveredAt = closeDeliveredAt;
+                    }
+                    return item;
+                }
+                throw new InvalidOperationException();
+            });
+        }
+
+        public Task<OrderHistoryDto> UpdateSubscriberOrderOpenInfoAsync(string id, string subscriberId, int ticketNo, int tradeNo, decimal priceOpened, decimal lotsOpened, DateTimeOffset timeOpened)
+        {
+            return queue.Enqueue(() =>
+            {
+                if (ById.TryGetValue(id, out var item))
+                {
+                    var subscriber = item.SubscriberOrderHistories.FirstOrDefault(s => s.SubscriberId == subscriberId);
+                    if (subscriber != null)
+                    {
+                        subscriber.TicketNo = ticketNo;
+                        subscriber.TradeNo = tradeNo;
+                        subscriber.PriceOpened = priceOpened;
+                        subscriber.LotsOpened = lotsOpened;
+                        subscriber.TimeOpened = timeOpened;
+                    }
+                    return item;
+                }
+                throw new InvalidOperationException();
+            });
+        }
+
+        public Task<OrderHistoryDto> UpdateSubscriberOrderCloseInfoAsync(string id, string subscriberId, int ticketNo, int tradeNo, decimal priceClosed, decimal lotsClosed, DateTimeOffset timeClosed, decimal profit)
+        {
+            return queue.Enqueue(() =>
+            {
+                if (ById.TryGetValue(id, out var item))
+                {
+                    var subscriber = item.SubscriberOrderHistories.FirstOrDefault(s => s.SubscriberId == subscriberId);
+                    if (subscriber != null)
+                    {
+                        subscriber.TicketNo = ticketNo;
+                        subscriber.TradeNo = tradeNo;
+                        subscriber.PriceClosed = priceClosed;
+                        subscriber.LotsClosed = lotsClosed;
+                        subscriber.TimeClosed = timeClosed;
+                    }
+                    return item;
+                }
+                throw new InvalidOperationException();
+            });
+        }
 
         public Task RemoveAsync(string id)
         {
@@ -60,9 +129,9 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                 {
                     ById.Remove(item.Id);
                     All.Remove(item);
-                    if (ByPublisherTicketNo[item.TicketNo.ToString()] == item)
+                    if (ByPublisherTicketNo[item.TicketNo] == item)
                     {
-                        ByPublisherTicketNo.Remove(item.TicketNo.ToString());
+                        ByPublisherTicketNo.Remove(item.TicketNo);
                     }
                 }
             });
@@ -70,57 +139,34 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
 
         public Task<OrderHistoryDto> FindByIdAsync(string id)
         {
-            if (ById.TryGetValue(id, out var item))
+            return queue.Enqueue(() =>
             {
-                return Task.FromResult(Copy(item));
-            }
-            return Task.FromResult<OrderHistoryDto>(null);
+                if (ById.TryGetValue(id, out var item))
+                {
+                    return item;
+                }
+                return null;
+            });
         }
 
-        public Task<OrderHistoryDto> FindByPublisherTicketNoAsync(string ticketNo)
+        public Task<OrderHistoryDto> FindByPublisherTicketNoAsync(int ticketNo)
         {
-            if (ByPublisherTicketNo.TryGetValue(ticketNo, out var item))
+            return queue.Enqueue(() =>
             {
-                return Task.FromResult(Copy(item));
-            }
-            return Task.FromResult<OrderHistoryDto>(null);
+                if (ByPublisherTicketNo.TryGetValue(ticketNo, out var item))
+                {
+                    return item;
+                }
+                return null;
+            });
         }
 
         public Task<List<OrderHistoryDto>> SearchAsync()
         {
-            return Task.FromResult(All.Select(Copy).ToList());
-        }
-
-        private OrderHistoryDto Copy(OrderHistoryDto item)
-        {
-            var copied = new OrderHistoryDto()
+            return queue.Enqueue(() =>
             {
-                Id = item.Id,
-                PublisherId = item.PublisherId,
-                TicketNo = item.TicketNo,
-                Symbol = item.Symbol,
-                OrderType = item.OrderType,
-                PriceOpened = item.PriceOpened,
-                TimeOpened = item.TimeOpened,
-                PriceClosed = item.PriceClosed,
-                TimeClosed = item.TimeClosed,
-                Percentage = item.Percentage,
-                OpenPublishedAt = item.OpenPublishedAt,
-                ClosePublishedAt = item.ClosePublishedAt,
-            };
-            copied.SubscriberOrderHistories.AddRange(item.SubscriberOrderHistories.Select(x => new SubscriberOrderHistoryDto()
-            {
-                SubscriberId = x.SubscriberId,
-                OpenDeliveredAt = x.OpenDeliveredAt,
-                ClosedDeliveredAt = x.ClosedDeliveredAt,
-                TicketNo = x.TicketNo,
-                Lots = x.Lots,
-                PriceOpened = x.PriceOpened,
-                TimeOpened = x.TimeOpened,
-                PriceClosed = x.PriceClosed,
-                TimeClosed = x.TimeClosed,
-            }));
-            return copied;
+                return All.ToList();
+            });
         }
 
         public void Dispose()

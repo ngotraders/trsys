@@ -22,6 +22,7 @@ namespace Trsys.Models.ReadModel.Dtos
 決済時刻: -
 通貨ペア: {order.Symbol}
 ポジション: {order.OrderType.ToString().ToUpper()}
+注文時金額: {order.PriceOpened}
 ");
         }
 
@@ -34,6 +35,7 @@ namespace Trsys.Models.ReadModel.Dtos
 決済時刻: {order.ClosePublishedAt?.ToOffset(TimeSpan.FromHours(9)):yyyy/MM/dd HH:mm:ss} (JST)
 通貨ペア: {order.Symbol}
 ポジション: {order.OrderType.ToString().ToUpper()}
+注文時金額: {order.PriceOpened}
 ");
         }
     }

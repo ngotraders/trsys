@@ -23,15 +23,17 @@ namespace Trsys.Models.ReadModel.Dtos
 
     public class SubscriberOrderHistoryDto
     {
-        public Guid SubscriberId { get; set; }
+        public string SubscriberId { get; set; }
         public DateTimeOffset OpenDeliveredAt { get; set; }
         public DateTimeOffset? ClosedDeliveredAt { get; set; }
 
         public int? TicketNo { get; set; }
-        public decimal? Lots { get; set; }
+        public int? TradeNo { get; set; }
         public decimal? PriceOpened { get; set; }
+        public decimal? LotsOpened { get; set; }
         public DateTimeOffset? TimeOpened { get; set; }
         public decimal? PriceClosed { get; set; }
+        public decimal? LotsClosed { get; set; }
         public DateTimeOffset? TimeClosed { get; set; }
         public decimal? Profit { get; set; }
     }
