@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Infrastructure.Queue;
 using Trsys.Models.ReadModel.Dtos;
@@ -54,9 +55,36 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
+        public Task<int> CountAsync()
+        {
+            return queue.Enqueue(() =>
+            {
+                return List.Count;
+            });
+        }
+
         public Task<List<UserDto>> SearchAsync()
         {
-            return Task.FromResult(List);
+            return queue.Enqueue(() =>
+            {
+                return List;
+            });
+        }
+
+        public Task<List<UserDto>> SearchAsync(int page, int perPage)
+        {
+            if (page <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(page));
+            }
+            if (perPage <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(perPage));
+            }
+            return queue.Enqueue(() =>
+            {
+                return List.Skip(perPage * (page - 1)).Take(perPage).ToList();
+            });
         }
 
         public Task<UserDto> FindByIdAsync(Guid id)

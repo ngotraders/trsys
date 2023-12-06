@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -91,21 +89,6 @@ namespace Trsys.Web.Tests
             var res = await client.GetAsync($"/api/keys/{key.Key}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
-        }
-    }
-    public static class HttpClientExtension
-    {
-        public static async Task LoginAsync(this HttpClient client)
-        {
-            var loginResponse = await client.PostAsync("/login", new FormUrlEncodedContent(
-                new KeyValuePair<string, string>[] {
-                        KeyValuePair.Create("Username", "admin"),
-                        KeyValuePair.Create("Password", "P@ssw0rd"),
-                }));
-
-            var container = new CookieContainer();
-            container.SetCookies(client.BaseAddress, loginResponse.Headers.GetValues("Set-Cookie").FirstOrDefault());
-            client.DefaultRequestHeaders.Add("Cookie", container.GetCookieHeader(client.BaseAddress));
         }
     }
 }

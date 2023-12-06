@@ -47,9 +47,27 @@ namespace Trsys.Infrastructure.ReadModel.Database
             await db.SaveChangesAsync();
         }
 
+        public Task<int> CountAsync()
+        {
+            return db.Users.CountAsync();
+        }
+
         public Task<List<UserDto>> SearchAsync()
         {
             return db.Users.ToListAsync();
+        }
+
+        public Task<List<UserDto>> SearchAsync(int page, int perPage)
+        {
+            if (page <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(page));
+            }
+            if (perPage <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(perPage));
+            }
+            return db.Users.Skip(perPage * (page - 1)).Take(perPage).ToListAsync();
         }
 
         public Task<UserDto> FindByIdAsync(Guid id)
