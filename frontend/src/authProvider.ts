@@ -56,4 +56,25 @@ export const authProvider: AuthBindings = {
     console.error(error);
     return { error };
   },
+  register: async ({ username, email, password }) => {
+    console.log(username, email, password)
+    return {
+      success: true,
+      redirectTo: "/",
+    };
+  },
+  forgotPassword: async ({ email }) => {
+    console.log(email)
+    return {
+      success: true,
+      redirectTo: "/login",
+    };
+  },
+  updatePassword: async ({ password, token }) => {
+    console.log(password, token)
+    return {
+      success: true,
+      redirectTo: "/",
+    };
+  }
 };

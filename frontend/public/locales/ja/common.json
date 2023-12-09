@@ -1,0 +1,163 @@
+{
+  "pages": {
+    "login": {
+      "title": "ログインする",
+      "signin": "ログイン",
+      "signup": "新規登録",
+      "divider": "または",
+      "fields": {
+        "email": "Email",
+        "password": "Password"
+      },
+      "errors": {
+        "validEmail": "メールアドレスが不正です"
+      },
+      "buttons": {
+        "submit": "ログイン",
+        "forgotPassword": "パスワードを忘れた場合",
+        "noAccount": "アカウントをお持ちではないですか？",
+        "rememberMe": "ログイン状態を記憶する"
+      }
+    },
+    "forgotPassword": {
+      "title": "パスワードをリセットする",
+      "fields": {
+        "email": "Email"
+      },
+      "errors": {
+        "validEmail": "メールアドレスが不正です"
+      },
+      "buttons": {
+        "submit": "パスワードリセット"
+      }
+    },
+    "register": {
+      "title": "新規登録する",
+      "fields": {
+        "email": "Email",
+        "password": "Password"
+      },
+      "errors": {
+        "validEmail": "メールアドレスが不正です"
+      },
+      "buttons": {
+        "submit": "新規登録",
+        "haveAccount": "アカウントをお持ちですか？"
+      }
+    },
+    "updatePassword": {
+      "title": "パスワードを更新する",
+      "fields": {
+        "password": "新しい Password",
+        "confirmPassword": "確認用 Password"
+      },
+      "errors": {
+        "confirmPasswordNotMatch": "パスワードが一致しません"
+      },
+      "buttons": {
+        "submit": "更新"
+      }
+    },
+    "error": {
+      "info": "You may have forgotten to add the {{action}} component to {{resource}} resource.",
+      "404": "Sorry, the page you visited does not exist.",
+      "resource404": "Are you sure you have created the {{resource}} resource.",
+      "backHome": "Back Home"
+    }
+  },
+  "actions": {
+    "list": "一覧",
+    "create": "作成",
+    "edit": "編集",
+    "show": "詳細"
+  },
+  "buttons": {
+    "create": "作成",
+    "save": "保存",
+    "logout": "ログアウト",
+    "delete": "削除",
+    "edit": "編集",
+    "cancel": "キャンセル",
+    "confirm": "実行します。よろしいですか？",
+    "filter": "フィルター",
+    "clear": "クリア",
+    "refresh": "更新",
+    "show": "詳細",
+    "undo": "元に戻す",
+    "import": "インポート",
+    "clone": "コピーする",
+    "notAccessTitle": "権限がありません"
+  },
+  "warnWhenUnsavedChanges": "Are you sure you want to leave? You have unsaved changes.",
+  "notifications": {
+    "success": "Successful",
+    "error": "Error (status code: {{statusCode}})",
+    "undoable": "You have {{seconds}} seconds to undo",
+    "createSuccess": "Successfully created {{resource}}",
+    "createError": "There was an error creating {{resource}} (status code: {{statusCode}})",
+    "deleteSuccess": "Successfully deleted {{resource}}",
+    "deleteError": "Error when deleting {{resource}} (status code: {{statusCode}})",
+    "editSuccess": "Successfully edited {{resource}}",
+    "editError": "Error when editing {{resource}} (status code: {{statusCode}})",
+    "importProgress": "Importing: {{processed}}/{{total}}"
+  },
+  "loading": "Loading",
+  "tags": {
+    "clone": "Clone"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "blog_posts": {
+    "blog_posts": "Blog Posts",
+    "fields": {
+      "id": "Id",
+      "title": "Title",
+      "content": "Content",
+      "status": "Status",
+      "createdAt": "Created At",
+      "category": "Category"
+    },
+    "titles": {
+      "create": "Create Blog Post",
+      "edit": "Edit Blog Post",
+      "list": "Blog Posts",
+      "show": "Show Blog Post"
+    }
+  },
+  "categories": {
+    "categories": "Categories",
+    "fields": {
+      "id": "Id",
+      "title": "Title",
+      "createdAt": "Created At"
+    },
+    "titles": {
+      "create": "Create Category",
+      "edit": "Edit Category",
+      "list": "Categories",
+      "show": "Show Category"
+    }
+  },
+  "documentTitle": {
+    "default": "refine",
+    "suffix": " | refine",
+    "blog_posts": {
+      "list": "Blog Posts | refine",
+      "show": "#{{id}} Show Blog Post | refine",
+      "edit": "#{{id}} Edit Blog Post | refine",
+      "create": "Create new Blog Post | refine",
+      "clone": "#{{id}} Clone Blog Post | refine"
+    },
+    "categories": {
+      "list": "Categories | refine",
+      "show": "#{{id}} Show Category | refine",
+      "edit": "#{{id}} Edit Category | refine",
+      "create": "Create new Category | refine",
+      "clone": "#{{id}} Clone Category | refine"
+    }
+  },
+  "table": {
+    "actions": "Actions"
+  }
+}

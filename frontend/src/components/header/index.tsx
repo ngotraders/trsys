@@ -64,7 +64,6 @@ export const Header: React.FC<RefineThemedLayoutV2HeaderProps> = ({
                 }}
               >
                 {[...(i18n.languages ?? [])].sort().map((lang: string) => (
-                  // @ts-ignore
                   <MenuItem
                     selected={currentLocale === lang}
                     key={lang}
@@ -79,16 +78,8 @@ export const Header: React.FC<RefineThemedLayoutV2HeaderProps> = ({
                       alignItems="center"
                       justifyContent="center"
                     >
-                      <Avatar
-                        sx={{
-                          width: "24px",
-                          height: "24px",
-                          marginRight: "5px",
-                        }}
-                        src={`/images/flags/${lang}.svg`}
-                      />
                       <Typography>
-                        {lang === "en" ? "English" : "German"}
+                        {lang === "en" ? "English" : "日本語"}
                       </Typography>
                     </Stack>
                   </MenuItem>

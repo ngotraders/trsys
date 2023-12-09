@@ -1,4 +1,4 @@
-import { Authenticated, GitHubBanner, Refine } from "@refinedev/core";
+import { Authenticated, Refine } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 
@@ -38,6 +38,8 @@ import {
 import { ForgotPassword } from "./pages/forgotPassword";
 import { Login } from "./pages/login";
 import { Register } from "./pages/register";
+import { UpdatePassword } from "./pages/updatePassword";
+import { Logo } from "./components/logo";
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -50,7 +52,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <GitHubBanner />
       <RefineKbarProvider>
         <ColorModeContextProvider>
           <CssBaseline />
@@ -87,7 +88,7 @@ function App() {
                 ]}
                 options={{
                   syncWithLocation: true,
-                  warnWhenUnsavedChanges: true,
+                  warnWhenUnsavedChanges: false,
                   useNewQueryKeys: true,
                   projectId: "5CiY82-FEStUw-1Msx23",
                 }}
@@ -99,7 +100,12 @@ function App() {
                         key="authenticated-inner"
                         fallback={<CatchAllNavigate to="/login" />}
                       >
-                        <ThemedLayoutV2 Header={() => <Header sticky />}>
+                        <ThemedLayoutV2
+                          Title={(props) =>
+                            props.collapsed ? null : <Logo size="sm" />
+                          }
+                          Header={() => <Header sticky />}
+                        >
                           <Outlet />
                         </ThemedLayoutV2>
                       </Authenticated>
@@ -121,6 +127,10 @@ function App() {
                       <Route path="edit/:id" element={<CategoryEdit />} />
                       <Route path="show/:id" element={<CategoryShow />} />
                     </Route>
+                    <Route
+                      path="/update-password"
+                      element={<UpdatePassword />}
+                    />
                     <Route path="*" element={<ErrorComponent />} />
                   </Route>
                   <Route
