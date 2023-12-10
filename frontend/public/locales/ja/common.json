@@ -108,6 +108,22 @@
   "dashboard": {
     "title": "Dashboard"
   },
+  "users": {
+    "users": "Users",
+    "fields": {
+      "id": "Id",
+      "name": "Name",
+      "username": "Username",
+      "role": "Role",
+      "emailAddress": "Email Address"
+    },
+    "titles": {
+      "create": "Create User",
+      "edit": "Edit User",
+      "list": "Users",
+      "show": "Show User"
+    }
+  },
   "blog_posts": {
     "blog_posts": "Blog Posts",
     "fields": {

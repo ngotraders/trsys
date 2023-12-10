@@ -113,6 +113,13 @@ namespace Trsys.Web
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCors(config =>
+            {
+                config.AllowCredentials();
+                config.AllowAnyHeader();
+                config.AllowAnyMethod();
+                config.SetIsOriginAllowed(origin => true);
+            });
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseInitialization(task);

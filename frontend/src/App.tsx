@@ -17,7 +17,7 @@ import routerBindings, {
   NavigateToResource,
   UnsavedChangesNotifier,
 } from "@refinedev/react-router-v6";
-import dataProvider from "@refinedev/simple-rest";
+import dataProvider, { axiosInstance } from "@refinedev/simple-rest";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { authProvider } from "./authProvider";
@@ -67,7 +67,7 @@ function App() {
               <Refine
                 dataProvider={{
                   default: dataProvider("https://api.fake-rest.refine.dev"),
-                  "copy-trading-system": dataProvider("https://localhost:8443/api/admin"),
+                  "trsys": dataProvider("https://localhost:8443/api/admin", axiosInstance),
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
@@ -81,7 +81,7 @@ function App() {
                     edit: "/users/edit/:id",
                     show: "/users/show/:id",
                     meta: {
-                      dataProviderName: "copy-trading-system",
+                      dataProviderName: "trsys",
                       canDelete: true,
                     },
                   },
