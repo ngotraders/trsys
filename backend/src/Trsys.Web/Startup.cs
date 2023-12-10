@@ -15,7 +15,6 @@ using Trsys.Infrastructure;
 using Trsys.Web.Middlewares;
 using Trsys.Models;
 using Trsys.Infrastructure.ReadModel.UserNotification;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Trsys.Web
 {
@@ -61,7 +60,8 @@ namespace Trsys.Web
             services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 
             services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
-            var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
+            var sqliteConnection = Configuration.GetConnectionString("SQLiteConnection");
+            var sqlserverConnection = string.IsNullOrEmpty(sqliteConnection) ? Configuration.GetConnectionString("DefaultConnection") : null;
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
             var blobStorageConnection = Configuration.GetConnectionString("BlobStorageConnection");
             if (!string.IsNullOrEmpty(redisConnection))
@@ -74,9 +74,13 @@ namespace Trsys.Web
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
             services.AddEmailSender(Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
-            services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
-            if (!string.IsNullOrEmpty(sqlserverConnection))
+            if (!string.IsNullOrEmpty(sqliteConnection))
             {
+                services.AddDbContext<TrsysContext>(options => options.UseSqlite(sqliteConnection));
+            }
+            else
+            {
+                services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
                 services.AddDataProtection().PersistKeysToDbContext<TrsysContext>();
             }
         }
@@ -84,22 +88,12 @@ namespace Trsys.Web
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
-            var sqlserverConnection = Configuration.GetConnectionString("DefaultConnection");
-            var task = Task.CompletedTask;
-            if (string.IsNullOrEmpty(sqlserverConnection))
+            var task = Task.Run(async () =>
             {
-                logger.LogInformation("Using in-memory implementation for database.");
-            }
-            else
-            {
-                logger.LogInformation("Using sql server connection.");
-                task = Task.Run(async () =>
-                {
-                    logger.LogInformation("Database initializing.");
-                    await DatabaseInitializer.InitializeAsync(app);
-                    logger.LogInformation("Database initialized.");
-                });
-            }
+                logger.LogInformation("Database initializing.");
+                await DatabaseInitializer.InitializeAsync(app);
+                logger.LogInformation("Database initialized.");
+            });
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
             if (string.IsNullOrEmpty(redisConnection))
             {

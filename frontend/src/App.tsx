@@ -24,6 +24,12 @@ import { authProvider } from "./authProvider";
 import { Header } from "./components/header";
 import { ColorModeContextProvider } from "./contexts/color-mode";
 import {
+  UserCreate,
+  UserEdit,
+  UserList,
+  UserShow,
+} from "./pages/users";
+import {
   BlogPostCreate,
   BlogPostEdit,
   BlogPostList,
@@ -59,12 +65,26 @@ function App() {
           <RefineSnackbarProvider>
             <DevtoolsProvider>
               <Refine
-                dataProvider={dataProvider("https://api.fake-rest.refine.dev")}
+                dataProvider={{
+                  default: dataProvider("https://api.fake-rest.refine.dev"),
+                  "copy-trading-system": dataProvider("https://localhost:8443/api/admin"),
+                }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
                 authProvider={authProvider}
                 i18nProvider={i18nProvider}
                 resources={[
+                  {
+                    name: "users",
+                    list: "/users",
+                    create: "/users/create",
+                    edit: "/users/edit/:id",
+                    show: "/users/show/:id",
+                    meta: {
+                      dataProviderName: "copy-trading-system",
+                      canDelete: true,
+                    },
+                  },
                   {
                     name: "blog_posts",
                     list: "/blog-posts",
@@ -115,6 +135,12 @@ function App() {
                       index
                       element={<NavigateToResource resource="blog_posts" />}
                     />
+                    <Route path="/users">
+                      <Route index element={<UserList />} />
+                      <Route path="create" element={<UserCreate />} />
+                      <Route path="edit/:id" element={<UserEdit />} />
+                      <Route path="show/:id" element={<UserShow />} />
+                    </Route>
                     <Route path="/blog-posts">
                       <Route index element={<BlogPostList />} />
                       <Route path="create" element={<BlogPostCreate />} />

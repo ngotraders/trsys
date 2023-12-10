@@ -74,9 +74,18 @@ namespace Trsys.Models
                     .IsRequired()
                     .HasMaxLength(1000);
 
-                entity.Property(e => e.IdOriginalReversed)
-                    .HasMaxLength(1000)
-                    .HasComputedColumnSql("(reverse([IdOriginal]))", false);
+                if (Database.IsSqlServer())
+                {
+                    entity.Property(e => e.IdOriginalReversed)
+                        .HasMaxLength(1000)
+                        .HasComputedColumnSql("(reverse([IdOriginal]))", false);
+                }
+                else
+                {
+                    entity.Property(e => e.IdOriginalReversed)
+                        .HasMaxLength(1000);
+                }
+
 
                 entity.Property(e => e.Position).HasDefaultValueSql("((-1))");
 

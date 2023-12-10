@@ -47,9 +47,9 @@ namespace Trsys.Models.ReadModel.Handlers
         public async Task<SearchResponseDto<UserDto>> Handle(GetUsers message, CancellationToken token = default)
         {
             var count = await db.CountAsync();
-            if (message.PerPage.HasValue && message.PerPage.Value > 0)
+            if (message.Start.HasValue && message.End.HasValue)
             {
-                return new SearchResponseDto<UserDto>(count, await db.SearchAsync(message.Page ?? 1, message.PerPage.Value));
+                return new SearchResponseDto<UserDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue));
             }
             else
             {

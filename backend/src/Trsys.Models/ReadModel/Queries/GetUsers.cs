@@ -9,13 +9,13 @@ namespace Trsys.Models.ReadModel.Queries
         {
         }
 
-        public GetUsers(int? page, int? perPage)
+        public GetUsers(int? start, int? end)
         {
-            Page = page;
-            PerPage = perPage;
+            Start = start;
+            End = end;
         }
 
-        public int? Page { get; set; }
-        public int? PerPage { get; set; }
+        public int? Start { get; set; }
+        public int? End { get; set; }
     }
 }

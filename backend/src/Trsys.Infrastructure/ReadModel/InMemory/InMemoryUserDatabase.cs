@@ -71,19 +71,19 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
-        public Task<List<UserDto>> SearchAsync(int page, int perPage)
+        public Task<List<UserDto>> SearchAsync(int start, int end)
         {
-            if (page <= 0)
+            if (start < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(page));
+                throw new ArgumentOutOfRangeException(nameof(start));
             }
-            if (perPage <= 0)
+            if (end <= start)
             {
-                throw new ArgumentOutOfRangeException(nameof(perPage));
+                throw new ArgumentOutOfRangeException(nameof(end));
             }
             return queue.Enqueue(() =>
             {
-                return List.Skip(perPage * (page - 1)).Take(perPage).ToList();
+                return List.Skip(start).Take(end - start).ToList();
             });
         }
 

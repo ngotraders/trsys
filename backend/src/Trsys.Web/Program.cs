@@ -35,9 +35,17 @@ namespace Trsys.Web
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((context, collection) =>
                 {
-                    var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
-                    if (!string.IsNullOrEmpty(connectionString))
+                    var sqliteConnectionString = context.Configuration.GetConnectionString("SQLiteConnection");
+                    if (!string.IsNullOrEmpty(sqliteConnectionString))
                     {
+                        using var db = new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
+                            .UseSqlite(sqliteConnectionString)
+                            .Options);
+                        DatabaseInitializer.InitializeContextAsync(db).Wait();
+                    }
+                    else
+                    {
+                        var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
                         using var db = new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
                             .UseSqlServer(connectionString)
                             .Options);

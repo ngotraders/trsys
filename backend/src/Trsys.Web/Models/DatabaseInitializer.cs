@@ -19,7 +19,7 @@ namespace Trsys.Models
         {
             using var scope = app.ApplicationServices.CreateScope();
             using var db = scope.ServiceProvider.GetRequiredService<TrsysContext>();
-            using var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
+            var store = scope.ServiceProvider.GetRequiredService<IStreamStore>();
             var tokenConnectionManager = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManager>();
             var dispatcher = scope.ServiceProvider.GetRequiredService<IMessageDispatcher>();
             await InitializeContextAsync(db);
