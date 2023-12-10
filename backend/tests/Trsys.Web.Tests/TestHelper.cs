@@ -18,8 +18,12 @@ namespace Trsys.Web.Tests
                 .UseSerilog(new LoggerConfiguration().WriteTo.Console().CreateLogger())
                 .UseConfiguration(
                     new ConfigurationBuilder()
-                    .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
-                 )
+                        .AddInMemoryCollection(new[] {
+                            new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"),
+                            new KeyValuePair<string, string>("ConnectionStrings:SQLiteConnection", "Data Source=:memory:"),
+                        })
+                       .Build()
+                    )
                 .UseStartup<Startup>());
         }
     }

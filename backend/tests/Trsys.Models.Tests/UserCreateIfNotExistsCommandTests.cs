@@ -18,7 +18,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "pass", "Administrator"));
+            var id = await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "emailAddress", "pass", "Administrator"));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -27,6 +27,7 @@ namespace Trsys.Models.Tests
             Assert.AreEqual(typeof(UserCreated), events[0].GetType());
             Assert.AreEqual("name", ((UserCreated)events[0]).Name);
             Assert.AreEqual("username", ((UserCreated)events[0]).Username);
+            Assert.AreEqual("emailAddress", ((UserCreated)events[0]).EmailAddress);
             Assert.AreEqual("Administrator", ((UserCreated)events[0]).Role);
             Assert.AreEqual(typeof(UserPasswordHashChanged), events[1].GetType());
             Assert.AreEqual("pass", ((UserPasswordHashChanged)events[1]).PasswordHash);
@@ -37,8 +38,8 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "pass", "Administrator"));
-            Assert.AreEqual(id, await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "pass", "Administrator")));
+            var id = await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "emailAddress", "pass", "Administrator"));
+            Assert.AreEqual(id, await mediator.Send(new UserCreateIfNotExistsCommand("name", "username", "pass", "emailAddress", "Administrator")));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
@@ -47,6 +48,7 @@ namespace Trsys.Models.Tests
             Assert.AreEqual(typeof(UserCreated), events[0].GetType());
             Assert.AreEqual("name", ((UserCreated)events[0]).Name);
             Assert.AreEqual("username", ((UserCreated)events[0]).Username);
+            Assert.AreEqual("emailAddress", ((UserCreated)events[0]).EmailAddress);
             Assert.AreEqual("Administrator", ((UserCreated)events[0]).Role);
             Assert.AreEqual(typeof(UserPasswordHashChanged), events[1].GetType());
             Assert.AreEqual("pass", ((UserPasswordHashChanged)events[1]).PasswordHash);

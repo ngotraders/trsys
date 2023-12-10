@@ -10,6 +10,7 @@ using Trsys.Models.ReadModel.Queries;
 namespace Trsys.Web.Controllers.Admin
 {
     [Route("/api/admin/users")]
+    [Authorize(Roles = "Administrator")]
     [ApiController]
     public class UsersApiController : ControllerBase
     {

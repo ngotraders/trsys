@@ -10,10 +10,11 @@ namespace Trsys.Models.ReadModel.Infrastructure
         Task AddAsync(UserDto user);
         Task UpdateUserInfoAsync(Guid id, string name, string emailAddress);
         Task UpdatePasswordHashAsync(Guid id, string passwordHash);
+        Task<int> CountAsync();
         Task<List<UserDto>> SearchAsync();
         Task<List<UserDto>> SearchAsync(int start, int end);
         Task<UserDto> FindByIdAsync(Guid id);
         Task<UserDto> FindByUsernameAsync(string username);
-        Task<int> CountAsync();
+        Task<UserPasswordHashDto> GetUserPasswordHash(Guid id);
     }
 }

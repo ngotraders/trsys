@@ -14,6 +14,8 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
         private readonly List<UserDto> List = new();
         private readonly Dictionary<Guid, UserDto> ById = new();
         private readonly Dictionary<string, UserDto> ByUsername = new();
+        private readonly Dictionary<string, UserDto> ByEmailAddress = new();
+        private readonly Dictionary<Guid, UserPasswordHashDto> PasswordHashById = new();
 
         public Task AddAsync(UserDto userDto)
         {
@@ -21,6 +23,12 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             {
                 ById.Add(userDto.Id, userDto);
                 ByUsername.Add(userDto.Username.ToUpperInvariant(), userDto);
+                ByEmailAddress.Add(userDto.EmailAddress.ToUpperInvariant(), userDto);
+                PasswordHashById.Add(userDto.Id, new UserPasswordHashDto()
+                {
+                    Id = userDto.Id,
+                    PasswordHash = null,
+                });
                 List.Add(userDto);
             });
         }
@@ -39,7 +47,10 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
         {
             return queue.Enqueue(() =>
             {
-                ById[id].PasswordHash = passwordHash;
+                if (PasswordHashById.TryGetValue(id, out var value))
+                {
+                    value.PasswordHash = passwordHash;
+                }
             });
 
         }
@@ -51,6 +62,7 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                 var item = ById[id];
                 ById.Remove(id);
                 ByUsername.Remove(item.Username.ToUpperInvariant());
+                ByEmailAddress.Remove(item.EmailAddress.ToUpperInvariant());
                 List.RemoveAt(List.IndexOf(item));
             });
         }
@@ -89,13 +101,36 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
 
         public Task<UserDto> FindByIdAsync(Guid id)
         {
-            return Task.FromResult(ById.TryGetValue(id, out var value) ? value : null);
+            return queue.Enqueue(() =>
+            {
+                return ById.TryGetValue(id, out var value) ? value : null;
+            });
         }
 
         public Task<UserDto> FindByUsernameAsync(string username)
         {
-            return Task.FromResult(ByUsername.TryGetValue(username.ToUpperInvariant(), out var value) ? value : null);
+            return queue.Enqueue(() =>
+            {
+                return ByUsername.TryGetValue(username.ToUpperInvariant(), out var value)
+                    ? value
+                    : ByEmailAddress.TryGetValue(username.ToUpperInvariant(), out value)
+                    ? value
+                    : null;
+            });
         }
+
+        public Task<UserPasswordHashDto> GetUserPasswordHash(Guid id)
+        {
+            return queue.Enqueue(() =>
+            {
+                if (PasswordHashById.TryGetValue(id, out var value))
+                {
+                    return value;
+                }
+                return null;
+            });
+        }
+
         public void Dispose()
         {
             queue.Dispose();

@@ -18,8 +18,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
-            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "PasswordHash", "Role"));
-            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "email2@example.com", "PasswordHash", "Role"));
             await client.LoginAsync();
 
             var res = await client.GetAsync("/api/admin/users");
@@ -37,8 +37,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
-            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "PasswordHash", "Role"));
-            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "email2@example.com", "PasswordHash", "Role"));
             await client.LoginAsync();
 
             // Admin ユーザーが存在するので、1ページ目は2件

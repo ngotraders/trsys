@@ -1,6 +1,7 @@
 import { Authenticated, Refine } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
+import axios, { AxiosInstance } from "axios";
 
 import {
   ErrorComponent,
@@ -17,7 +18,7 @@ import routerBindings, {
   NavigateToResource,
   UnsavedChangesNotifier,
 } from "@refinedev/react-router-v6";
-import dataProvider, { axiosInstance } from "@refinedev/simple-rest";
+import dataProvider from "@refinedev/simple-rest";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { authProvider } from "./authProvider";
@@ -47,6 +48,8 @@ import { Register } from "./pages/register";
 import { UpdatePassword } from "./pages/updatePassword";
 import { Logo } from "./components/logo";
 
+const axiosInstance: AxiosInstance = axios.create({ withCredentials: true })!;
+
 function App() {
   const { t, i18n } = useTranslation();
 
@@ -67,11 +70,11 @@ function App() {
               <Refine
                 dataProvider={{
                   default: dataProvider("https://api.fake-rest.refine.dev"),
-                  "trsys": dataProvider("https://localhost:8443/api/admin", axiosInstance),
+                  "trsys": dataProvider("https://localhost:8443/api/admin", axiosInstance as unknown as any),
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
-                authProvider={authProvider}
+                authProvider={authProvider("https://localhost:8443/api/auth", axiosInstance)}
                 i18nProvider={i18nProvider}
                 resources={[
                   {

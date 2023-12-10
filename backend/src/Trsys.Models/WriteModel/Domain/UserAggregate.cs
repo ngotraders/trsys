@@ -21,10 +21,10 @@ namespace Trsys.Models.WriteModel.Domain
         {
         }
 
-        public UserAggregate(Guid id, string name, string username, string role)
+        public UserAggregate(Guid id, string name, string username, string emailAddress, string role)
         {
             Id = id;
-            ApplyChange(new UserCreated(id, name, username, role));
+            ApplyChange(new UserCreated(id, name, username, emailAddress, role));
         }
 
         public void UpdateUserInfo(string name, string emailAddress)

@@ -38,13 +38,21 @@ namespace Trsys.Infrastructure.ReadModel.Database
 
         public async Task UpdatePasswordHashAsync(Guid id, string passwordHash)
         {
-            var user = await db.Users.FindAsync(id);
-            if (user == null)
+            var userPassword = await db.UserPasswordHashes.FindAsync(id);
+            if (userPassword == null)
             {
-                throw new InvalidOperationException($"user {id} not found.");
+                db.UserPasswordHashes.Add(new UserPasswordHashDto()
+                {
+                    Id = id,
+                    PasswordHash = passwordHash,
+                });
+                await db.SaveChangesAsync();
             }
-            user.PasswordHash = passwordHash;
-            await db.SaveChangesAsync();
+            else
+            {
+                userPassword.PasswordHash = passwordHash;
+                await db.SaveChangesAsync();
+            }
         }
 
         public Task<int> CountAsync()
@@ -78,6 +86,11 @@ namespace Trsys.Infrastructure.ReadModel.Database
         public Task<UserDto> FindByUsernameAsync(string username)
         {
             return db.Users.Where(user => user.Username == username).FirstOrDefaultAsync();
+        }
+
+        public Task<UserPasswordHashDto> GetUserPasswordHash(Guid id)
+        {
+            return db.UserPasswordHashes.Where(user => user.Id == id).FirstOrDefaultAsync();
         }
 
         public void Dispose()

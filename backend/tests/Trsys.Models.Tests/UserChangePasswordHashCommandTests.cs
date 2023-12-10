@@ -18,7 +18,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new UserCreateCommand("user", "username", "password", "Administrator"));
+            var id = await mediator.Send(new UserCreateCommand("user", "username", "emailAddress", "password", "Administrator"));
             await mediator.Send(new UserChangePasswordHashCommand(id, "password"));
 
             var store = services.GetRequiredService<IEventStore>();
@@ -37,7 +37,7 @@ namespace Trsys.Models.Tests
         {
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
-            var id = await mediator.Send(new UserCreateCommand("user", "username", "password", "Administrator"));
+            var id = await mediator.Send(new UserCreateCommand("user", "username", "emailAddress", "password", "Administrator"));
             await mediator.Send(new UserChangePasswordHashCommand(id, "newPassword"));
 
             var store = services.GetRequiredService<IEventStore>();

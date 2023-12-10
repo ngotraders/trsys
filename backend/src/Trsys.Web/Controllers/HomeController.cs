@@ -53,7 +53,13 @@ namespace Trsys.Web.Controllers
             }
 
             var user = await mediator.Send(new FindByUsername(model.Username));
-            if (user == null || user.PasswordHash != passwordHasher.Hash(model.Password))
+            if (user == null)
+            {
+                model.ErrorMessage = "ユーザー名またはパスワードが違います。";
+                return View("Login", model);
+            }
+            var result = await mediator.Send(new GetUserPasswordHash(user.Id));
+            if (result.PasswordHash != passwordHasher.Hash(model.Password))
             {
                 model.ErrorMessage = "ユーザー名またはパスワードが違います。";
                 return View("Login", model);

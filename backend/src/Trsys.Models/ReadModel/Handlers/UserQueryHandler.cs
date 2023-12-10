@@ -15,6 +15,7 @@ namespace Trsys.Models.ReadModel.Handlers
         INotificationHandler<UserPasswordHashChanged>,
         IRequestHandler<GetUsers, SearchResponseDto<UserDto>>,
         IRequestHandler<GetUser, UserDto>,
+        IRequestHandler<GetUserPasswordHash, UserPasswordHashDto>,
         IRequestHandler<FindByUsername, UserDto>
     {
         private readonly IUserDatabase db;
@@ -30,6 +31,7 @@ namespace Trsys.Models.ReadModel.Handlers
                 Id = notification.Id,
                 Name = notification.Name,
                 Username = notification.Username,
+                EmailAddress = notification.EmailAddress,
                 Role = notification.Role,
             });
         }
@@ -65,6 +67,11 @@ namespace Trsys.Models.ReadModel.Handlers
         public Task<UserDto> Handle(FindByUsername request, CancellationToken cancellationToken)
         {
             return db.FindByUsernameAsync(request.Username);
+        }
+
+        public Task<UserPasswordHashDto> Handle(GetUserPasswordHash request, CancellationToken cancellationToken)
+        {
+            return db.GetUserPasswordHash(request.Id);
         }
     }
 }
