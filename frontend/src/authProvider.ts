@@ -7,16 +7,18 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
   return {
     login: async ({ username, email, password }) => {
       if ((username || email) && password) {
-        const { status } = await axiosInstance.post(url + '/login', {
-          username: username || email,
-          password,
-        });
-        if (status === 204) {
-          localStorage.setItem(TOKEN_KEY, username);
-          return {
-            success: true,
-            redirectTo: "/",
-          };
+        try {
+          const { status } = await axiosInstance.post(url + '/login', {
+            username: username || email,
+            password,
+          });
+          if (status === 204) {
+            return {
+              success: true,
+              redirectTo: "/",
+            };
+          }
+        } catch {
         }
       }
 
