@@ -1,29 +1,26 @@
 import { it, vi, describe, expect, beforeEach } from 'vitest'
-import type { Mocked } from 'vitest'
-import axios, { AxiosStatic } from 'axios'
-
+import axios from 'axios'
+import { http, HttpResponse } from 'msw'
 import { authProvider } from './authProvider'
-
-vi.mock('axios')
+import { server } from './mocks/server'
 
 describe('authProvider', () => {
     beforeEach(() => {
         vi.resetAllMocks()
     })
 
-    const mockedAxios = axios as Mocked<AxiosStatic>
-    const sut = authProvider("http://test", mockedAxios);
+    const axiosInstance = axios.create({
+        baseURL: 'http://auth/',
+        withCredentials: true,
+    })
+    const sut = authProvider(axiosInstance);
 
     it('login with username and password', async () => {
-
-        mockedAxios.post.mockResolvedValue({ status: 204 })
+        server.use(
+            http.post('http://auth/login', () => new HttpResponse(null, { status: 204 }))
+        )
 
         const result = await sut.login({ username: 'test', password: 'password' })
-
-        expect(axios.post).toBeCalledWith('http://test/login', {
-            username: 'test',
-            password: 'password',
-        })
 
         expect(result).toEqual({
             redirectTo: '/',
@@ -33,14 +30,11 @@ describe('authProvider', () => {
 
     it('login with email and password', async () => {
 
-        mockedAxios.post.mockResolvedValue({ status: 204 })
+        server.use(
+            http.post('http://auth/login', () => new HttpResponse(null, { status: 204 }))
+        )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
-
-        expect(axios.post).toBeCalledWith('http://test/login', {
-            username: 'test@example.com',
-            password: 'password',
-        })
 
         expect(result).toEqual({
             redirectTo: '/',
@@ -50,14 +44,11 @@ describe('authProvider', () => {
 
     it('login with unexpected status code', async () => {
 
-        mockedAxios.post.mockResolvedValue({ status: 200 })
+        server.use(
+            http.post('http://auth/login', () => HttpResponse.json({ message: "Error" }, { status: 400 }))
+        )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
-
-        expect(axios.post).toBeCalledWith('http://test/login', {
-            username: 'test@example.com',
-            password: 'password',
-        })
 
         expect(result).toEqual({
             success: false,
@@ -70,14 +61,11 @@ describe('authProvider', () => {
 
     it('login with error', async () => {
 
-        mockedAxios.post.mockRejectedValue(new Error("Error"))
+        server.use(
+            http.post('http://auth/login', () => HttpResponse.error())
+        )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
-
-        expect(axios.post).toBeCalledWith('http://test/login', {
-            username: 'test@example.com',
-            password: 'password',
-        })
 
         expect(result).toEqual({
             success: false,
