@@ -48,7 +48,10 @@ import { Register } from "./pages/register";
 import { UpdatePassword } from "./pages/updatePassword";
 import { Logo } from "./components/logo";
 
-const axiosInstance: AxiosInstance = axios.create({ withCredentials: true })!;
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: "https://localhost:8443",
+  withCredentials: true
+})!;
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -70,11 +73,11 @@ function App() {
               <Refine
                 dataProvider={{
                   default: dataProvider("https://api.fake-rest.refine.dev"),
-                  "trsys": dataProvider("https://localhost:8443/api/admin", axiosInstance as unknown as any),
+                  "trsys": dataProvider("/api/admin", axiosInstance as unknown as any),
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
-                authProvider={authProvider("https://localhost:8443/api/auth", axiosInstance)}
+                authProvider={authProvider("/api/auth", axiosInstance)}
                 i18nProvider={i18nProvider}
                 resources={[
                   {

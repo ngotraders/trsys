@@ -3,12 +3,12 @@ import { AxiosInstance } from "axios";
 
 export const TOKEN_KEY = "refine-auth";
 
-export function authProvider(axiosInstance: AxiosInstance): AuthBindings {
+export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBindings {
   return {
     login: async ({ username, email, password }) => {
       if ((username || email) && password) {
         try {
-          const { status } = await axiosInstance.post('/login', {
+          const { status } = await axiosInstance.post(url + '/login', {
             username: username || email,
             password,
           });
@@ -31,7 +31,7 @@ export function authProvider(axiosInstance: AxiosInstance): AuthBindings {
       };
     },
     logout: async () => {
-      const { status } = await axiosInstance.post('/logout');
+      const { status } = await axiosInstance.post(url + '/logout');
       if (status === 204) {
         return {
           success: true,
@@ -43,7 +43,7 @@ export function authProvider(axiosInstance: AxiosInstance): AuthBindings {
       };
     },
     check: async () => {
-      const { status, headers } = await axiosInstance.get('/userinfo');
+      const { status, headers } = await axiosInstance.get(url + '/userinfo');
       console.log(status, headers)
       if (status === 200 && headers['content-type'].startsWith('application/json')) {
         return {
@@ -58,7 +58,7 @@ export function authProvider(axiosInstance: AxiosInstance): AuthBindings {
     },
     getPermissions: async () => null,
     getIdentity: async () => {
-      const { status, headers, data } = await axiosInstance.get('/userinfo');
+      const { status, headers, data } = await axiosInstance.get(url + '/userinfo');
       if (status === 200 && headers['content-type'].startsWith('application/json')) {
         console.log(data)
         return {

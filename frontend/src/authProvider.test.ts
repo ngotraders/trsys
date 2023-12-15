@@ -10,14 +10,14 @@ describe('authProvider', () => {
     })
 
     const axiosInstance = axios.create({
-        baseURL: 'http://auth/',
+        baseURL: 'http://auth',
         withCredentials: true,
     })
-    const sut = authProvider(axiosInstance);
+    const sut = authProvider("/api", axiosInstance);
 
     it('login with username and password', async () => {
         server.use(
-            http.post('http://auth/login', () => new HttpResponse(null, { status: 204 }))
+            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 204 }))
         )
 
         const result = await sut.login({ username: 'test', password: 'password' })
@@ -31,7 +31,7 @@ describe('authProvider', () => {
     it('login with email and password', async () => {
 
         server.use(
-            http.post('http://auth/login', () => new HttpResponse(null, { status: 204 }))
+            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 204 }))
         )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
@@ -45,7 +45,7 @@ describe('authProvider', () => {
     it('login with unexpected status code', async () => {
 
         server.use(
-            http.post('http://auth/login', () => HttpResponse.json({ message: "Error" }, { status: 400 }))
+            http.post('http://auth/api/login', () => HttpResponse.json({ message: "Error" }, { status: 400 }))
         )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
@@ -62,7 +62,7 @@ describe('authProvider', () => {
     it('login with error', async () => {
 
         server.use(
-            http.post('http://auth/login', () => HttpResponse.error())
+            http.post('http://auth/api/login', () => HttpResponse.error())
         )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
