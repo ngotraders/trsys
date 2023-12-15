@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
@@ -21,7 +22,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_ok_given_valid_secret_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
@@ -48,7 +50,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_not_exsisting_secret_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
@@ -63,7 +66,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_invalid_secret_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
@@ -84,7 +88,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_in_use_secret_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
@@ -107,7 +112,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiTokenRelease_should_return_ok_given_valid_token_and_secret_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var token = default(string);
@@ -137,7 +143,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiTokenRelease_should_return_badrequest_given_invalid_token()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);

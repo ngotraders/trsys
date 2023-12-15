@@ -38,7 +38,7 @@ namespace Trsys.Web.Filters
             {
                 if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
                 {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
                 }
             }
             var token = context.HttpContext.Request.Headers["X-Secret-Token"];

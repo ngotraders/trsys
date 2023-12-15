@@ -27,7 +27,7 @@ namespace Trsys.Web.Controllers.Admin
         public async Task<List<UserDto>> Index(int? _start, int? _end)
         {
             var response = await mediator.Send(new GetUsers(_start, _end));
-            Response.Headers.Add("X-Total-Count", response.TotalCount.ToString());
+            Response.Headers["X-Total-Count"] = response.TotalCount.ToString();
             return response.Items;
         }
     }

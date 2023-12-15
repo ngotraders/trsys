@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -14,7 +15,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task Index_search_users()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
@@ -33,7 +35,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task Index_search_users_with_pagenation()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();

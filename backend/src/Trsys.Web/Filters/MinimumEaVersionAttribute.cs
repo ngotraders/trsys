@@ -22,7 +22,7 @@ namespace Trsys.Web.Filters
             {
                 if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
                 {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
                 }
             }
             var version = (string)context.HttpContext.Request.Headers["X-Ea-Version"] ?? (string)context.HttpContext.Request.Headers["Version"];

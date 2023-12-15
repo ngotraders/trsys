@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Azure;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -27,7 +28,7 @@ namespace Trsys.Web.Filters
             {
                 if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
                 {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
                 }
             }
             var key = (string)context.HttpContext.Request.Headers["X-Ea-Id"];

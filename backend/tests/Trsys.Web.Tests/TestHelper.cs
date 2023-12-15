@@ -6,25 +6,30 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace Trsys.Web.Tests
 {
     public static class TestHelper
     {
-        public static TestServer CreateServer()
+        public static Task<IHost> CreateTestServerAsync()
         {
-            return new TestServer(new WebHostBuilder()
+            return new HostBuilder()
                 .UseSerilog(new LoggerConfiguration().WriteTo.Console().CreateLogger())
-                .UseConfiguration(
-                    new ConfigurationBuilder()
+                .ConfigureWebHost(webBuilder =>
+                {
+                    webBuilder.UseTestServer();
+                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseConfiguration(new ConfigurationBuilder()
                         .AddInMemoryCollection(new[] {
                             new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"),
                             new KeyValuePair<string, string>("ConnectionStrings:SQLiteConnection", "Data Source=:memory:"),
                         })
                        .Build()
-                    )
-                .UseStartup<Startup>());
+                    );
+                })
+                .StartAsync();
         }
     }
 

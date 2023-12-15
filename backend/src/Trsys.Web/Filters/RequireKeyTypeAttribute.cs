@@ -36,7 +36,7 @@ namespace Trsys.Web.Filters
             {
                 if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
                 {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
                 }
             }
             if (!context.HttpContext.User.HasClaim(claim => claim.Type == ClaimTypes.Role && claim.Value == KeyTypeStr))

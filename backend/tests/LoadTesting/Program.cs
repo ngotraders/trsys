@@ -47,7 +47,7 @@ namespace LoadTesting
 
 
             var scenario2 = Scenario
-                .Create("subscriber", context => subscribers[context.InvocationNumber % COUNT_OF_CLIENTS].ExecuteAsync())
+                .Create("subscriber", context => subscribers[(int)context.InvocationNumber % COUNT_OF_CLIENTS].ExecuteAsync())
                 .WithInit(context => Task.WhenAll(subscribers.Select(subscriber => subscriber.InitializeAsync())))
                 .WithWarmUpDuration(TimeSpan.FromSeconds(5))
                 .WithLoadSimulations(LoadSimulation.NewInject(10 * COUNT_OF_CLIENTS, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES)))

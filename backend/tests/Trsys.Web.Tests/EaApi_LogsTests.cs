@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
@@ -19,7 +20,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_empty_string()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -38,7 +40,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_non_empty_string()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -57,7 +60,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_invalid_token()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -75,7 +79,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_without_token()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -92,7 +97,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostLog_should_return_accepted_given_unknown_key()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             client.DefaultRequestHeaders.Add("X-Ea-Id", "InvalidKey");

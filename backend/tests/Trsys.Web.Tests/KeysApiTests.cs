@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
@@ -19,7 +20,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -34,7 +36,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_is_approved_is_false()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -56,7 +59,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostKey_should_return_created_given_key_type_specified()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
             await client.LoginAsync();
 
@@ -79,7 +83,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetKey_should_return_bad_request_given_key_type_not_specified()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
             await client.LoginAsync();
             var mediator = server.Services.GetRequiredService<IMediator>();

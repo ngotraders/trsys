@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Net;
@@ -20,7 +21,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_ok_given_no_data_exists()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -40,7 +42,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_ok_and_single_entity_given_single_order_exists()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -71,7 +74,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_ok_and_multiple_entities_given_multiple_orders_exists()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -110,7 +114,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_not_modified_given_cache_exists()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -159,7 +164,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_unauthorized_given_invalid_token()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -177,7 +183,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task GetApiOrders_should_return_bad_request_given_invalid_version()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -197,7 +204,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiOrders_should_return_ok_given_empty_string()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -219,7 +227,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiOrders_should_return_ok_given_single_order()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -248,7 +257,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiOrders_should_return_ok_given_multiple_orders()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -270,7 +280,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiOrders_should_return_unauthorized_given_invalid_token()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
@@ -288,7 +299,8 @@ namespace Trsys.Web.Tests
         [TestMethod]
         public async Task PostApiOrders_should_return_bad_request_given_invalid_version()
         {
-            var server = TestHelper.CreateServer();
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
             var client = server.CreateClient();
 
             var mediator = server.Services.GetRequiredService<IMediator>();
