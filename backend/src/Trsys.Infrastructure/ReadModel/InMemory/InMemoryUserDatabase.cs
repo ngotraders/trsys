@@ -13,8 +13,8 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
         private readonly BlockingTaskQueue queue = new();
         private readonly List<UserDto> List = new();
         private readonly Dictionary<Guid, UserDto> ById = new();
-        private readonly Dictionary<string, UserDto> ByUsername = new();
-        private readonly Dictionary<string, UserDto> ByEmailAddress = new();
+        private readonly Dictionary<string, UserDto> ByNormalizedUsername = new();
+        private readonly Dictionary<string, UserDto> ByNormalizedEmailAddress = new();
         private readonly Dictionary<Guid, UserPasswordHashDto> PasswordHashById = new();
 
         public Task AddAsync(UserDto userDto)
@@ -22,8 +22,8 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             return queue.Enqueue(() =>
             {
                 ById.Add(userDto.Id, userDto);
-                ByUsername.Add(userDto.Username.ToUpperInvariant(), userDto);
-                ByEmailAddress.Add(userDto.EmailAddress.ToUpperInvariant(), userDto);
+                ByNormalizedUsername.Add(userDto.Username.ToUpperInvariant(), userDto);
+                ByNormalizedEmailAddress.Add(userDto.EmailAddress.ToUpperInvariant(), userDto);
                 PasswordHashById.Add(userDto.Id, new UserPasswordHashDto()
                 {
                     Id = userDto.Id,
@@ -61,8 +61,8 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             {
                 var item = ById[id];
                 ById.Remove(id);
-                ByUsername.Remove(item.Username.ToUpperInvariant());
-                ByEmailAddress.Remove(item.EmailAddress.ToUpperInvariant());
+                ByNormalizedUsername.Remove(item.Username.ToUpperInvariant());
+                ByNormalizedEmailAddress.Remove(item.EmailAddress.ToUpperInvariant());
                 List.RemoveAt(List.IndexOf(item));
             });
         }
@@ -107,13 +107,13 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
-        public Task<UserDto> FindByUsernameAsync(string username)
+        public Task<UserDto> FindByNormalizedUsernameAsync(string username)
         {
             return queue.Enqueue(() =>
             {
-                return ByUsername.TryGetValue(username.ToUpperInvariant(), out var value)
+                return ByNormalizedUsername.TryGetValue(username.ToUpperInvariant(), out var value)
                     ? value
-                    : ByEmailAddress.TryGetValue(username.ToUpperInvariant(), out value)
+                    : ByNormalizedEmailAddress.TryGetValue(username.ToUpperInvariant(), out value)
                     ? value
                     : null;
             });

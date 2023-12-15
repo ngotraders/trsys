@@ -77,7 +77,7 @@ function App() {
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
-                authProvider={authProvider("/api/auth", axiosInstance)}
+                authProvider={authProvider("", axiosInstance)}
                 i18nProvider={i18nProvider}
                 resources={[
                   {

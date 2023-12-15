@@ -6,10 +6,10 @@ using SqlStreamStore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Trsys.Web.Configurations;
 using Trsys.Models.Messaging;
-using Trsys.Models.WriteModel.Commands;
 using Trsys.Models.WriteModel.Infrastructure;
+using Microsoft.AspNetCore.Identity;
+using Trsys.Models.WriteModel.Commands;
 
 namespace Trsys.Models
 {
@@ -70,9 +70,17 @@ namespace Trsys.Models
         public static async Task SeedDataAsync(IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-            await mediator.Send(new UserCreateIfNotExistsCommand("管理者", "admin", "admin@example.com", passwordHasher.Hash("P@ssw0rd"), "Administrator"));
+            var mediator = scope.ServiceProvider.GetService<IMediator>();
+            var userManager = scope.ServiceProvider.GetService<UserManager<IdentityUser>>();
+            var user = await userManager.FindByNameAsync("admin");
+            var identity = new IdentityUser("admin");
+            var passwordHash = userManager.PasswordHasher.HashPassword(identity, "P@ssw0rd");
+            if (user != null)
+            {
+                await mediator.Send(new UserChangePasswordHashCommand(Guid.Parse(user.Id), passwordHash));
+                return;
+            }
+            await mediator.Send(new UserCreateCommand("管理者", "admin", "admin@example.com", passwordHash, "Administrator"));
         }
 
         private static async Task InitializeWriteModelAsync(ISecretKeyConnectionManager tokenManager)

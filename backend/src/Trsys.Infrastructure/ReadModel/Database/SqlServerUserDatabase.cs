@@ -83,9 +83,9 @@ namespace Trsys.Infrastructure.ReadModel.Database
             return db.Users.Where(user => user.Id == id).FirstOrDefaultAsync();
         }
 
-        public Task<UserDto> FindByUsernameAsync(string username)
+        public Task<UserDto> FindByNormalizedUsernameAsync(string username)
         {
-            return db.Users.Where(user => user.Username == username).FirstOrDefaultAsync();
+            return db.Users.Where(user => user.Username.ToUpperInvariant() == username.ToUpperInvariant()).FirstOrDefaultAsync();
         }
 
         public Task<UserPasswordHashDto> GetUserPasswordHash(Guid id)

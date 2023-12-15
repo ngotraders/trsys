@@ -1,5 +1,4 @@
 using MediatR;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -16,7 +15,7 @@ namespace Trsys.Models.ReadModel.Handlers
         IRequestHandler<GetUsers, SearchResponseDto<UserDto>>,
         IRequestHandler<GetUser, UserDto>,
         IRequestHandler<GetUserPasswordHash, UserPasswordHashDto>,
-        IRequestHandler<FindByUsername, UserDto>
+        IRequestHandler<FindByNormalizedUsername, UserDto>
     {
         private readonly IUserDatabase db;
 
@@ -64,9 +63,9 @@ namespace Trsys.Models.ReadModel.Handlers
             return db.FindByIdAsync(request.Id);
         }
 
-        public Task<UserDto> Handle(FindByUsername request, CancellationToken cancellationToken)
+        public Task<UserDto> Handle(FindByNormalizedUsername request, CancellationToken cancellationToken)
         {
-            return db.FindByUsernameAsync(request.Username);
+            return db.FindByNormalizedUsernameAsync(request.Username);
         }
 
         public Task<UserPasswordHashDto> Handle(GetUserPasswordHash request, CancellationToken cancellationToken)

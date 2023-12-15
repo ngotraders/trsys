@@ -3,9 +3,9 @@ using Trsys.Models.ReadModel.Dtos;
 
 namespace Trsys.Models.ReadModel.Queries
 {
-    public class FindByUsername : IRequest<UserDto>
+    public class FindByNormalizedUsername : IRequest<UserDto>
     {
-        public FindByUsername(string username)
+        public FindByNormalizedUsername(string username)
         {
             Username = username;
         }

@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Trsys.Models.ReadModel.Dtos;
@@ -29,6 +30,17 @@ namespace Trsys.Web.Controllers.Admin
             var response = await mediator.Send(new GetUsers(_start, _end));
             Response.Headers["X-Total-Count"] = response.TotalCount.ToString();
             return response.Items;
+        }
+
+        [HttpGet("{id}")]
+        public async Task<UserDto> Get(Guid id)
+        {
+            var response = await mediator.Send(new GetUser(id));
+            if (response == null)
+            {
+                throw new KeyNotFoundException();
+            }
+            return response;
         }
     }
 }

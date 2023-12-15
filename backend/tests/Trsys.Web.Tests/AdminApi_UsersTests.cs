@@ -61,5 +61,23 @@ namespace Trsys.Web.Tests
             Assert.IsFalse(retObj.Contains("user1"));
             Assert.IsTrue(retObj.Contains("user2"));
         }
+
+        [TestMethod]
+        public async Task Index_find_user_by_id()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetService<IMediator>();
+            var id = await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
+            await client.LoginAsync();
+
+            // Admin ユーザーが存在するので、1ページ目は2件
+            var res = await client.GetAsync("/api/admin/users/" + id);
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            var retObj = await res.Content.ReadAsStringAsync();
+            Assert.IsTrue(retObj.Contains("user1"));
+        }
     }
 }

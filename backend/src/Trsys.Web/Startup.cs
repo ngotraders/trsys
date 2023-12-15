@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,11 +11,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using Trsys.Web.Configurations;
 using Trsys.Infrastructure;
-using Trsys.Web.Middlewares;
-using Trsys.Models;
 using Trsys.Infrastructure.ReadModel.UserNotification;
+using Trsys.Models;
+using Trsys.Web.Configurations;
+using Trsys.Web.Identity;
+using Trsys.Web.Middlewares;
 
 namespace Trsys.Web
 {
@@ -49,17 +51,16 @@ namespace Trsys.Web
                 options.Cookie.IsEssential = true;
             });
 
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.LoginPath = "/login";
-                    options.LogoutPath = "/logout";
-                    options.ReturnUrlParameter = "returnUrl";
-                });
+            services.AddAuthentication(IdentityConstants.ApplicationScheme)
+                .AddIdentityCookies();
+            services.AddAuthorizationBuilder();
+            services.AddIdentityCore<IdentityUser>()
+                .AddRoles<IdentityRole>()
+                .AddIdentityStore()
+                .AddApiEndpoints();
 
             services.AddMediatR(config => config.RegisterServicesFromAssembly(typeof(Startup).Assembly));
 
-            services.AddSingleton(new PasswordHasher(Configuration.GetValue<string>("Trsys.Web:PasswordSalt")));
             var sqliteConnection = Configuration.GetConnectionString("SQLiteConnection");
             var sqlserverConnection = string.IsNullOrEmpty(sqliteConnection) ? Configuration.GetConnectionString("DefaultConnection") : null;
             var redisConnection = Configuration.GetConnectionString("RedisConnection");
@@ -83,6 +84,8 @@ namespace Trsys.Web
                 services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
                 services.AddDataProtection().PersistKeysToDbContext<TrsysContext>();
             }
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -110,6 +113,8 @@ namespace Trsys.Web
 
             if (env.IsDevelopment())
             {
+                app.UseSwagger();
+                app.UseSwaggerUI();
                 app.UseDeveloperExceptionPage();
             }
 
@@ -125,10 +130,10 @@ namespace Trsys.Web
             app.UseInitialization(task);
             app.UseSession();
             app.UseRouting();
-            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapIdentityApi<IdentityUser>();
                 endpoints.MapControllers();
             });
         }

@@ -5,14 +5,14 @@ export const TOKEN_KEY = "refine-auth";
 
 export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBindings {
   return {
-    login: async ({ username, email, password }) => {
+    login: async ({ username, email, password, remember }) => {
       if ((username || email) && password) {
         try {
-          const { status } = await axiosInstance.post(url + '/login', {
-            username: username || email,
+          const { status } = await axiosInstance.post(url + '/login?useCookies=true&useSessionCookies=' + !!remember, {
+            email: username || email,
             password,
           });
-          if (status === 204) {
+          if (status === 200) {
             return {
               success: true,
               redirectTo: "/",
@@ -32,7 +32,7 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
     },
     logout: async () => {
       const { status } = await axiosInstance.post(url + '/logout');
-      if (status === 204) {
+      if (status === 200) {
         return {
           success: true,
           redirectTo: "/",
@@ -43,7 +43,7 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
       };
     },
     check: async () => {
-      const { status, headers } = await axiosInstance.get(url + '/userinfo');
+      const { status, headers } = await axiosInstance.get(url + '/manage/info');
       console.log(status, headers)
       if (status === 200 && headers['content-type'].startsWith('application/json')) {
         return {
@@ -58,14 +58,14 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
     },
     getPermissions: async () => null,
     getIdentity: async () => {
-      const { status, headers, data } = await axiosInstance.get(url + '/userinfo');
+      const { status, headers, data } = await axiosInstance.get(url + '/manage/info');
       if (status === 200 && headers['content-type'].startsWith('application/json')) {
         console.log(data)
         return {
           id: data.id,
           username: data.username,
           name: data.name,
-          email: data.emailAddress,
+          email: data.email,
           avatar: "https://i.pravatar.cc/300",
           role: data.role,
         };
@@ -77,10 +77,28 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
       return { error };
     },
     register: async ({ username, email, password }) => {
-      console.log(username, email, password)
+      if ((username || email) && password) {
+        try {
+          const { status } = await axiosInstance.post(url + '/register', {
+            email: username || email,
+            password,
+          });
+          if (status === 204) {
+            return {
+              success: true,
+              redirectTo: "/",
+            };
+          }
+        } catch {
+        }
+      }
+
       return {
-        success: true,
-        redirectTo: "/",
+        success: false,
+        error: {
+          name: "RegistrationError",
+          message: "Failed to create user.",
+        },
       };
     },
     forgotPassword: async ({ email }) => {
