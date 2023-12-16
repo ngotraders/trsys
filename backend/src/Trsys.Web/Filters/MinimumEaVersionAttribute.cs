@@ -4,38 +4,32 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Trsys.Web.Filters
+namespace Trsys.Web.Filters;
+
+public class MinimumEaVersionAttribute(string version) : ActionFilterAttribute
 {
-    public class MinimumEaVersionAttribute : ActionFilterAttribute
+    public string Version { get; } = version;
+
+    public override void OnActionExecuting(ActionExecutingContext context)
     {
-        public MinimumEaVersionAttribute(string version)
+        var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+        if (env.IsDevelopment())
         {
-            Version = version;
+            if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
+            {
+                context.HttpContext.Response.Headers["X-Environment"] = "Development";
+            }
         }
-
-        public string Version { get; }
-
-        public override void OnActionExecuting(ActionExecutingContext context)
+        var version = (string?)context.HttpContext.Request.Headers["X-Ea-Version"] ?? (string?)context.HttpContext.Request.Headers["Version"];
+        if (string.IsNullOrEmpty(version))
         {
-            var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
-            if (env.IsDevelopment())
-            {
-                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
-                {
-                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
-                }
-            }
-            var version = (string)context.HttpContext.Request.Headers["X-Ea-Version"] ?? (string)context.HttpContext.Request.Headers["Version"];
-            if (string.IsNullOrEmpty(version))
-            {
-                context.Result = new BadRequestObjectResult("InvalidVersion");
-                return;
-            }
-            if (version.CompareTo(Version) < 0)
-            {
-                context.Result = new BadRequestObjectResult("InvalidVersion");
-                return;
-            }
+            context.Result = new BadRequestObjectResult("InvalidVersion");
+            return;
+        }
+        if (version.CompareTo(Version) < 0)
+        {
+            context.Result = new BadRequestObjectResult("InvalidVersion");
+            return;
         }
     }
 }

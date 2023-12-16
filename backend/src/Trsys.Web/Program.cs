@@ -1,62 +1,48 @@
-using System;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Trsys.Models;
+using Trsys.Infrastructure;
+using Trsys.Infrastructure.ReadModel.UserNotification;
+using Trsys.Web.Identity;
+using Trsys.Web.Middlewares;
+using Trsys.Web.Models;
 
-namespace Trsys.Web
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+builder.Services.AddTrsysIdentity();
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddMediatR(options => options.RegisterServicesFromAssembly(typeof(Program).Assembly));
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"), null);
+builder.Services.AddEmailSender(builder.Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
+builder.Services.AddDbContext<TrsysContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
 {
-    public class Program
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    app.UseCors(options =>
     {
-        public static void Main(string[] args)
-        {
-            Serilog.Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .CreateBootstrapLogger();
-
-            try
-            {
-                Serilog.Log.Information("Starting web host");
-                CreateHostBuilder(args).Build().Run();
-            }
-            catch (Exception ex)
-            {
-                Serilog.Log.Fatal(ex, "Host terminated unexpectedly");
-            }
-            finally
-            {
-                Serilog.Log.CloseAndFlush();
-            }
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((context, collection) =>
-                {
-                    var sqliteConnectionString = context.Configuration.GetConnectionString("SQLiteConnection");
-                    if (!string.IsNullOrEmpty(sqliteConnectionString))
-                    {
-                        using var db = new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
-                            .UseSqlite(sqliteConnectionString)
-                            .Options);
-                        DatabaseInitializer.InitializeContextAsync(db).Wait();
-                    }
-                    else
-                    {
-                        var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
-                        using var db = new TrsysContext(new DbContextOptionsBuilder<TrsysContext>()
-                            .UseSqlServer(connectionString)
-                            .Options);
-                        DatabaseInitializer.InitializeContextAsync(db).Wait();
-                    }
-                })
-                .UseSerilog((context, services, configuration) => configuration
-                    .ReadFrom.Configuration(context.Configuration))
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+        options.AllowAnyHeader();
+        options.AllowAnyMethod();
+        options.SetIsOriginAllowed(origin => true);
+        options.AllowCredentials();
+    });
 }
+
+app.UseHttpsRedirection();
+app.UseInitialization();
+app.MapIdentityApi<TrsysUser>();
+app.MapControllers().WithOpenApi();
+
+app.Run();

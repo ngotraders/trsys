@@ -26,7 +26,7 @@ namespace Trsys.Infrastructure
 {
     public static class Extension
     {
-        public static IServiceCollection AddEmailSender(this IServiceCollection services, Action<EmailSenderConfiguration> action)
+        public static IServiceCollection AddEmailSender(this IServiceCollection services, Action<EmailSenderConfiguration> action = null)
         {
             var configuration = new EmailSenderConfiguration();
             action?.Invoke(configuration);

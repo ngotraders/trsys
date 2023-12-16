@@ -6,43 +6,42 @@ using Microsoft.Extensions.Hosting;
 using System.Security.Claims;
 using Trsys.Models;
 
-namespace Trsys.Web.Filters
-{
-    public class RequireKeyType : ActionFilterAttribute
-    {
-        public SecretKeyType? KeyType { get; }
-        public string KeyTypeStr { get; }
+namespace Trsys.Web.Filters;
 
-        public RequireKeyType(string keyType = null)
+public class RequireKeyType : ActionFilterAttribute
+{
+    public SecretKeyType? KeyType { get; }
+    public string? KeyTypeStr { get; }
+
+    public RequireKeyType(string? keyType = null)
+    {
+        KeyTypeStr = keyType;
+        if (!string.IsNullOrEmpty(keyType))
         {
-            KeyTypeStr = keyType;
-            if (!string.IsNullOrEmpty(keyType))
+            if (keyType == "Publisher")
             {
-                if (keyType == "Publisher")
-                {
-                    KeyType = SecretKeyType.Publisher;
-                }
-                else if (keyType == "Subscriber")
-                {
-                    KeyType = SecretKeyType.Subscriber;
-                }
+                KeyType = SecretKeyType.Publisher;
+            }
+            else if (keyType == "Subscriber")
+            {
+                KeyType = SecretKeyType.Subscriber;
             }
         }
+    }
 
-        public override void OnActionExecuting(ActionExecutingContext context)
+    public override void OnActionExecuting(ActionExecutingContext context)
+    {
+        var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+        if (env.IsDevelopment())
         {
-            var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
-            if (env.IsDevelopment())
+            if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
             {
-                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
-                {
-                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
-                }
+                context.HttpContext.Response.Headers["X-Environment"] = "Development";
             }
-            if (!context.HttpContext.User.HasClaim(claim => claim.Type == ClaimTypes.Role && claim.Value == KeyTypeStr))
-            {
-                context.Result = new BadRequestObjectResult("InvalidKeyType");
-            }
+        }
+        if (!context.HttpContext.User.HasClaim(claim => claim.Type == ClaimTypes.Role && claim.Value == KeyTypeStr))
+        {
+            context.Result = new BadRequestObjectResult("InvalidKeyType");
         }
     }
 }
