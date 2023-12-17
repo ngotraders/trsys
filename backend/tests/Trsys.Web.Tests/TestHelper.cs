@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Trsys.Infrastructure;
+using Trsys.Web.Formatters;
 using Trsys.Web.Identity;
 using Trsys.Web.Middlewares;
 using Trsys.Web.Models;
@@ -31,7 +32,10 @@ namespace Trsys.Web.Tests
                 {
                     services.AddEndpointsApiExplorer();
                     services.AddTrsysIdentity();
-                    services.AddControllers()
+                    services.AddControllers(options =>
+                    {
+                        options.InputFormatters.Add(new TextPlainInputFormatter());
+                    })
                         .PartManager.ApplicationParts.Add(new AssemblyPart(assembly)); ;
 
                     services.AddEndpointsApiExplorer();
@@ -55,7 +59,7 @@ namespace Trsys.Web.Tests
                         app.UseEndpoints(endpoint =>
                         {
                             endpoint.MapIdentityApi<TrsysUser>();
-                            endpoint.MapControllers();
+                            endpoint.MapControllers().RequireAuthorization();
                         });
                     });
                 })
@@ -67,7 +71,7 @@ namespace Trsys.Web.Tests
     {
         public static async Task LoginAsync(this HttpClient client)
         {
-            var loginResponse = await client.PostAsync("/login?useCookie=true", JsonContent.Create(new
+            var loginResponse = await client.PostAsync("/login?useCookies=true", JsonContent.Create(new
             {
                 email = "admin@example.com",
                 password = "P@ssw0rd",

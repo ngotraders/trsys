@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,8 +23,6 @@ public static class Extensions
             .AddUserStore<TrsysUserStore>()
             .AddRoleStore<TrsysRoleStore>()
             .AddApiEndpoints();
-        services.AddAuthentication()
-            .AddCookie(IdentityConstants.BearerScheme);
         services.AddTransient<IEmailSender<TrsysUser>, TrsysIdentityEmailSender>();
         services.AddAuthorizationBuilder()
             .AddPolicy("Administrator", policy => policy.RequireRole("Administrator"))

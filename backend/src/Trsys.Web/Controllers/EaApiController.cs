@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ using Trsys.Web.Filters;
 
 namespace Trsys.Web.Controllers;
 
+[AllowAnonymous]
 [EaEndpoint]
 [MinimumEaVersion("20211109")]
 [ApiController]
@@ -22,7 +24,7 @@ public class EaApiController(ILogger<EaApiController> logger, IMediator mediator
     [Route("api/ea/token/generate")]
     [HttpPost]
     [Consumes("text/plain")]
-    public async Task<IActionResult> PostToken([FromBody] string key)
+    public async Task<IActionResult> PostToken([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string? key)
     {
         if (string.IsNullOrEmpty(key))
         {
@@ -102,7 +104,7 @@ public class EaApiController(ILogger<EaApiController> logger, IMediator mediator
     [Consumes("text/plain")]
     [RequireToken]
     [RequireKeyType("Publisher")]
-    public async Task<IActionResult> PostOrders([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
+    public async Task<IActionResult> PostOrders([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string? text)
     {
         var orders = new List<PublishedOrder>();
         if (!string.IsNullOrEmpty(text))
@@ -125,7 +127,12 @@ public class EaApiController(ILogger<EaApiController> logger, IMediator mediator
     [Route("api/ea/logs")]
     [HttpPost]
     [Consumes("text/plain")]
-    public IActionResult PostLogs([FromHeader(Name = "X-Ea-Id")] string key, [FromHeader(Name = "X-Ea-Type")] string keyType, [FromHeader(Name = "X-Ea-Version")] string version, [FromHeader(Name = "X-Secret-Token")] string token, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string text)
+    public IActionResult PostLogs(
+        [FromHeader(Name = "X-Ea-Id")] string key,
+        [FromHeader(Name = "X-Ea-Type")] string keyType,
+        [FromHeader(Name = "X-Ea-Version")] string version,
+        [FromHeader(Name = "X-Secret-Token")] string? token,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] string? text)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -133,14 +140,7 @@ public class EaApiController(ILogger<EaApiController> logger, IMediator mediator
         }
 
         var logText = text.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        if (!string.IsNullOrEmpty(key))
-        {
-            logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}/Token:{token}, {@text}", key, keyType, version, token ?? "None", logText);
-        }
-        else
-        {
-            logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}/Token:{token}, {@text}", User.Identity?.Name ?? "Unknown", "Unknown", version ?? "Unknown", token ?? "None", logText);
-        }
+        logger.LogInformation("Receive Log SecretKey:{secretKey}/Type:{type}/Version:{version}/Token:{token}, {@text}", key, keyType, version, token ?? "None", logText);
         return Accepted();
     }
 }

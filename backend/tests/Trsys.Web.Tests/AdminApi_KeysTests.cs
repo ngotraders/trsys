@@ -15,7 +15,7 @@ using Trsys.Models.WriteModel.Commands;
 namespace Trsys.Web.Tests
 {
     [TestClass]
-    public class KeysApiTests
+    public class AdminApi_KeysTests
     {
         [TestMethod]
         public async Task PostKey_should_return_bad_request_given_key_type_not_specified()
@@ -25,7 +25,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             await client.LoginAsync();
 
-            var res = await client.PostAsync("/api/keys", new StringContent(JsonConvert.SerializeObject(new
+            var res = await client.PostAsync("/api/admin/keys", new StringContent(JsonConvert.SerializeObject(new
             {
                 KeyType = default(int?),
                 Description = default(string),
@@ -41,7 +41,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             await client.LoginAsync();
 
-            var res = await client.PostAsync("/api/keys", new StringContent(JsonConvert.SerializeObject(new
+            var res = await client.PostAsync("/api/admin/keys", new StringContent(JsonConvert.SerializeObject(new
             {
                 KeyType = 1,
                 Description = default(string),
@@ -50,7 +50,7 @@ namespace Trsys.Web.Tests
             var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
             Assert.IsNotNull(key);
 
-            var keyRes = await client.GetAsync($"/api/keys/{key}");
+            var keyRes = await client.GetAsync($"/api/admin/keys/{key}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(false, retObj.Property("isApproved").Value);
@@ -64,7 +64,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
             await client.LoginAsync();
 
-            var res = await client.PostAsync("/api/keys", new StringContent(JsonConvert.SerializeObject(new
+            var res = await client.PostAsync("/api/admin/keys", new StringContent(JsonConvert.SerializeObject(new
             {
                 KeyType = 1,
                 Description = default(string),
@@ -74,7 +74,7 @@ namespace Trsys.Web.Tests
             var key = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value;
             Assert.IsNotNull(key);
 
-            var keyRes = await client.GetAsync($"/api/keys/{key}");
+            var keyRes = await client.GetAsync($"/api/admin/keys/{key}");
             Assert.AreEqual(HttpStatusCode.OK, keyRes.StatusCode);
             var retObj = JsonConvert.DeserializeObject<JObject>(await keyRes.Content.ReadAsStringAsync());
             Assert.AreEqual(true, retObj.Property("isApproved").Value);
@@ -91,7 +91,7 @@ namespace Trsys.Web.Tests
             var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, null, null));
             var key = await mediator.Send(new GetSecretKey(id));
 
-            var res = await client.GetAsync($"/api/keys/{key.Key}");
+            var res = await client.GetAsync($"/api/admin/keys/{key.Key}");
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             Assert.AreEqual(key.Key, JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync()).Property("key").Value);
         }

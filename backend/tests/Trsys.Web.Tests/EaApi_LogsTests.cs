@@ -34,7 +34,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/ea/logs", new StringContent("", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode, await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -54,7 +54,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", token);
 
             var res = await client.PostAsync("/api/ea/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode, await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -73,7 +73,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Secret-Token", "InvalidToken");
 
             var res = await client.PostAsync("/api/ea/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode, await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -91,7 +91,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             var res = await client.PostAsync("/api/ea/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode, await res.Content.ReadAsStringAsync());
         }
 
         [TestMethod]
@@ -106,7 +106,7 @@ namespace Trsys.Web.Tests
             client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
 
             var res = await client.PostAsync("/api/ea/logs", new StringContent("1:DEBUG:NonEmpty", Encoding.UTF8, "text/plain"));
-            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode);
+            Assert.AreEqual(HttpStatusCode.Accepted, res.StatusCode, await res.Content.ReadAsStringAsync());
         }
     }
 }

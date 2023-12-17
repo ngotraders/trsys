@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Trsys.Infrastructure;
 using Trsys.Infrastructure.ReadModel.UserNotification;
+using Trsys.Web.Formatters;
 using Trsys.Web.Identity;
 using Trsys.Web.Middlewares;
 using Trsys.Web.Models;
@@ -15,7 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 builder.Services.AddTrsysIdentity();
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.InputFormatters.Add(new TextPlainInputFormatter());
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
