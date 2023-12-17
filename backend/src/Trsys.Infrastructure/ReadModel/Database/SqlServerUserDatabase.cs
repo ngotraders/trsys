@@ -55,6 +55,12 @@ namespace Trsys.Infrastructure.ReadModel.Database
             }
         }
 
+        public Task RemoveAsync(Guid id)
+        {
+            db.Users.Remove(new UserDto() { Id = id });
+            return db.SaveChangesAsync();
+        }
+
         public Task<int> CountAsync()
         {
             return db.Users.CountAsync();

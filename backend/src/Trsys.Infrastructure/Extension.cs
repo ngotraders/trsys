@@ -4,7 +4,6 @@ using CQRSlite.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
-using StackExchange.Redis;
 using System;
 using System.Reflection;
 using Trsys.Infrastructure.Logging;
@@ -14,10 +13,8 @@ using Trsys.Infrastructure.ReadModel.UserNotification;
 using Trsys.Infrastructure.WriteModel;
 using Trsys.Infrastructure.WriteModel.SqlStreamStore;
 using Trsys.Infrastructure.WriteModel.SqlStreamStore.InMemory;
-using Trsys.Infrastructure.WriteModel.SqlStreamStore.Redis;
 using Trsys.Infrastructure.WriteModel.Tokens;
 using Trsys.Infrastructure.WriteModel.Tokens.InMemory;
-using Trsys.Infrastructure.WriteModel.Tokens.Redis;
 using Trsys.Models.Messaging;
 using Trsys.Models.ReadModel.Infrastructure;
 using Trsys.Models.WriteModel.Infrastructure;
@@ -88,33 +85,19 @@ namespace Trsys.Infrastructure
         {
             // For testing
             services.AddLogging();
-            return services.AddInfrastructure(null, null);
+            return services.AddInfrastructure(null);
         }
 
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string sqlserverConnection, string redisConnection)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, string sqlserverConnection)
         {
             services.AddInfrastructure();
 
-            if (string.IsNullOrEmpty(redisConnection))
-            {
-                // Manage latest version for each stream in StreamStore
-                services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
-                services.AddSingleton<ISecretKeyConnectionManagerStore, InMemoryTokenConnectionManagerStore>();
+            // Manage latest version for each stream in StreamStore
+            services.AddSingleton<ILatestStreamVersionHolder, InMemoryLatestStreamVersionHolder>();
+            services.AddSingleton<ISecretKeyConnectionManagerStore, InMemoryTokenConnectionManagerStore>();
 
-                // Message synchronization
-                services.AddSingleton<IMessagePublisher, LocalMessagePublisher>();
-            }
-            else
-            {
-                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnection));
-
-                // Manage latest version for each stream in StreamStore
-                services.AddSingleton<ILatestStreamVersionHolder, RedisLatestStreamVersionHolder>();
-                services.AddSingleton<ISecretKeyConnectionManagerStore, RedisTokenConnectionManagerStore>();
-
-                // Message synchronization
-                services.AddSingleton<IMessagePublisher, RedisMessageBroker>();
-            }
+            // Message synchronization
+            services.AddSingleton<IMessagePublisher, LocalMessagePublisher>();
 
             // ReadModel Database
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();

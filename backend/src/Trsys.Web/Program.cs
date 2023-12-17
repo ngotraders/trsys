@@ -25,7 +25,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddMediatR(options => options.RegisterServicesFromAssembly(typeof(Program).Assembly));
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"), null);
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"));
 builder.Services.AddEmailSender(builder.Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
 builder.Services.AddDbContext<TrsysContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

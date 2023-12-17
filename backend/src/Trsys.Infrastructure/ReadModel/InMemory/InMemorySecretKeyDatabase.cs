@@ -124,38 +124,61 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
-        public Task<List<SecretKeyDto>> SearchAsync()
+        public Task<int> CountAsync()
         {
-            return Task.FromResult(List);
+            return queue.Enqueue(() =>
+            {
+                return List.Count;
+            });
         }
 
-        public Task<PagedResultDto<SecretKeyDto>> SearchPagedAsync(int page, int perPage)
+        public Task<List<SecretKeyDto>> SearchAsync()
         {
-            var query = List
-                .OrderBy(e => e.IsApproved)
-                .ThenBy(e => e.KeyType)
-                .ThenBy(e => e.Id)
-                .AsEnumerable();
-            if (perPage > 0)
+            return queue.Enqueue(() =>
             {
-                query = query.Skip((page - 1) * perPage).Take(perPage);
+                return List;
+            });
+        }
+
+        public Task<List<SecretKeyDto>> SearchAsync(int start, int end)
+        {
+            if (start < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(start));
             }
-            return Task.FromResult(new PagedResultDto<SecretKeyDto>(page, perPage, List.Count, query.ToList()));
+            if (end <= start)
+            {
+                throw new ArgumentOutOfRangeException(nameof(end));
+            }
+            return queue.Enqueue(() =>
+            {
+                return List.Skip(start).Take(end - start).ToList();
+            });
         }
 
         public Task<SecretKeyDto> FindByIdAsync(Guid id)
         {
-            return Task.FromResult(ById.TryGetValue(id, out var value) ? value : null);
+            return queue.Enqueue(() =>
+            {
+                return ById.TryGetValue(id, out var value) ? value : null;
+            });
         }
 
         public Task<SecretKeyDto> FindByKeyAsync(string key)
         {
-            return Task.FromResult(ByKey.TryGetValue(key, out var value) ? value : null);
+            return queue.Enqueue(() =>
+            {
+                return ByKey.TryGetValue(key, out var value) ? value : null;
+            });
         }
 
         public Task<SecretKeyDto> FindByTokenAsync(string token)
         {
-            return Task.FromResult(ByToken.TryGetValue(token, out var value) ? value : null);
+
+            return queue.Enqueue(() =>
+            {
+                return ByToken.TryGetValue(token, out var value) ? value : null;
+            });
         }
         public void Dispose()
         {

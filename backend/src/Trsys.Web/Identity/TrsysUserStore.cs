@@ -15,9 +15,9 @@ internal class TrsysUserStore(IMediator mediator, ILogger<TrsysUserStore> logger
     {
         try
         {
-            await mediator.Send(new UserCreateCommand(user.UserName, user.UserName, user.Email, user.PasswordHash, user.Role), cancellationToken);
+            var id = await mediator.Send(new UserCreateCommand(user.Name ?? user.UserName, user.UserName, user.Email, user.PasswordHash, user.Role), cancellationToken);
+            user.Id = id;
             return IdentityResult.Success;
-
         }
         catch (Exception e)
         {

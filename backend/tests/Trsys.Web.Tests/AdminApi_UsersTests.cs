@@ -2,8 +2,12 @@ using MediatR;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Linq;
 using System.Net;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Trsys.Models.WriteModel.Commands;
 
@@ -63,7 +67,7 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
-        public async Task Index_find_user_by_id()
+        public async Task GetUser_should_return_ok_if_specified_key_exists()
         {
             using var host = await TestHelper.CreateTestServerAsync();
             var server = host.GetTestServer();
@@ -78,6 +82,41 @@ namespace Trsys.Web.Tests
             Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
             var retObj = await res.Content.ReadAsStringAsync();
             Assert.IsTrue(retObj.Contains("user1"));
+        }
+
+        [TestMethod]
+        public async Task GetUser_should_return_not_found_if_specified_key_not_exists()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+            await client.LoginAsync();
+            var res = await client.GetAsync($"/api/admin/users/{Guid.NewGuid()}");
+            Assert.AreEqual(HttpStatusCode.NotFound, res.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task PostUser_should_return_ok_if_valid_user_request()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+            await client.LoginAsync();
+
+            var res = await client.PostAsync("/api/admin/users", JsonContent.Create(new
+            {
+                Name = "User Name 1",
+                Username = "user1",
+                EmailAddress = "user1@example.com",
+                Role = "Administrator",
+                Password = "P@ssw0rd",
+            }));
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            var obj = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("user1", obj.Property("username").Value.ToObject<string>());
+            Assert.AreEqual("User Name 1", obj.Property("name").Value.ToObject<string>());
+            Assert.AreEqual("user1@example.com", obj.Property("emailAddress").Value.ToObject<string>());
+            Assert.AreEqual("Administrator", obj.Property("role").Value.ToObject<string>());
         }
     }
 }
