@@ -17,7 +17,7 @@ describe('authProvider', () => {
 
     it('login with username and password', async () => {
         server.use(
-            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 204 }))
+            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 200 }))
         )
 
         const result = await sut.login({ username: 'test', password: 'password' })
@@ -31,7 +31,7 @@ describe('authProvider', () => {
     it('login with email and password', async () => {
 
         server.use(
-            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 204 }))
+            http.post('http://auth/api/login', () => new HttpResponse(null, { status: 200 }))
         )
 
         const result = await sut.login({ email: 'test@example.com', password: 'password' })
