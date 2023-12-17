@@ -31,17 +31,11 @@ import {
   UserShow,
 } from "./pages/users";
 import {
-  BlogPostCreate,
-  BlogPostEdit,
-  BlogPostList,
-  BlogPostShow,
-} from "./pages/blog-posts";
-import {
-  CategoryCreate,
-  CategoryEdit,
-  CategoryList,
-  CategoryShow,
-} from "./pages/categories";
+  SecretKeyCreate,
+  SecretKeyEdit,
+  SecretKeyList,
+  SecretKeyShow,
+} from "./pages/secret-keys";
 import { ForgotPassword } from "./pages/forgotPassword";
 import { Login } from "./pages/login";
 import { Register } from "./pages/register";
@@ -89,26 +83,19 @@ function App() {
                     meta: {
                       dataProviderName: "trsys",
                       canDelete: true,
+                      title: "ユーザー",
                     },
                   },
                   {
-                    name: "blog_posts",
-                    list: "/blog-posts",
-                    create: "/blog-posts/create",
-                    edit: "/blog-posts/edit/:id",
-                    show: "/blog-posts/show/:id",
+                    name: "keys",
+                    list: "/secret-keys",
+                    create: "/secret-keys/create",
+                    edit: "/secret-keys/edit/:id",
+                    show: "/secret-keys/show/:id",
                     meta: {
+                      dataProviderName: "trsys",
                       canDelete: true,
-                    },
-                  },
-                  {
-                    name: "categories",
-                    list: "/categories",
-                    create: "/categories/create",
-                    edit: "/categories/edit/:id",
-                    show: "/categories/show/:id",
-                    meta: {
-                      canDelete: true,
+                      title: "シークレットキー",
                     },
                   },
                 ]}
@@ -147,17 +134,11 @@ function App() {
                       <Route path="edit/:id" element={<UserEdit />} />
                       <Route path="show/:id" element={<UserShow />} />
                     </Route>
-                    <Route path="/blog-posts">
-                      <Route index element={<BlogPostList />} />
-                      <Route path="create" element={<BlogPostCreate />} />
-                      <Route path="edit/:id" element={<BlogPostEdit />} />
-                      <Route path="show/:id" element={<BlogPostShow />} />
-                    </Route>
-                    <Route path="/categories">
-                      <Route index element={<CategoryList />} />
-                      <Route path="create" element={<CategoryCreate />} />
-                      <Route path="edit/:id" element={<CategoryEdit />} />
-                      <Route path="show/:id" element={<CategoryShow />} />
+                    <Route path="/secret-keys">
+                      <Route index element={<SecretKeyList />} />
+                      <Route path="create" element={<SecretKeyCreate />} />
+                      <Route path="edit/:id" element={<SecretKeyEdit />} />
+                      <Route path="show/:id" element={<SecretKeyShow />} />
                     </Route>
                     <Route
                       path="/update-password"
