@@ -13,10 +13,10 @@ using Trsys.Web.Requests;
 
 namespace Trsys.Web.Controllers.Admin;
 
-[Route("/api/admin/keys")]
+[Route("/api/admin/secret-keys")]
 [ApiController]
 [Authorize]
-public class AdminKeysApiController(IMediator mediator) : ControllerBase
+public class AdminSecretKeysApiController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     public async Task<Ok<List<SecretKeyDto>>> Index(int? _start, int? _end)
@@ -42,5 +42,12 @@ public class AdminKeysApiController(IMediator mediator) : ControllerBase
             return TypedResults.NotFound();
         }
         return TypedResults.Ok(response);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<Results<Ok<SecretKeyDto>, ValidationProblem>> Put(Guid id, [FromBody] UpdateSecretKeyRequest request)
+    {
+        await mediator.Send(new SecretKeyUpdateCommand(id, request.KeyType, request.Description, request.IsApproved));
+        return TypedResults.Ok(await mediator.Send(new GetSecretKey(id)));
     }
 }

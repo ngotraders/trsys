@@ -1,8 +1,6 @@
 import { AuthBindings } from "@refinedev/core";
 import { AxiosInstance } from "axios";
 
-export const TOKEN_KEY = "refine-auth";
-
 export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBindings {
   return {
     login: async ({ username, email, password, remember }) => {
@@ -19,6 +17,7 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
             };
           }
         } catch {
+          // ignore
         }
       }
 
@@ -83,13 +82,14 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
             email: username || email,
             password,
           });
-          if (status === 204) {
+          if (status === 200) {
             return {
               success: true,
               redirectTo: "/",
             };
           }
         } catch {
+          // ignore
         }
       }
 
@@ -116,4 +116,4 @@ export function authProvider(url: string, axiosInstance: AxiosInstance): AuthBin
       };
     }
   }
-};
+}

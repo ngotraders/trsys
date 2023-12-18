@@ -12,6 +12,8 @@ import {
 
 import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
+import PeopleIcon from "@mui/icons-material/People";
+import KeyIcon from "@mui/icons-material/Key";
 import routerBindings, {
   CatchAllNavigate,
   DocumentTitleHandler,
@@ -24,12 +26,7 @@ import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { authProvider } from "./authProvider";
 import { Header } from "./components/header";
 import { ColorModeContextProvider } from "./contexts/color-mode";
-import {
-  UserCreate,
-  UserEdit,
-  UserList,
-  UserShow,
-} from "./pages/users";
+import { UserCreate, UserEdit, UserList, UserShow } from "./pages/users";
 import {
   SecretKeyCreate,
   SecretKeyEdit,
@@ -44,8 +41,8 @@ import { Logo } from "./components/logo";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: "https://localhost:8443",
-  withCredentials: true
-})!;
+  withCredentials: true,
+});
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -67,7 +64,10 @@ function App() {
               <Refine
                 dataProvider={{
                   default: dataProvider("https://api.fake-rest.refine.dev"),
-                  "trsys": dataProvider("/api/admin", axiosInstance as unknown as any),
+                  trsys: dataProvider(
+                    "/api/admin",
+                    axiosInstance as unknown as any
+                  ),
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
@@ -84,10 +84,12 @@ function App() {
                       dataProviderName: "trsys",
                       canDelete: true,
                       title: "ユーザー",
+                      label: "ユーザー",
+                      icon: <PeopleIcon />,
                     },
                   },
                   {
-                    name: "keys",
+                    name: "secret-keys",
                     list: "/secret-keys",
                     create: "/secret-keys/create",
                     edit: "/secret-keys/edit/:id",
@@ -96,6 +98,8 @@ function App() {
                       dataProviderName: "trsys",
                       canDelete: true,
                       title: "シークレットキー",
+                      label: "シークレットキー",
+                      icon: <KeyIcon />,
                     },
                   },
                 ]}

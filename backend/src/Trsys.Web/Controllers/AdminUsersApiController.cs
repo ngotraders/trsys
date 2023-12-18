@@ -10,7 +10,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Models.ReadModel.Dtos;
 using Trsys.Models.ReadModel.Queries;
-using Trsys.Models.WriteModel.Commands;
 using Trsys.Web.Identity;
 using Trsys.Web.Requests;
 

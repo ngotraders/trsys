@@ -15,7 +15,7 @@ namespace LoadTesting
     {
         const int COUNT_OF_CLIENTS = 100;
         const double LENGTH_OF_TEST_MINUTES = 3;
-        const string ENDPOINT_URL = "https://localhost:44326";
+        const string ENDPOINT_URL = "https://localhost:5001";
 
         static void Main(string[] _)
         {
@@ -26,8 +26,8 @@ namespace LoadTesting
             var secretKeys = WithRetry(() => GenerateSecretKeys(COUNT_OF_CLIENTS + 1)).Result;
             var feeds = DataFeed.Constant(secretKeys);
             var orderProvider = new OrderProvider(TimeSpan.FromMinutes(LENGTH_OF_TEST_MINUTES));
-            var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First())).ToList();
-            var publisher = new Publisher(ENDPOINT_URL, secretKeys.First(), orderProvider);
+            var subscribers = Enumerable.Range(1, COUNT_OF_CLIENTS).Select(i => new Subscriber(ENDPOINT_URL, secretKeys.Skip(i).First().Key)).ToList();
+            var publisher = new Publisher(ENDPOINT_URL, secretKeys.First().Key, orderProvider);
             orderProvider.SetStart();
 
             var scenario1 = Scenario
@@ -83,18 +83,18 @@ namespace LoadTesting
             throw new Exception("Failed to execute.", lastException);
         }
 
-        private static async Task<IEnumerable<string>> GenerateSecretKeys(int count)
+        private static async Task<IEnumerable<SecretKey>> GenerateSecretKeys(int count)
         {
-            var admin = new Admin(ENDPOINT_URL, "admin", "P@ssw0rd");
+            var admin = new Admin(ENDPOINT_URL, "admin@example.com", "P@ssw0rd");
             await admin.LoginAsync();
 
             var secretKeys = (await admin.GetSecretKeysAsync())
-                .Where(k => Guid.TryParse(k, out var _))
+                .Where(k => Guid.TryParse(k.Key, out var _))
                 .ToList();
             foreach (var secretKey in secretKeys)
             {
-                await admin.RevokeSecretKeyAsync(secretKey);
-                await admin.DeleteSecretKeyAsync(secretKey);
+                await admin.RevokeSecretKeyAsync(secretKey.Id);
+                await admin.DeleteSecretKeyAsync(secretKey.Id);
             }
 
             for (var i = 0; i < count; i++)
@@ -103,23 +103,23 @@ namespace LoadTesting
             }
 
             secretKeys = (await admin.GetSecretKeysAsync())
-                .Where(k => Guid.TryParse(k, out var _))
+                .Where(k => Guid.TryParse(k.Key, out var _))
                 .ToList();
             foreach (var secretKey in secretKeys)
             {
-                await admin.ApproveSecretKeyAsync(secretKey);
+                await admin.ApproveSecretKeyAsync(secretKey.Id);
             }
             return secretKeys;
         }
 
-        private static async Task DeleteSecretKeys(IEnumerable<string> secretKeys)
+        private static async Task DeleteSecretKeys(IEnumerable<SecretKey> secretKeys)
         {
             var admin = new Admin(ENDPOINT_URL, "admin", "P@ssw0rd");
             await admin.LoginAsync();
             foreach (var secretKey in secretKeys)
             {
-                await admin.RevokeSecretKeyAsync(secretKey);
-                await admin.DeleteSecretKeyAsync(secretKey);
+                await admin.RevokeSecretKeyAsync(secretKey.Id);
+                await admin.DeleteSecretKeyAsync(secretKey.Id);
             }
         }
     }

@@ -16,9 +16,9 @@ services:
     build:
       context: ./docker/app
     command: bash -c "dotnet run --project src/Trsys.Web/Trsys.Web.csproj"
-    working_dir: /workspace
+    working_dir: /app
     volumes:
-      - .:/workspace
+      - .:/app
     environment:
       - ConnectionStrings__DefaultConnection=Persist Security Info=False;User ID=sa;Password=P@ssw0rd;Initial Catalog=TrsysDatabase;Server=db;Trust Server Certificate=True
     depends_on:

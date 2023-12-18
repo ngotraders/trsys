@@ -1,76 +1,78 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace LoadTesting
 {
+    public class SecretKey
+    {
+        public string Id { get; set; }
+        public string Key { get; set; }
+    }
     public class Admin
     {
         private readonly HttpClient client;
-        private readonly string username;
+        private readonly string email;
         private readonly string password;
 
-        public Admin(string endpointUrl, string username, string password)
+        public Admin(string endpointUrl, string email, string password)
         {
             client = HttpClientFactory.Create(endpointUrl, true);
             client.BaseAddress = new Uri(endpointUrl);
-            this.username = username;
+            this.email = email;
             this.password = password;
         }
 
         public async Task LoginAsync()
         {
-            await client.PostAsync("/login", new FormUrlEncodedContent(
-                new KeyValuePair<string, string>[] {
-                    KeyValuePair.Create("Username", username),
-                    KeyValuePair.Create("Password", password),
+            await client.PostAsync("/login?useCookies=true", JsonContent.Create(
+                new
+                {
+                    Email = email,
+                    Password = password,
                 }));
         }
 
-        public async Task<IEnumerable<string>> GetSecretKeysAsync()
+        public async Task<List<SecretKey>> GetSecretKeysAsync()
         {
-            var response = await client.GetAsync("/api/keys");
-            var arr = JArray.Parse(await response.Content.ReadAsStringAsync());
-            return arr.Select(e => e.Value<string>("key"));
+            var response = await client.GetAsync("/api/admin/secret-keys");
+            return JsonConvert.DeserializeObject<List<SecretKey>>(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<string> CreateKeyAsync(string secretKey = default)
+        public async Task<SecretKey> CreateKeyAsync(string secretKey = default)
         {
-            var response = await client.PostAsync("/api/keys", new StringContent(JsonConvert.SerializeObject(new
+            var response = await client.PostAsync("/api/admin/secret-keys", JsonContent.Create(new
             {
                 Key = secretKey,
                 KeyType = 3,
-            }), Encoding.UTF8, "application/json"));
-            var obj = JObject.Parse(await response.Content.ReadAsStringAsync());
-            return obj.Property("key").Value.ToString();
+            }));
+            return JsonConvert.DeserializeObject<SecretKey>(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task ApproveSecretKeyAsync(string secretKey)
+        public async Task ApproveSecretKeyAsync(string secretKeyId)
         {
-            await client.PutAsync($"/api/keys/{secretKey}", new StringContent(JsonConvert.SerializeObject(new
+            await client.PutAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
             {
                 KeyType = 3,
                 IsApproved = true,
-            }), Encoding.UTF8, "application/json"));
+            }));
         }
 
-        public async Task RevokeSecretKeyAsync(string secretKey)
+        public async Task RevokeSecretKeyAsync(string secretKeyId)
         {
-            await client.PutAsync($"/api/keys/{secretKey}", new StringContent(JsonConvert.SerializeObject(new
+            await client.PutAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
             {
                 KeyType = 3,
                 IsApproved = false,
-            }), Encoding.UTF8, "application/json"));
+            }));
         }
 
-        public async Task DeleteSecretKeyAsync(string secretKey)
+        public async Task DeleteSecretKeyAsync(string secretKeyId)
         {
-            await client.DeleteAsync($"/api/keys/{secretKey}");
+            await client.DeleteAsync($"/api/admin/secret-keys/{secretKeyId}");
         }
     }
 }
