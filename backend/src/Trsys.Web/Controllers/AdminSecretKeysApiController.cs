@@ -44,10 +44,27 @@ public class AdminSecretKeysApiController(IMediator mediator) : ControllerBase
         return TypedResults.Ok(response);
     }
 
-    [HttpPut("{id}")]
-    public async Task<Results<Ok<SecretKeyDto>, ValidationProblem>> Put(Guid id, [FromBody] UpdateSecretKeyRequest request)
+    [HttpPatch("{id}")]
+    public async Task<Results<Ok<SecretKeyDto>, NotFound, ValidationProblem>> Put(Guid id, [FromBody] UpdateSecretKeyRequest request)
     {
+        var response = await mediator.Send(new GetSecretKey(id));
+        if (response == null)
+        {
+            return TypedResults.NotFound();
+        }
         await mediator.Send(new SecretKeyUpdateCommand(id, request.KeyType, request.Description, request.IsApproved));
         return TypedResults.Ok(await mediator.Send(new GetSecretKey(id)));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<Results<Ok, NotFound, ValidationProblem>> Delete(Guid id)
+    {
+        var response = await mediator.Send(new GetSecretKey(id));
+        if (response == null)
+        {
+            return TypedResults.NotFound();
+        }
+        await mediator.Send(new SecretKeyDeleteCommand(id));
+        return TypedResults.Ok();
     }
 }

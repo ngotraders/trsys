@@ -14,6 +14,9 @@ using Trsys.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var dbContext = new TrsysContext(new DbContextOptionsBuilder<TrsysContext>().UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")).Options);
+await DatabaseInitializer.InitializeContextAsync(dbContext);
+
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
 builder.Services.AddTrsysIdentity();
 builder.Services.AddControllers(options =>

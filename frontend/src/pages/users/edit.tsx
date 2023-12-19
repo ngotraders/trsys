@@ -1,19 +1,24 @@
 import { Edit } from "@refinedev/mui";
 import { Box, TextField } from "@mui/material";
 import { useForm } from "@refinedev/react-hook-form";
-import { IResourceComponentsProps, useTranslate } from "@refinedev/core";
+import {
+  HttpError,
+  IResourceComponentsProps,
+  useTranslate,
+} from "@refinedev/core";
+import { IUser, Nullable } from "../../interfaces";
 
 export const UserEdit: React.FC<IResourceComponentsProps> = () => {
   const translate = useTranslate();
   const {
     saveButtonProps,
-    refineCore: { queryResult },
     register,
-    control,
     formState: { errors },
-  } = useForm();
-
-  const Data = queryResult?.data?.data;
+  } = useForm<
+    IUser & { newPassword: string },
+    HttpError,
+    Nullable<IUser & { newPassword: string }>
+  >();
 
   return (
     <Edit saveButtonProps={saveButtonProps}>
@@ -26,8 +31,8 @@ export const UserEdit: React.FC<IResourceComponentsProps> = () => {
           {...register("name", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.name}
-          helperText={(errors as any)?.name?.message}
+          error={!!errors?.name}
+          helperText={errors?.name?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}
@@ -39,8 +44,8 @@ export const UserEdit: React.FC<IResourceComponentsProps> = () => {
           {...register("username", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.username}
-          helperText={(errors as any)?.username?.message}
+          error={!!errors?.username}
+          helperText={errors?.username?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}
@@ -52,8 +57,8 @@ export const UserEdit: React.FC<IResourceComponentsProps> = () => {
           {...register("emailAddress", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.emailAddress}
-          helperText={(errors as any)?.emailAddress?.message}
+          error={!!errors?.emailAddress}
+          helperText={errors?.emailAddress?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}
@@ -63,8 +68,8 @@ export const UserEdit: React.FC<IResourceComponentsProps> = () => {
         />
         <TextField
           {...register("newPassword")}
-          error={!!(errors as any)?.newPassword}
-          helperText={(errors as any)?.newPassword?.message}
+          error={!!errors?.newPassword}
+          helperText={errors?.newPassword?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}
@@ -76,8 +81,8 @@ export const UserEdit: React.FC<IResourceComponentsProps> = () => {
           {...register("role", {
             required: "This field is required",
           })}
-          error={!!(errors as any)?.role}
-          helperText={(errors as any)?.role?.message}
+          error={!!errors?.role}
+          helperText={errors?.role?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}

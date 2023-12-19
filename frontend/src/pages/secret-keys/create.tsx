@@ -10,8 +10,13 @@ import {
   InputLabel,
 } from "@mui/material";
 import { useForm } from "@refinedev/react-hook-form";
-import { IResourceComponentsProps, useTranslate } from "@refinedev/core";
+import {
+  HttpError,
+  IResourceComponentsProps,
+  useTranslate,
+} from "@refinedev/core";
 import { Controller } from "react-hook-form";
+import { ISecretKey, Nullable } from "../../interfaces";
 
 export const SecretKeyCreate: React.FC<IResourceComponentsProps> = () => {
   const translate = useTranslate();
@@ -21,7 +26,7 @@ export const SecretKeyCreate: React.FC<IResourceComponentsProps> = () => {
     register,
     control,
     formState: { errors },
-  } = useForm();
+  } = useForm<ISecretKey, HttpError, Nullable<ISecretKey>>();
 
   return (
     <Create isLoading={formLoading} saveButtonProps={saveButtonProps}>
@@ -31,16 +36,19 @@ export const SecretKeyCreate: React.FC<IResourceComponentsProps> = () => {
         autoComplete="off"
       >
         <FormControl>
-          <InputLabel>{translate("secret-keys.fields.keyType")}</InputLabel>
+          <InputLabel id="keyType">
+            {translate("secret-keys.fields.keyType")}
+          </InputLabel>
           <Select
             {...register("keyType", {
               required: "This field is required",
               valueAsNumber: true,
             })}
-            error={!!(errors as any)?.keyType}
+            error={!!errors?.keyType}
             fullWidth
             type="number"
             name="keyType"
+            labelId="keyType"
           >
             <MenuItem value={1}>Publisher</MenuItem>
             <MenuItem value={2}>Subscriber</MenuItem>
@@ -49,14 +57,25 @@ export const SecretKeyCreate: React.FC<IResourceComponentsProps> = () => {
         </FormControl>
         <TextField
           {...register("key")}
-          error={!!(errors as any)?.key}
-          helperText={(errors as any)?.key?.message}
+          error={!!errors?.key}
+          helperText={errors?.key?.message}
           margin="normal"
           fullWidth
           InputLabelProps={{ shrink: true }}
           type="text"
           label={translate("secret-keys.fields.key")}
           name="key"
+        />
+        <TextField
+          {...register("description")}
+          error={!!errors?.description}
+          helperText={errors?.description?.message}
+          margin="normal"
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+          type="text"
+          label={translate("secret-keys.fields.description")}
+          name="description"
         />
         <Controller
           control={control}
@@ -69,7 +88,7 @@ export const SecretKeyCreate: React.FC<IResourceComponentsProps> = () => {
               control={
                 <Checkbox
                   {...field}
-                  checked={field.value}
+                  checked={!!field.value}
                   onChange={(event) => {
                     field.onChange(event.target.checked);
                   }}

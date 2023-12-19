@@ -7,12 +7,20 @@ import {
   List,
 } from "@refinedev/mui";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { IResourceComponentsProps, useTranslate } from "@refinedev/core";
+import {
+  IResourceComponentsProps,
+  useTranslate,
+  useUpdate,
+} from "@refinedev/core";
 import { Checkbox } from "@mui/material";
+import SyncIcon from "@mui/icons-material/Sync";
 
 export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
   const translate = useTranslate();
-  const { dataGridProps } = useDataGrid();
+  const { dataGridProps } = useDataGrid({
+    syncWithLocation: true,
+  });
+  const { mutate } = useUpdate();
 
   const columns = React.useMemo<GridColDef[]>(
     () => [
@@ -32,11 +40,28 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
         minWidth: 200,
       },
       {
+        field: "description",
+        flex: 1,
+        headerName: translate("secret-keys.fields.description"),
+        minWidth: 200,
+      },
+      {
         field: "isApproved",
         headerName: translate("secret-keys.fields.isApproved"),
         minWidth: 100,
-        renderCell: function render({ value }) {
-          return <Checkbox checked={!!value} />;
+        renderCell: function render({ value, row }) {
+          return (
+            <Checkbox
+              checked={!!value}
+              onClick={async () => {
+                await mutate({
+                  resource: "secret-keys",
+                  id: row.id,
+                  values: { ...row, isApproved: !value },
+                });
+              }}
+            />
+          );
         },
       },
       {
@@ -44,7 +69,10 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
         headerName: translate("secret-keys.fields.isConnected"),
         minWidth: 100,
         renderCell: function render({ value }) {
-          return <Checkbox checked={!!value} />;
+          if (value) {
+            return <SyncIcon color="success" />;
+          }
+          return <SyncIcon color="disabled" />;
         },
       },
       {
@@ -56,7 +84,11 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
             <>
               <EditButton hideText recordItemId={row.id} />
               <ShowButton hideText recordItemId={row.id} />
-              <DeleteButton hideText recordItemId={row.id} />
+              <DeleteButton
+                hideText
+                recordItemId={row.id}
+                disabled={row.isApproved}
+              />
             </>
           );
         },
@@ -65,7 +97,7 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
         minWidth: 80,
       },
     ],
-    [translate]
+    [mutate, translate]
   );
 
   return (

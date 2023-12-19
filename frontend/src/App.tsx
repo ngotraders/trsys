@@ -66,6 +66,7 @@ function App() {
                   default: dataProvider("https://api.fake-rest.refine.dev"),
                   trsys: dataProvider(
                     "/api/admin",
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     axiosInstance as unknown as any
                   ),
                 }}

@@ -31,7 +31,7 @@ namespace Trsys.Models.WriteModel.Handlers
         public async Task<Guid> Handle(SecretKeyCreateIfNotExistsCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
-            var key = request.Key ?? Guid.NewGuid().ToString();
+            var key = string.IsNullOrEmpty(request.Key) ? Guid.NewGuid().ToString() : request.Key;
             if (state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
                 await repository.Save(state, null, cancellationToken);
@@ -68,7 +68,7 @@ namespace Trsys.Models.WriteModel.Handlers
         public async Task<Guid> Handle(SecretKeyCreateCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
-            var key = request.Key ?? Guid.NewGuid().ToString();
+            var key = string.IsNullOrEmpty(request.Key) ? Guid.NewGuid().ToString() : request.Key;
             if (state.GenerateSecretKeyIdIfNotExists(key, out var secretKeyId))
             {
                 await repository.Save(state, null, cancellationToken);

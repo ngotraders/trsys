@@ -48,8 +48,8 @@
     "updatePassword": {
       "title": "パスワードを更新する",
       "fields": {
-        "password": "新しい Password",
-        "confirmPassword": "確認用 Password"
+        "password": "新しいパスワード",
+        "confirmPassword": "確認用パスワード"
       },
       "errors": {
         "confirmPasswordNotMatch": "パスワードが一致しません"
@@ -134,6 +134,7 @@
       "keyType": "種類",
       "key": "シークレットキー",
       "description": "説明",
+      "token": "トークン",
       "isConnected": "接続",
       "isApproved": "承認"
     },

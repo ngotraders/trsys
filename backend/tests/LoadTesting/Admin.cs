@@ -54,7 +54,7 @@ namespace LoadTesting
 
         public async Task ApproveSecretKeyAsync(string secretKeyId)
         {
-            await client.PutAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
+            await client.PatchAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
             {
                 KeyType = 3,
                 IsApproved = true,
@@ -63,7 +63,7 @@ namespace LoadTesting
 
         public async Task RevokeSecretKeyAsync(string secretKeyId)
         {
-            await client.PutAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
+            await client.PatchAsync($"/api/admin/secret-keys/{secretKeyId}", JsonContent.Create(new
             {
                 KeyType = 3,
                 IsApproved = false,
