@@ -103,7 +103,7 @@ namespace Trsys.Infrastructure
             services.AddSingleton<IUserDatabase, InMemoryUserDatabase>();
             services.AddSingleton<ISecretKeyDatabase, InMemorySecretKeyDatabase>();
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
-            services.AddSingleton<IOrderHistoryDatabase, InMemoryOrderHistoryDatabase>();
+            services.AddSingleton<ITradeHistoryDatabase, InMemoryTradeHistoryDatabase>();
             services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
 
             if (string.IsNullOrEmpty(sqlserverConnection))

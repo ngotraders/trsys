@@ -13,7 +13,7 @@ namespace Trsys.Models.ReadModel.Dtos
         public string Subject { get; }
         public string Body { get; }
 
-        public static NotificationMessageDto CreateCopyTradeOpenedMessage(OrderHistoryDto order)
+        public static NotificationMessageDto CreateTradeHistoryOpenedMessage(TradeHistoryDto order)
         {
             return new NotificationMessageDto("[copy-trading-system] Pub注文が作成されました", $@"
 コピー注文が作成されました。
@@ -26,7 +26,7 @@ namespace Trsys.Models.ReadModel.Dtos
 ");
         }
 
-        public static NotificationMessageDto CreateCopyTradeClosedMessage(OrderHistoryDto order)
+        public static NotificationMessageDto CreateTradeHistoryClosedMessage(TradeHistoryDto order)
         {
             return new NotificationMessageDto("[copy-trading-system] Pub注文が決済されました", $@"
 コピー注文が決済されました。

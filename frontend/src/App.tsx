@@ -14,6 +14,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import GlobalStyles from "@mui/material/GlobalStyles";
 import PeopleIcon from "@mui/icons-material/People";
 import KeyIcon from "@mui/icons-material/Key";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 import routerBindings, {
   CatchAllNavigate,
   DocumentTitleHandler,
@@ -33,6 +34,12 @@ import {
   SecretKeyList,
   SecretKeyShow,
 } from "./pages/secret-keys";
+import {
+  TradeHistoryCreate,
+  TradeHistoryEdit,
+  TradeHistoryList,
+  TradeHistoryShow,
+} from "./pages/trade-histories";
 import { ForgotPassword } from "./pages/forgotPassword";
 import { Login } from "./pages/login";
 import { Register } from "./pages/register";
@@ -103,6 +110,20 @@ function App() {
                       icon: <KeyIcon />,
                     },
                   },
+                  {
+                    name: "trade-histories",
+                    list: "/trade-histories",
+                    create: "/trade-histories/create",
+                    edit: "/trade-histories/edit/:id",
+                    show: "/trade-histories/show/:id",
+                    meta: {
+                      dataProviderName: "trsys",
+                      canDelete: true,
+                      title: "トレード",
+                      label: "トレード",
+                      icon: <ShowChartIcon />,
+                    },
+                  },
                 ]}
                 options={{
                   syncWithLocation: true,
@@ -131,7 +152,7 @@ function App() {
                   >
                     <Route
                       index
-                      element={<NavigateToResource resource="blog_posts" />}
+                      element={<NavigateToResource resource="users" />}
                     />
                     <Route path="/users">
                       <Route index element={<UserList />} />
@@ -144,6 +165,12 @@ function App() {
                       <Route path="create" element={<SecretKeyCreate />} />
                       <Route path="edit/:id" element={<SecretKeyEdit />} />
                       <Route path="show/:id" element={<SecretKeyShow />} />
+                    </Route>
+                    <Route path="/trade-histories">
+                      <Route index element={<TradeHistoryList />} />
+                      <Route path="create" element={<TradeHistoryCreate />} />
+                      <Route path="edit/:id" element={<TradeHistoryEdit />} />
+                      <Route path="show/:id" element={<TradeHistoryShow />} />
                     </Route>
                     <Route
                       path="/update-password"

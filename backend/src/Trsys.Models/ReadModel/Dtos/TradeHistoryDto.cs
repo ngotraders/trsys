@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Trsys.Models.ReadModel.Dtos
 {
-    public class OrderHistoryDto
+    public class TradeHistoryDto
     {
         public string Id { get; set; }
         public Guid PublisherId { get; set; }
@@ -18,10 +18,10 @@ namespace Trsys.Models.ReadModel.Dtos
         public DateTimeOffset OpenPublishedAt { get; set; }
         public DateTimeOffset? ClosePublishedAt { get; set; }
 
-        public List<SubscriberOrderHistoryDto> SubscriberOrderHistories { get; } = new();
+        public List<SubscriberTradeHistoryDto> SubscriberOrderHistories { get; } = new();
     }
 
-    public class SubscriberOrderHistoryDto
+    public class SubscriberTradeHistoryDto
     {
         public string SubscriberId { get; set; }
         public DateTimeOffset OpenDeliveredAt { get; set; }

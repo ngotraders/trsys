@@ -31,7 +31,7 @@ export const SecretKeyEdit: React.FC<IResourceComponentsProps> = () => {
   const Data = queryResult?.data?.data;
 
   return (
-    <Edit saveButtonProps={saveButtonProps}>
+    <Edit saveButtonProps={saveButtonProps} canDelete={!Data?.isApproved}>
       <Box
         component="form"
         sx={{ display: "flex", flexDirection: "column" }}

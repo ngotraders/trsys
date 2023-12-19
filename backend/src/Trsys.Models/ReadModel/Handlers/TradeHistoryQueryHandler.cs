@@ -1,6 +1,5 @@
 using MediatR;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -11,19 +10,20 @@ using Trsys.Models.ReadModel.Queries;
 
 namespace Trsys.Models.ReadModel.Handlers
 {
-    public class OrderHistoryQueryHandler :
+    public class TradeHistoryQueryHandler :
         INotificationHandler<OrderPublisherOpenedOrder>,
         INotificationHandler<OrderPublisherClosedOrder>,
         INotificationHandler<OrderSubscriberOpenedOrder>,
         INotificationHandler<OrderSubscriberClosedOrder>,
         INotificationHandler<LogNotification>,
-        IRequestHandler<GetOrderHistories, List<OrderHistoryDto>>
+        IRequestHandler<GetTradeHistory, TradeHistoryDto>,
+        IRequestHandler<SearchTradeHistories, SearchResponseDto<TradeHistoryDto>>
     {
-        private readonly IOrderHistoryDatabase db;
+        private readonly ITradeHistoryDatabase db;
         private readonly ISecretKeyDatabase secretKeyDatabase;
         private readonly IUserNotificationDispatcher notificationDispatcher;
 
-        public OrderHistoryQueryHandler(IOrderHistoryDatabase db, ISecretKeyDatabase secretKeyDatabase, IUserNotificationDispatcher notificationDispatcher)
+        public TradeHistoryQueryHandler(ITradeHistoryDatabase db, ISecretKeyDatabase secretKeyDatabase, IUserNotificationDispatcher notificationDispatcher)
         {
             this.db = db;
             this.secretKeyDatabase = secretKeyDatabase;
@@ -32,8 +32,8 @@ namespace Trsys.Models.ReadModel.Handlers
 
         public async Task Handle(OrderPublisherOpenedOrder notification, CancellationToken cancellationToken = default)
         {
-            var id = $"{notification.Id}:{notification.Order.TicketNo}";
-            var order = new OrderHistoryDto()
+            var id = $"{notification.Id}-{notification.Order.TicketNo}";
+            var order = new TradeHistoryDto()
             {
                 Id = id,
                 PublisherId = notification.Id,
@@ -49,20 +49,20 @@ namespace Trsys.Models.ReadModel.Handlers
             await db.AddAsync(order);
             if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
             {
-                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeOpenedMessage(order));
+                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateTradeHistoryOpenedMessage(order));
             }
         }
 
         public async Task Handle(OrderPublisherClosedOrder notification, CancellationToken cancellationToken = default)
         {
-            var order = await db.UpdateClosePublishedAtAsync($"{notification.Id}:{notification.TicketNo}", notification.TimeStamp);
+            var order = await db.UpdateClosePublishedAtAsync($"{notification.Id}-{notification.TicketNo}", notification.TimeStamp);
             if (order == null)
             {
                 return;
             }
             if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
             {
-                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeClosedMessage(order));
+                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateTradeHistoryClosedMessage(order));
             }
         }
 
@@ -73,7 +73,7 @@ namespace Trsys.Models.ReadModel.Handlers
             {
                 return;
             }
-            await db.AddSubscriberOrderHistoryAsync(order.Id, notification.Id.ToString(), notification.TimeStamp);
+            await db.AddSubscriberTradeHistoryAsync(order.Id, notification.Id.ToString(), notification.TimeStamp);
         }
 
         public async Task Handle(OrderSubscriberClosedOrder notification, CancellationToken cancellationToken)
@@ -83,7 +83,7 @@ namespace Trsys.Models.ReadModel.Handlers
             {
                 return;
             }
-            await db.UpdateSubscriberOrderHistoryClosedDeliveredAtAsync(order.Id, notification.Id.ToString(), notification.TimeStamp);
+            await db.UpdateSubscriberTradeHistoryClosedDeliveredAtAsync(order.Id, notification.Id.ToString(), notification.TimeStamp);
         }
 
         public async Task Handle(LogNotification notification, CancellationToken cancellationToken)
@@ -153,9 +153,22 @@ namespace Trsys.Models.ReadModel.Handlers
             }
         }
 
-        public Task<List<OrderHistoryDto>> Handle(GetOrderHistories request, CancellationToken cancellationToken = default)
+        public Task<TradeHistoryDto> Handle(GetTradeHistory request, CancellationToken cancellationToken)
         {
-            return db.SearchAsync();
+            return db.FindByIdAsync(request.Id);
+        }
+
+        public async Task<SearchResponseDto<TradeHistoryDto>> Handle(SearchTradeHistories request, CancellationToken cancellationToken = default)
+        {
+            var count = await db.CountAsync();
+            if (request.Start.HasValue && request.End.HasValue)
+            {
+                return new SearchResponseDto<TradeHistoryDto>(count, await db.SearchAsync(request.Start ?? 0, request.End ?? int.MaxValue, request.Sort, request.Order));
+            }
+            else
+            {
+                return new SearchResponseDto<TradeHistoryDto>(count, await db.SearchAsync());
+            }
         }
     }
 }

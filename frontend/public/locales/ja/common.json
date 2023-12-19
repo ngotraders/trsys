@@ -129,7 +129,7 @@
     }
   },
   "secret-keys": {
-    "users": "シークレットキー",
+    "secret-key": "シークレットキー",
     "fields": {
       "keyType": "種類",
       "key": "シークレットキー",
@@ -148,6 +148,30 @@
       "1": "Publisher",
       "2": "Subscriber",
       "3": "Publisher & Subscriber"
+    }
+  },
+  "trade-histories": {
+    "trade-histories": "トレード履歴",
+    "fields": {
+      "id": "Id",
+      "ticketNo": "チケットNo",
+      "symbol": "銘柄",
+      "orderType": "注文種別",
+      "priceOpened": "注文時価格",
+      "timeOpened": "注文時刻",
+      "priceClosed": "決済時価格",
+      "timeClosed": "決済時刻",
+      "percentage": "注文量(%)",
+      "lots": "数量",
+      "openPublishedAt": "注文配信時刻",
+      "closePublishedAt": "決済配信時刻",
+      "profit": "損益"
+    },
+    "titles": {
+      "create": "トレードの作成",
+      "edit": "トレードの編集",
+      "list": "トレード一覧",
+      "show": "トレード詳細"
     }
   },
   "documentTitle": {
