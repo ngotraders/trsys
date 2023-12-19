@@ -21,9 +21,13 @@ namespace Trsys.Web.Controllers.Admin;
 public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> userManager) : ControllerBase
 {
     [HttpGet]
-    public async Task<Ok<List<UserDto>>> Index(int? _start, int? _end)
+    public async Task<Ok<List<UserDto>>> Index(
+        [FromQuery] int? _start,
+        [FromQuery] int? _end,
+        [FromQuery] string[]? _sort,
+        [FromQuery] string[]? _order)
     {
-        var response = await mediator.Send(new GetUsers(_start, _end));
+        var response = await mediator.Send(new SearchUsers(_start, _end, _sort, _order));
         Response.Headers["X-Total-Count"] = response.TotalCount.ToString();
         return TypedResults.Ok(response.Items);
     }

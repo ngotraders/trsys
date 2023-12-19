@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Trsys.Models.ReadModel.Dtos;
 using Trsys.Models.ReadModel.Infrastructure;
@@ -85,7 +86,7 @@ namespace Trsys.Infrastructure.ReadModel.Database
             return db.Users.ToListAsync();
         }
 
-        public Task<List<UserDto>> SearchAsync(int start, int end)
+        public Task<List<UserDto>> SearchAsync(int start, int end, string[] sort, string[] order)
         {
             if (start < 0)
             {
@@ -95,7 +96,37 @@ namespace Trsys.Infrastructure.ReadModel.Database
             {
                 throw new ArgumentOutOfRangeException(nameof(end));
             }
-            return db.Users.Skip(start).Take(end - start).ToListAsync();
+            var query = db.Users.AsQueryable();
+            if (sort != null && order != null)
+            {
+                for (var i = 0; i < sort.Length; i++)
+                {
+                    var sortField = sort[i];
+                    var orderField = order[i];
+                    if (orderField == "asc")
+                    {
+                        query = query.OrderBy(GetItemField(sortField));
+                    }
+                    else if (orderField == "desc")
+                    {
+                        query = query.OrderByDescending(GetItemField(sortField));
+                    }
+                }
+            }
+            return query.Skip(start).Take(end - start).ToListAsync();
+        }
+
+        private static Expression<Func<UserDto, object>> GetItemField(string sortField)
+        {
+            return sortField switch
+            {
+                "id" => item => item.Id,
+                "name" => item => item.Name,
+                "username" => item => item.Username,
+                "emailAddress" => item => item.EmailAddress,
+                "role" => item => item.Role,
+                _ => throw new InvalidOperationException($"sort field {sortField} not found."),
+            };
         }
 
         public Task<UserDto> FindByIdAsync(Guid id)

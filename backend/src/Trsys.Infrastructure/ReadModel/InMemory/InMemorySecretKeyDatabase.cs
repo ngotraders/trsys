@@ -140,7 +140,7 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
-        public Task<List<SecretKeyDto>> SearchAsync(int start, int end)
+        public Task<List<SecretKeyDto>> SearchAsync(int start, int end, string[] sort, string[] order)
         {
             if (start < 0)
             {
@@ -152,8 +152,40 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             }
             return queue.Enqueue(() =>
             {
-                return List.Skip(start).Take(end - start).ToList();
+                var query = List as IEnumerable<SecretKeyDto>;
+                if (sort != null && order != null)
+                {
+                    for (var i = 0; i < sort.Length; i++)
+                    {
+                        var sortKey = sort[i];
+                        var orderKey = order[i];
+                        if (orderKey == "asc")
+                        {
+                            query = query.OrderBy(item => GetItemValue(item, sortKey));
+                        }
+                        else if (orderKey == "desc")
+                        {
+                            query = query.OrderByDescending(item => GetItemValue(item, sortKey));
+                        }
+                    }
+                }
+                return query.Skip(start).Take(end - start).ToList();
             });
+        }
+
+        private static object GetItemValue(SecretKeyDto item, string sortKey)
+        {
+            return sortKey switch
+            {
+                "id" => item.Id,
+                "key" => item.Key,
+                "keyType" => item.KeyType,
+                "description" => item.Description,
+                "isApproved" => item.IsApproved,
+                "token" => item.Token,
+                "isConnected" => item.IsConnected,
+                _ => throw new ArgumentOutOfRangeException(nameof(sortKey)),
+            };
         }
 
         public Task<SecretKeyDto> FindByIdAsync(Guid id)

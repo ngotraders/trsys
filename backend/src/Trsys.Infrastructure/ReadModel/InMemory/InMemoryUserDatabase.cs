@@ -100,7 +100,7 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
-        public Task<List<UserDto>> SearchAsync(int start, int end)
+        public Task<List<UserDto>> SearchAsync(int start, int end, string[] sort, string[] order)
         {
             if (start < 0)
             {
@@ -112,8 +112,38 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             }
             return queue.Enqueue(() =>
             {
-                return List.Skip(start).Take(end - start).ToList();
+                var query = List as IEnumerable<UserDto>;
+                if (sort != null && order != null)
+                {
+                    for (var i = 0; i < sort.Length; i++)
+                    {
+                        var sortKey = sort[i];
+                        var orderKey = order[i];
+                        if (orderKey == "asc")
+                        {
+                            query = query.OrderBy(item => GetItemValue(item, sortKey));
+                        }
+                        else if (orderKey == "desc")
+                        {
+                            query = query.OrderByDescending(item => GetItemValue(item, sortKey));
+                        }
+                    }
+                }
+                return query.Skip(start).Take(end - start).ToList();
             });
+        }
+
+        private static object GetItemValue(UserDto item, string sortKey)
+        {
+            return sortKey switch
+            {
+                "id" => item.Id,
+                "name" => item.Name,
+                "username" => item.Username,
+                "emailAddress" => item.EmailAddress,
+                "role" => item.Role,
+                _ => throw new InvalidOperationException($"Unknown sort key {sortKey}."),
+            };
         }
 
         public Task<UserDto> FindByIdAsync(Guid id)

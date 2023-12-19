@@ -20,7 +20,7 @@ namespace Trsys.Models.ReadModel.Handlers
         INotificationHandler<SecretKeyEaConnected>,
         INotificationHandler<SecretKeyEaDisconnected>,
         INotificationHandler<SecretKeyDeleted>,
-        IRequestHandler<GetSecretKeys, SearchResponseDto<SecretKeyDto>>,
+        IRequestHandler<SearchSecretKeys, SearchResponseDto<SecretKeyDto>>,
         IRequestHandler<GetSecretKey, SecretKeyDto>,
         IRequestHandler<FindBySecretKey, SecretKeyDto>,
         IRequestHandler<FindByCurrentToken, SecretKeyDto>
@@ -86,12 +86,12 @@ namespace Trsys.Models.ReadModel.Handlers
             return db.RemoveAsync(notification.Id);
         }
 
-        public async Task<SearchResponseDto<SecretKeyDto>> Handle(GetSecretKeys message, CancellationToken token = default)
+        public async Task<SearchResponseDto<SecretKeyDto>> Handle(SearchSecretKeys message, CancellationToken token = default)
         {
             var count = await db.CountAsync();
             if (message.Start.HasValue && message.End.HasValue)
             {
-                return new SearchResponseDto<SecretKeyDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue));
+                return new SearchResponseDto<SecretKeyDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue, message.Sort, message.Order));
             }
             else
             {

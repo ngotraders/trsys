@@ -14,7 +14,7 @@ namespace Trsys.Models.ReadModel.Infrastructure
         Task RemoveAsync(Guid id);
         Task<int> CountAsync();
         Task<List<UserDto>> SearchAsync();
-        Task<List<UserDto>> SearchAsync(int start, int end);
+        Task<List<UserDto>> SearchAsync(int start, int end, string[] sort, string[] order);
         Task<UserDto> FindByIdAsync(Guid id);
         Task<UserDto> FindByNormalizedUsernameAsync(string username);
         Task<UserPasswordHashDto> GetUserPasswordHash(Guid id);

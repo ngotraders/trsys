@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Trsys.Models;
 using Trsys.Models.ReadModel.Dtos;
@@ -96,7 +97,7 @@ namespace Trsys.Infrastructure.ReadModel.Database
             return db.SecretKeys.ToListAsync();
         }
 
-        public Task<List<SecretKeyDto>> SearchAsync(int start, int end)
+        public Task<List<SecretKeyDto>> SearchAsync(int start, int end, string[] sort, string[] order)
         {
             if (start < 0)
             {
@@ -106,7 +107,39 @@ namespace Trsys.Infrastructure.ReadModel.Database
             {
                 throw new ArgumentOutOfRangeException(nameof(end));
             }
-            return db.SecretKeys.Skip(start).Take(end - start).ToListAsync();
+            var query = db.SecretKeys.AsQueryable();
+            if (sort != null && order != null)
+            {
+                for (var i = 0; i < sort.Length; i++)
+                {
+                    var sortField = sort[i];
+                    var orderField = order[i];
+                    if (orderField == "asc")
+                    {
+                        query = query.OrderBy(GetItemField(sortField));
+                    }
+                    else if (orderField == "desc")
+                    {
+                        query = query.OrderByDescending(GetItemField(sortField));
+                    }
+                }
+            }
+            return query.Skip(start).Take(end - start).ToListAsync();
+        }
+
+        private static Expression<Func<SecretKeyDto, object>> GetItemField(string sortField)
+        {
+            return sortField switch
+            {
+                "id" => item => item.Id,
+                "key" => item => item.Key,
+                "keyType" => item => item.KeyType,
+                "description" => item => item.Description,
+                "isApproved" => item => item.IsApproved,
+                "token" => item => item.Token,
+                "isConnected" => item => item.IsConnected,
+                _ => throw new InvalidOperationException($"sort field {sortField} not found."),
+            };
         }
 
         public Task<SecretKeyDto> FindByIdAsync(Guid id)

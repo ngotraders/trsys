@@ -66,6 +66,26 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
+        public async Task Index_search_secret_keys_with_sort()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetService<IMediator>();
+            await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, "key2", null));
+            await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "key1", null));
+            await client.LoginAsync();
+
+            var res = await client.GetAsync("/api/admin/secret-keys?_start=0&_end=1&_order=asc&_sort=keyType");
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            Assert.AreEqual(2, int.Parse(res.Headers.GetValues("X-Total-Count").First()));
+            var retObj = await res.Content.ReadAsStringAsync();
+            Assert.IsTrue(retObj.Contains("key1"));
+            Assert.IsFalse(retObj.Contains("key2"));
+        }
+
+        [TestMethod]
         public async Task GetKey_should_return_ok_if_specified_secret_key_exists()
         {
             using var host = await TestHelper.CreateTestServerAsync();

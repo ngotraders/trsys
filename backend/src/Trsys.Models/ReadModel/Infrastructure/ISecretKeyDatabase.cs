@@ -16,7 +16,7 @@ namespace Trsys.Models.ReadModel.Infrastructure
         Task RemoveAsync(Guid id);
         Task<int> CountAsync();
         Task<List<SecretKeyDto>> SearchAsync();
-        Task<List<SecretKeyDto>> SearchAsync(int start, int end);
+        Task<List<SecretKeyDto>> SearchAsync(int start, int end, string[] sort, string[] order);
         Task<SecretKeyDto> FindByIdAsync(Guid id);
         Task<SecretKeyDto> FindByKeyAsync(string key);
         Task<SecretKeyDto> FindByTokenAsync(string token);

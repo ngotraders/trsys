@@ -14,7 +14,7 @@ namespace Trsys.Models.ReadModel.Handlers
         INotificationHandler<UserDeleted>,
         INotificationHandler<UserUserInfoUpdated>,
         INotificationHandler<UserPasswordHashChanged>,
-        IRequestHandler<GetUsers, SearchResponseDto<UserDto>>,
+        IRequestHandler<SearchUsers, SearchResponseDto<UserDto>>,
         IRequestHandler<GetUser, UserDto>,
         IRequestHandler<GetUserPasswordHash, UserPasswordHashDto>,
         IRequestHandler<FindByNormalizedUsername, UserDto>
@@ -55,12 +55,12 @@ namespace Trsys.Models.ReadModel.Handlers
             return db.UpdateUserInfoAsync(notification.Id, notification.Name, notification.EmailAddress);
         }
 
-        public async Task<SearchResponseDto<UserDto>> Handle(GetUsers message, CancellationToken token = default)
+        public async Task<SearchResponseDto<UserDto>> Handle(SearchUsers message, CancellationToken token = default)
         {
             var count = await db.CountAsync();
             if (message.Start.HasValue && message.End.HasValue)
             {
-                return new SearchResponseDto<UserDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue));
+                return new SearchResponseDto<UserDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue, message.Sort, message.Order));
             }
             else
             {
