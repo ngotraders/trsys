@@ -154,6 +154,7 @@
     "trade-histories": "トレード履歴",
     "fields": {
       "id": "Id",
+      "publisherId": "PublisherId",
       "ticketNo": "チケットNo",
       "symbol": "銘柄",
       "orderType": "注文種別",
@@ -172,6 +173,10 @@
       "edit": "トレードの編集",
       "list": "トレード一覧",
       "show": "トレード詳細"
+    },
+    "orderTypes": {
+      "0": "ロング",
+      "1": "ショート"
     }
   },
   "documentTitle": {
