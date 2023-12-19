@@ -9,11 +9,14 @@ namespace Trsys.Models.WriteModel.Domain
     {
         public static readonly Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
 
-        private readonly Dictionary<string, Guid> _secretKeys = [];
-        private readonly Dictionary<string, Guid> _userNames = [];
+        private readonly Dictionary<string, Guid?> _secretKeys = [];
+        private readonly Dictionary<string, Guid?> _userNames = [];
         public void Apply(WorldStateSecretKeyIdGenerated e) => _secretKeys.Add(e.Key, e.SecretKeyId);
         public void Apply(WorldStateSecretKeyDeleted e) => _secretKeys.Remove(e.Key);
-        public void Apply(WorldStateUserIdGenerated e) => _userNames.Add(e.Username, e.UserId);
+        public void Apply(WorldStateUserIdGenerated e)
+        {
+            _userNames.Add(e.Username, e.UserId);
+        }
         public void Apply(WorldStateUserChanged e)
         {
             _userNames.Remove(e.OldUsername);
@@ -33,8 +36,9 @@ namespace Trsys.Models.WriteModel.Domain
 
         public bool GenerateSecretKeyIdIfNotExists(string key, out Guid id)
         {
-            if (_secretKeys.TryGetValue(key, out id))
+            if (_secretKeys.TryGetValue(key, out var secretKeyId))
             {
+                id = secretKeyId.Value;
                 return false;
             }
             id = Guid.NewGuid();
@@ -55,8 +59,9 @@ namespace Trsys.Models.WriteModel.Domain
 
         public bool GenerateUserIdIfNotExists(string username, out Guid id)
         {
-            if (_userNames.TryGetValue(username, out id))
+            if (_userNames.TryGetValue(username, out var userId))
             {
+                id = userId.Value;
                 return false;
             }
             id = Guid.NewGuid();

@@ -11,6 +11,7 @@ namespace Trsys.Models.ReadModel.Handlers
     public class UserQueryHandler :
         INotificationHandler<UserCreated>,
         INotificationHandler<UserUpdated>,
+        INotificationHandler<UserDeleted>,
         INotificationHandler<UserUserInfoUpdated>,
         INotificationHandler<UserPasswordHashChanged>,
         IRequestHandler<GetUsers, SearchResponseDto<UserDto>>,
@@ -38,6 +39,10 @@ namespace Trsys.Models.ReadModel.Handlers
         public Task Handle(UserUpdated notification, CancellationToken cancellationToken = default)
         {
             return db.UpdateAsync(notification.Id, notification.Name, notification.Username, notification.EmailAddress, notification.Role);
+        }
+        public Task Handle(UserDeleted notification, CancellationToken cancellationToken = default)
+        {
+            return db.RemoveAsync(notification.Id);
         }
 
         public Task Handle(UserPasswordHashChanged notification, CancellationToken cancellationToken = default)

@@ -27,9 +27,18 @@ internal class TrsysUserStore(IMediator mediator, ILogger<TrsysUserStore> logger
         }
     }
 
-    public Task<IdentityResult> DeleteAsync(TrsysUser user, CancellationToken cancellationToken)
+    public async Task<IdentityResult> DeleteAsync(TrsysUser user, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        try
+        {
+            await mediator.Send(new UserDeleteCommand(user.Id), cancellationToken);
+            return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Failed to delete user");
+            return IdentityResult.Failed();
+        }
     }
 
     public void Dispose()

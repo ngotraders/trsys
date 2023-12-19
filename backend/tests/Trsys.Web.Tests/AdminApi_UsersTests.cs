@@ -24,8 +24,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
-            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
-            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "email2@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("User Name 2", "user2", "email2@example.com", "PasswordHash", "Role"));
             await client.LoginAsync();
 
             var res = await client.GetAsync("/api/admin/users");
@@ -44,8 +44,8 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
-            await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
-            await mediator.Send(new UserCreateCommand("user2", "User Name 2", "email2@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("User Name 2", "user2", "email2@example.com", "PasswordHash", "Role"));
             await client.LoginAsync();
 
             // Admin ユーザーが存在するので、1ページ目は2件
@@ -74,7 +74,7 @@ namespace Trsys.Web.Tests
             var client = server.CreateClient();
 
             var mediator = server.Services.GetService<IMediator>();
-            var id = await mediator.Send(new UserCreateCommand("user1", "User Name 1", "email1@example.com", "PasswordHash", "Role"));
+            var id = await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
             await client.LoginAsync();
 
             // Admin ユーザーが存在するので、1ページ目は2件
@@ -117,6 +117,82 @@ namespace Trsys.Web.Tests
             Assert.AreEqual("User Name 1", obj.Property("name").Value.ToObject<string>());
             Assert.AreEqual("user1@example.com", obj.Property("emailAddress").Value.ToObject<string>());
             Assert.AreEqual("Administrator", obj.Property("role").Value.ToObject<string>());
+        }
+
+        [TestMethod]
+        public async Task PatchUser_should_return_ok_if_valid_request()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetService<IMediator>();
+            var id = await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
+            await client.LoginAsync();
+
+            var res = await client.PatchAsync($"/api/admin/users/{id}", JsonContent.Create(new
+            {
+                Name = "User Name 1 Updated",
+                Username = "user1updated",
+                EmailAddress = "user1updated@example.com",
+                Role = "User",
+                NewPassword = "P@ssw0rd",
+            }));
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            var obj = JsonConvert.DeserializeObject<JObject>(await res.Content.ReadAsStringAsync());
+            Assert.AreEqual("User Name 1 Updated", obj.Property("name").Value.ToObject<string>());
+            Assert.AreEqual("user1updated", obj.Property("username").Value.ToObject<string>());
+            Assert.AreEqual("user1updated@example.com", obj.Property("emailAddress").Value.ToObject<string>());
+            Assert.AreEqual("User", obj.Property("role").Value.ToObject<string>());
+        }
+
+        [TestMethod]
+        public async Task PatchUser_should_return_bad_request_if_user_name_has_been_taken()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetService<IMediator>();
+            var id = await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
+            await mediator.Send(new UserCreateCommand("User Name 2", "user2", "email2@example.com", "PasswordHash", "Role"));
+            await client.LoginAsync();
+
+            var res = await client.PatchAsync($"/api/admin/users/{id}", JsonContent.Create(new
+            {
+                Name = "User Name 1 Updated",
+                Username = "user2",
+                EmailAddress = "user1updated@example.com",
+                Role = "User",
+            }));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+        }
+
+        [TestMethod]
+        public async Task DeleteUser_should_return_ok()
+        {
+            using var host = await TestHelper.CreateTestServerAsync();
+            var server = host.GetTestServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetService<IMediator>();
+            var id = await mediator.Send(new UserCreateCommand("User Name 1", "user1", "email1@example.com", "PasswordHash", "Role"));
+            await client.LoginAsync();
+
+            var res = await client.DeleteAsync($"/api/admin/users/{id}");
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+
+            // Data should be deleted
+            res = await client.GetAsync($"/api/admin/users/{id}");
+            Assert.AreEqual(HttpStatusCode.NotFound, res.StatusCode);
+            res = await client.PatchAsync($"/api/admin/users/{id}", JsonContent.Create(new
+            {
+                Name = "User Name 1 Updated",
+                Username = "user1updated",
+                EmailAddress = "user1updated@example.com",
+                Role = "User",
+            }));
+            Assert.AreEqual(HttpStatusCode.NotFound, res.StatusCode);
         }
     }
 }

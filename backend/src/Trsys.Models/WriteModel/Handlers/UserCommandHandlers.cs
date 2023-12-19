@@ -13,6 +13,7 @@ namespace Trsys.Models.WriteModel.Handlers
         IRequestHandler<UserCreateIfNotExistsCommand, Guid>,
         IRequestHandler<UserCreateCommand, Guid>,
         IRequestHandler<UserUpdateCommand>,
+        IRequestHandler<UserDeleteCommand>,
         IRequestHandler<UserUpdateUserInfoCommand>,
         IRequestHandler<UserChangePasswordHashCommand>
     {
@@ -41,7 +42,7 @@ namespace Trsys.Models.WriteModel.Handlers
         public async Task<Guid> Handle(UserCreateCommand request, CancellationToken cancellationToken = default)
         {
             var state = await repository.GetWorldState();
-            if (!state.GenerateSecretKeyIdIfNotExists(request.Username, out var userId))
+            if (!state.GenerateUserIdIfNotExists(request.Username, out var userId))
             {
                 throw new InvalidOperationException("user name already exists.");
             }
@@ -51,7 +52,6 @@ namespace Trsys.Models.WriteModel.Handlers
             await repository.Save(state, null, cancellationToken);
             return userId;
         }
-
 
         public async Task Handle(UserUpdateCommand request, CancellationToken cancellationToken = default)
         {
@@ -64,6 +64,17 @@ namespace Trsys.Models.WriteModel.Handlers
             item.Update(request.Name, request.Username, request.EmailAddress, request.Role);
             item.ChangePasswordHash(request.PasswordHash);
             await repository.Save(item, item.Version, cancellationToken);
+            await repository.Save(state, null, cancellationToken);
+        }
+
+        public async Task Handle(UserDeleteCommand request, CancellationToken cancellationToken = default)
+        {
+            var item = await repository.Get<UserAggregate>(request.Id, cancellationToken);
+            var state = await repository.GetWorldState();
+            state.DeleteUser(item.Username, item.Id);
+            item.Delete();
+            await repository.Save(item, item.Version, cancellationToken);
+            await repository.Save(state, null, cancellationToken);
         }
 
 

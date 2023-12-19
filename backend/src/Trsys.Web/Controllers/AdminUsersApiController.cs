@@ -66,16 +66,42 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
         {
             return TypedResults.NotFound();
         }
-        identity.UserName = request.Username;
-        identity.Email = request.EmailAddress;
-        identity.Name = request.Name;
-        identity.Role = request.Role;
-        identity.PasswordHash = userManager.PasswordHasher.HashPassword(identity, request.NewPassword!);
-        var result = await userManager.UpdateAsync(identity!);
+        try
+        {
+            identity.UserName = request.Username;
+            identity.Email = request.EmailAddress;
+            identity.Name = request.Name;
+            identity.Role = request.Role;
+            if (!string.IsNullOrEmpty(request.NewPassword))
+            {
+                identity.PasswordHash = userManager.PasswordHasher.HashPassword(identity, request.NewPassword!);
+            }
+            var result = await userManager.UpdateAsync(identity!);
+            if (!result.Succeeded)
+            {
+                return TypedResults.BadRequest(result.Errors.First().Description);
+            }
+            return TypedResults.Ok(await mediator.Send(new GetUser(id)));
+        }
+        catch (InvalidOperationException e)
+        {
+            return TypedResults.BadRequest(e.Message);
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<Results<Ok, NotFound, BadRequest<string>>> Delete(Guid id)
+    {
+        var identity = await userManager.FindByIdAsync(id.ToString());
+        if (identity == null)
+        {
+            return TypedResults.NotFound();
+        }
+        var result = await userManager.DeleteAsync(identity);
         if (!result.Succeeded)
         {
             return TypedResults.BadRequest(result.Errors.First().Description);
         }
-        return TypedResults.Ok(await mediator.Send(new GetUser(id)));
+        return TypedResults.Ok();
     }
 }
