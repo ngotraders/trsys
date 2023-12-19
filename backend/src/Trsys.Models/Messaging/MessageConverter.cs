@@ -13,8 +13,8 @@ namespace Trsys.Models.Messaging
     public static class MessageConverter
     {
 
-        private static Type[] types = new[]
-        {
+        private static readonly Type[] types =
+        [
             typeof(LogNotification),
             typeof(OrderPublisherClosedOrder),
             typeof(OrderPublisherOpenedOrder),
@@ -34,15 +34,17 @@ namespace Trsys.Models.Messaging
             typeof(SecretKeyTokenInvalidated),
             typeof(SecretKeyConnected),
             typeof(UserCreated),
+            typeof(UserUpdated),
             typeof(UserUserInfoUpdated),
             typeof(UserPasswordHashChanged),
             typeof(WorldStateCreated),
             typeof(WorldStateSecretKeyDeleted),
             typeof(WorldStateSecretKeyIdGenerated),
-            typeof(WorldStateUserDeleted),
             typeof(WorldStateUserIdGenerated),
-        };
-        private static Func<object, Type>[] objToTypes = types.Select(e =>
+            typeof(WorldStateUserChanged),
+            typeof(WorldStateUserDeleted),
+        ];
+        private static readonly Func<object, Type>[] objToTypes = types.Select(e =>
         {
             var p = Expression.Parameter(typeof(object));
             var rt = Expression.Label(typeof(Type));
@@ -57,8 +59,8 @@ namespace Trsys.Models.Messaging
                 rl),
                 p).Compile() as Func<object, Type>;
         }).ToArray();
-        private static Func<object, Type> objToType = o => objToTypes.Select(ott => ott(o)).First(t => t != null);
-        private static Func<string, Type> strToType = str => types.First(t => t.FullName == str);
+        private static readonly Func<object, Type> objToType = o => objToTypes.Select(ott => ott(o)).First(t => t != null);
+        private static readonly Func<string, Type> strToType = str => types.First(t => t.FullName == str);
         public static IEvent ConvertToEvent(PublishingMessage message)
         {
             return (IEvent)JsonConvert.DeserializeObject(message.Data, strToType(message.Type));

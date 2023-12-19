@@ -24,6 +24,20 @@ namespace Trsys.Infrastructure.ReadModel.Database
             return db.SaveChangesAsync();
         }
 
+        public async Task UpdateAsync(Guid id, string name, string username, string emailAddress, string role)
+        {
+            var user = await db.Users.FindAsync(id);
+            if (user == null)
+            {
+                throw new InvalidOperationException($"user {id} not found.");
+            }
+            user.Name = name;
+            user.Username = username;
+            user.EmailAddress = emailAddress;
+            user.Role = role;
+            await db.SaveChangesAsync();
+        }
+
         public async Task UpdateUserInfoAsync(Guid id, string name, string emailAddress)
         {
             var user = await db.Users.FindAsync(id);

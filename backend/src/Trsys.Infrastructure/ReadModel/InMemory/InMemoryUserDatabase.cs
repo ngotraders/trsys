@@ -33,6 +33,23 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             });
         }
 
+        public Task UpdateAsync(Guid id, string name, string username, string emailAddress, string role)
+        {
+            return queue.Enqueue(() =>
+            {
+                var item = ById[id];
+                ByNormalizedUsername.Remove(item.Username.ToUpperInvariant());
+                ByNormalizedEmailAddress.Remove(item.EmailAddress.ToUpperInvariant());
+                item.Name = name;
+                item.Username = username;
+                item.EmailAddress = emailAddress;
+                item.Role = role;
+                ById[id] = item;
+                ByNormalizedUsername.Add(item.Username.ToUpperInvariant(), item);
+                ByNormalizedEmailAddress.Add(item.EmailAddress.ToUpperInvariant(), item);
+            });
+        }
+
         public Task UpdateUserInfoAsync(Guid id, string name, string emailAddress)
         {
             return queue.Enqueue(() =>

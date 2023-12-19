@@ -109,50 +109,44 @@
     "title": "Dashboard"
   },
   "users": {
-    "users": "Users",
+    "users": "ユーザー",
     "fields": {
       "id": "Id",
-      "name": "Name",
-      "username": "Username",
-      "role": "Role",
-      "emailAddress": "Email Address"
+      "name": "名前",
+      "username": "ユーザー名",
+      "emailAddress": "メールアドレス",
+      "password": "パスワード",
+      "passwordConfirm": "パスワード（確認）",
+      "newPassword": "新しいパスワード",
+      "newPasswordConfirm": "新しいパスワード（確認）",
+      "role": "ロール"
     },
     "titles": {
-      "create": "Create User",
-      "edit": "Edit User",
-      "list": "Users",
-      "show": "Show User"
+      "create": "ユーザーの作成",
+      "edit": "ユーザーの編集",
+      "list": "ユーザー一覧",
+      "show": "ユーザー詳細"
     }
   },
-  "blog_posts": {
-    "blog_posts": "Blog Posts",
+  "secret-keys": {
+    "users": "シークレットキー",
     "fields": {
-      "id": "Id",
-      "title": "Title",
-      "content": "Content",
-      "status": "Status",
-      "createdAt": "Created At",
-      "category": "Category"
+      "keyType": "種類",
+      "key": "シークレットキー",
+      "description": "説明",
+      "isConnected": "接続",
+      "isApproved": "承認"
     },
     "titles": {
-      "create": "Create Blog Post",
-      "edit": "Edit Blog Post",
-      "list": "Blog Posts",
-      "show": "Show Blog Post"
-    }
-  },
-  "categories": {
-    "categories": "Categories",
-    "fields": {
-      "id": "Id",
-      "title": "Title",
-      "createdAt": "Created At"
+      "create": "シークレットキーの作成",
+      "edit": "シークレットキーの編集",
+      "list": "シークレットキー一覧",
+      "show": "シークレットキー詳細"
     },
-    "titles": {
-      "create": "Create Category",
-      "edit": "Edit Category",
-      "list": "Categories",
-      "show": "Show Category"
+    "keyTypes": {
+      "1": "Publisher",
+      "2": "Subscriber",
+      "3": "Publisher & Subscriber"
     }
   },
   "documentTitle": {

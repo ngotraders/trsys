@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -177,8 +178,14 @@ internal class TrsysUserStore(IMediator mediator, ILogger<TrsysUserStore> logger
         return Task.CompletedTask;
     }
 
-    public Task<IdentityResult> UpdateAsync(TrsysUser user, CancellationToken cancellationToken)
+    public async Task<IdentityResult> UpdateAsync(TrsysUser user, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var userDto = await mediator.Send(new GetUser(user.Id), cancellationToken);
+        if (userDto == null)
+        {
+            return IdentityResult.Failed();
+        }
+        await mediator.Send(new UserUpdateCommand(user.Id, user.Name, user.UserName, user.Email, user.PasswordHash, user.Role), cancellationToken);
+        return IdentityResult.Success;
     }
 }

@@ -57,4 +57,25 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
         }
         return TypedResults.Ok(response);
     }
+
+    [HttpPatch("{id}")]
+    public async Task<Results<Ok<UserDto>, NotFound, ValidationProblem, BadRequest<string>>> Put(Guid id, [FromBody] UpdateUserRequest request)
+    {
+        var identity = await userManager.FindByIdAsync(id.ToString());
+        if (identity == null)
+        {
+            return TypedResults.NotFound();
+        }
+        identity.UserName = request.Username;
+        identity.Email = request.EmailAddress;
+        identity.Name = request.Name;
+        identity.Role = request.Role;
+        identity.PasswordHash = userManager.PasswordHasher.HashPassword(identity, request.NewPassword!);
+        var result = await userManager.UpdateAsync(identity!);
+        if (!result.Succeeded)
+        {
+            return TypedResults.BadRequest(result.Errors.First().Description);
+        }
+        return TypedResults.Ok(await mediator.Send(new GetUser(id)));
+    }
 }

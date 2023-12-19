@@ -12,6 +12,7 @@ namespace Trsys.Models.WriteModel.Handlers
     public class UserCommandHandlers :
         IRequestHandler<UserCreateIfNotExistsCommand, Guid>,
         IRequestHandler<UserCreateCommand, Guid>,
+        IRequestHandler<UserUpdateCommand>,
         IRequestHandler<UserUpdateUserInfoCommand>,
         IRequestHandler<UserChangePasswordHashCommand>
     {
@@ -49,6 +50,20 @@ namespace Trsys.Models.WriteModel.Handlers
             await repository.Save(item, item.Version, cancellationToken);
             await repository.Save(state, null, cancellationToken);
             return userId;
+        }
+
+
+        public async Task Handle(UserUpdateCommand request, CancellationToken cancellationToken = default)
+        {
+            var item = await repository.Get<UserAggregate>(request.Id, cancellationToken);
+            var state = await repository.GetWorldState();
+            if (!state.UpdateUser(item.Username, request.Username, request.Id))
+            {
+                throw new InvalidOperationException("user name already exists.");
+            }
+            item.Update(request.Name, request.Username, request.EmailAddress, request.Role);
+            item.ChangePasswordHash(request.PasswordHash);
+            await repository.Save(item, item.Version, cancellationToken);
         }
 
 
