@@ -2,38 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Trsys.Infrastructure.Queue;
 using Trsys.Models;
 using Trsys.Models.ReadModel.Dtos;
 using Trsys.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Infrastructure.ReadModel.InMemory
 {
-    public class InMemoryOrderDatabase : IOrderDatabase, IDisposable
+    public class InMemoryOrderDatabase : InMemoryDatabaseBase<OrderDto, string>, IOrderDatabase
     {
-        private readonly BlockingTaskQueue queue = new();
         private OrdersTextEntry Entry = OrdersTextEntry.Create(new List<PublishedOrder>());
 
-        private readonly List<OrderDto> All = new();
-        private readonly Dictionary<string, OrderDto> ById = new();
-        private readonly Dictionary<int, OrderDto> ByTicketNo = new();
-        private readonly Dictionary<Guid, List<OrderDto>> BySecretKey = new();
+        private readonly Dictionary<int, OrderDto> ByTicketNo = [];
+        private readonly Dictionary<Guid, List<OrderDto>> BySecretKey = [];
         private List<PublishedOrder> List => All.Select(o => o.Order).ToList();
 
         public Task AddAsync(OrderDto order)
         {
-            return queue.Enqueue(() =>
+            return AddAsync(order.Id, order, (item) =>
             {
                 if (ByTicketNo.TryAdd(order.TicketNo, order))
                 {
-                    All.Add(order);
-                    ById.Add(order.Id, order);
                     if (!BySecretKey.TryGetValue(order.SecretKeyId, out var list))
                     {
                         list = new();
                         BySecretKey.Add(order.SecretKeyId, list);
                     }
-                    list.Add(order);
                     Entry = OrdersTextEntry.Create(List);
                 }
             });
@@ -42,19 +35,14 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
 
         public Task RemoveAsync(string id)
         {
-            return queue.Enqueue(() =>
+            return RemoveAsync(id, item =>
             {
-                if (ById.TryGetValue(id, out var item))
+                ByTicketNo.Remove(item.TicketNo);
+                if (BySecretKey.TryGetValue(item.SecretKeyId, out var list))
                 {
-                    ById.Remove(item.Id);
-                    All.Remove(item);
-                    ByTicketNo.Remove(item.TicketNo);
-                    if (BySecretKey.TryGetValue(item.SecretKeyId, out var list))
-                    {
-                        list.Remove(item);
-                    }
-                    Entry = OrdersTextEntry.Create(List);
+                    list.Remove(item);
                 }
+                Entry = OrdersTextEntry.Create(List);
             });
         }
 
@@ -81,19 +69,14 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             return Task.FromResult(Entry);
         }
 
-        public Task<List<OrderDto>> SearchAsync()
-        {
-            return Task.FromResult(All);
-        }
-
         public Task<List<PublishedOrder>> SearchPublishedOrderAsync()
         {
             return Task.FromResult(List);
         }
-        public void Dispose()
+
+        protected override object GetItemValue(OrderDto item, string sortKey)
         {
-            queue.Dispose();
-            GC.SuppressFinalize(this);
+            throw new NotImplementedException();
         }
     }
 }

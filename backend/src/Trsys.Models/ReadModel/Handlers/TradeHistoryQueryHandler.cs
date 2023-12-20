@@ -1,5 +1,6 @@
 using MediatR;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -166,8 +167,8 @@ namespace Trsys.Models.ReadModel.Handlers
                 await db.SearchAsync(
                     request.Start ?? 0,
                     request.End ?? int.MaxValue,
-                    request.Sort,
-                    request.Order));
+                    request.Sort.Append("openPublishedAt").ToArray(),
+                    request.Order.Append("desc").ToArray()));
         }
     }
 }

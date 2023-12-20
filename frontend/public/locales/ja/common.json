@@ -154,6 +154,7 @@
     "trade-histories": "トレード履歴",
     "fields": {
       "id": "Id",
+      "isOpen": "状態",
       "publisherId": "PublisherId",
       "ticketNo": "チケットNo",
       "symbol": "銘柄",

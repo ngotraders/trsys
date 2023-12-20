@@ -1,4 +1,5 @@
 using MediatR;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -55,17 +56,17 @@ namespace Trsys.Models.ReadModel.Handlers
             return db.UpdateUserInfoAsync(notification.Id, notification.Name, notification.EmailAddress);
         }
 
-        public async Task<SearchResponseDto<UserDto>> Handle(SearchUsers message, CancellationToken token = default)
+        public async Task<SearchResponseDto<UserDto>> Handle(SearchUsers request, CancellationToken token = default)
         {
             var count = await db.CountAsync();
-            if (message.Start.HasValue && message.End.HasValue)
-            {
-                return new SearchResponseDto<UserDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue, message.Sort, message.Order));
-            }
-            else
-            {
-                return new SearchResponseDto<UserDto>(count, await db.SearchAsync());
-            }
+            return new SearchResponseDto<UserDto>(
+                count,
+                await db.SearchAsync(
+                    request.Start ?? 0,
+                    request.End ?? int.MaxValue,
+                    request.Sort.Append("username").ToArray(),
+                    request.Order.Append("asc").ToArray()));
+
         }
 
         public Task<UserDto> Handle(GetUser request, CancellationToken cancellationToken)

@@ -14,7 +14,7 @@ namespace Trsys.Models.ReadModel.Handlers
         INotificationHandler<OrderPublisherClosedOrder>,
         INotificationHandler<SecretKeyDeleted>,
         IRequestHandler<GetOrderTextEntry, OrdersTextEntry>,
-        IRequestHandler<GetOrders, List<OrderDto>>,
+        IRequestHandler<SearchOrders, List<OrderDto>>,
         IRequestHandler<GetPublishedOrders, List<PublishedOrder>>
     {
         private readonly IOrderDatabase db;
@@ -50,7 +50,7 @@ namespace Trsys.Models.ReadModel.Handlers
             return db.FindEntryAsync();
         }
 
-        public Task<List<OrderDto>> Handle(GetOrders request, CancellationToken cancellationToken = default)
+        public Task<List<OrderDto>> Handle(SearchOrders request, CancellationToken cancellationToken = default)
         {
             return db.SearchAsync();
         }

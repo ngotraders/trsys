@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -89,14 +90,13 @@ namespace Trsys.Models.ReadModel.Handlers
         public async Task<SearchResponseDto<SecretKeyDto>> Handle(SearchSecretKeys message, CancellationToken token = default)
         {
             var count = await db.CountAsync();
-            if (message.Start.HasValue && message.End.HasValue)
-            {
-                return new SearchResponseDto<SecretKeyDto>(count, await db.SearchAsync(message.Start ?? 0, message.End ?? int.MaxValue, message.Sort, message.Order));
-            }
-            else
-            {
-                return new SearchResponseDto<SecretKeyDto>(count, await db.SearchAsync());
-            }
+            return new SearchResponseDto<SecretKeyDto>(
+                count,
+                await db.SearchAsync(
+                    message.Start ?? 0,
+                    message.End ?? int.MaxValue,
+                    message.Sort.Append("key").ToArray(),
+                    message.Order.Append("asc").ToArray()));
         }
 
         public Task<SecretKeyDto> Handle(GetSecretKey request, CancellationToken cancellationToken)

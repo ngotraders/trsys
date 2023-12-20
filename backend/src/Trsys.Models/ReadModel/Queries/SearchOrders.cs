@@ -4,7 +4,7 @@ using Trsys.Models.ReadModel.Dtos;
 
 namespace Trsys.Models.ReadModel.Queries
 {
-    public class GetOrders : IRequest<List<OrderDto>>
+    public class SearchOrders : IRequest<List<OrderDto>>
     {
     }
 }
