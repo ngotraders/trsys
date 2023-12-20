@@ -155,7 +155,7 @@
     "fields": {
       "id": "Id",
       "isOpen": "状態",
-      "publisherId": "PublisherId",
+      "publisherId": "Publisher's Id",
       "ticketNo": "チケットNo",
       "symbol": "銘柄",
       "orderType": "注文種別",
