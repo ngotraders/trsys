@@ -161,14 +161,13 @@ namespace Trsys.Models.ReadModel.Handlers
         public async Task<SearchResponseDto<TradeHistoryDto>> Handle(SearchTradeHistories request, CancellationToken cancellationToken = default)
         {
             var count = await db.CountAsync();
-            if (request.Start.HasValue && request.End.HasValue)
-            {
-                return new SearchResponseDto<TradeHistoryDto>(count, await db.SearchAsync(request.Start ?? 0, request.End ?? int.MaxValue, request.Sort, request.Order));
-            }
-            else
-            {
-                return new SearchResponseDto<TradeHistoryDto>(count, await db.SearchAsync());
-            }
+            return new SearchResponseDto<TradeHistoryDto>(
+                count,
+                await db.SearchAsync(
+                    request.Start ?? 0,
+                    request.End ?? int.MaxValue,
+                    request.Sort,
+                    request.Order));
         }
     }
 }

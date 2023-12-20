@@ -18,38 +18,27 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
   const columns = React.useMemo<GridColDef[]>(
     () => [
       {
-        field: "publisherId",
+        field: "isOpen",
         flex: 1,
-        headerName: translate("trade-histories.fields.publisherId"),
-        minWidth: 300,
-      },
-      {
-        field: "ticketNo",
-        flex: 1,
-        headerName: translate("trade-histories.fields.ticketNo"),
-        type: "number",
-        minWidth: 150,
-      },
-      {
-        field: "symbol",
-        flex: 1,
-        headerName: translate("trade-histories.fields.symbol"),
-        minWidth: 150,
-      },
-      {
-        field: "orderType",
-        flex: 1,
-        headerName: translate("trade-histories.fields.orderType"),
-        minWidth: 150,
+        headerName: translate("trade-histories.fields.isOpen"),
+        minWidth: 100,
         renderCell: function render({ value }) {
-          return translate(`trade-histories.orderTypes.${value}`);
+          return (
+            <Typography
+              variant="body1"
+              fontWeight="bold"
+              color={value ? "success.main" : "grey.500"}
+            >
+              {value ? "OPEN" : "CLOSED"}
+            </Typography>
+          );
         },
       },
       {
         field: "openPublishedAt",
         flex: 1,
         headerName: translate("trade-histories.fields.openPublishedAt"),
-        minWidth: 250,
+        minWidth: 200,
         renderCell: function render({ value }) {
           return <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />;
         },
@@ -58,10 +47,32 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
         field: "closePublishedAt",
         flex: 1,
         headerName: translate("trade-histories.fields.closePublishedAt"),
-        minWidth: 250,
+        minWidth: 200,
         renderCell: function render({ value }) {
-          return <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />;
+          return value && <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />;
         },
+      },
+      {
+        field: "symbol",
+        flex: 1,
+        headerName: translate("trade-histories.fields.symbol"),
+        minWidth: 120,
+      },
+      {
+        field: "orderType",
+        flex: 1,
+        headerName: translate("trade-histories.fields.orderType"),
+        minWidth: 120,
+        renderCell: function render({ value }) {
+          return translate(`trade-histories.orderTypes.${value}`);
+        },
+      },
+      {
+        field: "ticketNo",
+        flex: 1,
+        headerName: translate("trade-histories.fields.ticketNo"),
+        type: "number",
+        minWidth: 120,
       },
       {
         field: "actions",

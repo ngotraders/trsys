@@ -12,9 +12,9 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
     {
         private readonly BlockingTaskQueue queue = new();
 
-        private readonly List<TradeHistoryDto> All = new();
-        private readonly Dictionary<string, TradeHistoryDto> ById = new();
-        private readonly Dictionary<int, TradeHistoryDto> ByPublisherTicketNo = new();
+        private readonly List<TradeHistoryDto> All = [];
+        private readonly Dictionary<string, TradeHistoryDto> ById = [];
+        private readonly Dictionary<int, TradeHistoryDto> ByPublisherTicketNo = [];
 
         public Task AddAsync(TradeHistoryDto order)
         {
@@ -189,7 +189,7 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
             }
             return queue.Enqueue(() =>
             {
-                var query = All as IEnumerable<TradeHistoryDto>;
+                var query = null as IOrderedEnumerable<TradeHistoryDto>;
                 if (sort != null && order != null)
                 {
                     for (var i = 0; i < sort.Length; i++)
@@ -198,13 +198,35 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                         var orderKey = order[i];
                         if (orderKey == "asc")
                         {
-                            query = query.OrderBy(item => GetItemValue(item, sortKey));
+                            if (query == null)
+                            {
+                                query = All.OrderBy(item => GetItemValue(item, sortKey));
+                            }
+                            else
+                            {
+                                query = query.ThenBy(item => GetItemValue(item, sortKey));
+                            }
                         }
                         else if (orderKey == "desc")
                         {
-                            query = query.OrderByDescending(item => GetItemValue(item, sortKey));
+                            if (query == null)
+                            {
+                                query = All.OrderByDescending(item => GetItemValue(item, sortKey));
+                            }
+                            else
+                            {
+                                query = query.ThenByDescending(item => GetItemValue(item, sortKey));
+                            }
                         }
                     }
+                }
+                if (query == null)
+                {
+                    query = All.OrderByDescending(item => item.OpenPublishedAt);
+                }
+                else
+                {
+                    query = query.ThenByDescending(item => item.OpenPublishedAt);
                 }
                 return query.Skip(start).Take(end - start).ToList();
             });
@@ -217,8 +239,11 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
                 "id" => item.Id,
                 "publisherId" => item.PublisherId,
                 "ticketNo" => item.TicketNo,
+                "symbol" => item.Symbol,
+                "orderType" => item.OrderType,
                 "openPublishedAt" => item.OpenPublishedAt,
                 "closePublishedAt" => item.ClosePublishedAt,
+                "isOpen" => item.IsOpen,
                 _ => throw new InvalidOperationException(),
             };
         }

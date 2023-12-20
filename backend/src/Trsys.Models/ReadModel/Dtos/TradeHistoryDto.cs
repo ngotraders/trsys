@@ -17,6 +17,7 @@ namespace Trsys.Models.ReadModel.Dtos
         public decimal Percentage { get; set; }
         public DateTimeOffset OpenPublishedAt { get; set; }
         public DateTimeOffset? ClosePublishedAt { get; set; }
+        public bool IsOpen => !ClosePublishedAt.HasValue;
 
         public List<SubscriberTradeHistoryDto> SubscriberOrderHistories { get; } = new();
     }
