@@ -8,7 +8,7 @@ using Trsys.Models.ReadModel.Queries;
 
 namespace Trsys.Models.ReadModel.Handlers
 {
-    public class EventHandlers : IRequestHandler<GetEvents, IEnumerable<EventDto>>
+    public class EventHandlers : IRequestHandler<SearchEvents, SearchResponseDto<EventDto>>
     {
         private readonly IEventDatabase db;
 
@@ -17,9 +17,15 @@ namespace Trsys.Models.ReadModel.Handlers
             this.db = db;
         }
 
-        public Task<IEnumerable<EventDto>> Handle(GetEvents request, CancellationToken cancellationToken)
+        public async Task<SearchResponseDto<EventDto>> Handle(SearchEvents request, CancellationToken cancellationToken)
         {
-            return db.SearchAsync(request.Source, request.Page, request.PerPage);
+            var count = await db.CountAsync(request.Source);
+            return new SearchResponseDto<EventDto>(
+                count,
+                await db.SearchAsync(
+                    request.Start ?? 0,
+                    request.End ?? int.MaxValue,
+                    request.Source));
         }
     }
 }

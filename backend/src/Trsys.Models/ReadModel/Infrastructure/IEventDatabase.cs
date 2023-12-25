@@ -6,6 +6,8 @@ namespace Trsys.Models.ReadModel.Infrastructure
 {
     public interface IEventDatabase
     {
-        Task<IEnumerable<EventDto>> SearchAsync(string source, int page, int perPage);
+        Task<int> CountAsync(string source);
+        Task<List<EventDto>> SearchAsync();
+        Task<List<EventDto>> SearchAsync(int start, int end, string source);
     }
 }

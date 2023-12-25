@@ -18,31 +18,53 @@ namespace Trsys.Infrastructure.ReadModel.InMemory
         {
             this.db = store;
         }
-        public async Task<IEnumerable<EventDto>> SearchAsync(string source, int page, int perPage)
+
+        public async Task<int> CountAsync(string source)
         {
             if (string.IsNullOrEmpty(source))
             {
-                var fromPosition = await db.ReadHeadPosition() - (page - 1) * perPage;
-                if (fromPosition < 0)
-                {
-                    return Array.Empty<EventDto>();
-                }
-                var messages = await db.ReadAllBackwards(fromPosition, perPage, true);
-                return messages.Messages.Select(ConvertToEvent).ToList();
+                return (int)await db.ReadHeadPosition();
             }
             else
             {
-                var fromVersion = (await db.ReadStreamHeadVersion(new StreamId(source)) - (page - 1) * perPage);
-                if (fromVersion < 0)
-                {
-                    return Array.Empty<EventDto>();
-                }
-                var messages = await db.ReadStreamBackwards(new StreamId(source), fromVersion, perPage, true);
-                return messages.Messages.Select(ConvertToEvent).ToList();
+                return (int)await db.ReadStreamHeadVersion(new StreamId(source));
             }
         }
 
-        private static EventDto ConvertToEvent(StreamMessage message)
+        public async Task<List<EventDto>> SearchAsync()
+        {
+            var messages = await db.ReadAllBackwards(0, int.MaxValue, true);
+            return messages.Messages.Select(ConvertToEventDto).ToList();
+        }
+
+        public async Task<List<EventDto>> SearchAsync(int start, int end, string source)
+        {
+            if (string.IsNullOrEmpty(source))
+            {
+                var fetchCount = end - start;
+                var headPosition = await db.ReadHeadPosition();
+                if (headPosition < start)
+                {
+                    return [];
+                }
+                var messages = await db.ReadAllBackwards(Math.Min(headPosition, end), fetchCount, true);
+                return messages.Messages.Select(ConvertToEventDto).ToList();
+            }
+            else
+            {
+                var streamId = new StreamId(source);
+                var fetchCount = end - start;
+                var headVersion = await db.ReadStreamHeadVersion(streamId);
+                if (headVersion < start)
+                {
+                    return [];
+                }
+                var messages = await db.ReadStreamBackwards(streamId, Math.Min(headVersion, end), fetchCount, true);
+                return messages.Messages.Select(ConvertToEventDto).ToList();
+            }
+        }
+
+        private static EventDto ConvertToEventDto(StreamMessage message)
         {
             var obj = JObject.Parse(message.GetJsonData().Result);
             var timestamp = obj.Property("TimeStamp").Value.Value<DateTime>();
