@@ -11,6 +11,7 @@ using Trsys.Web.Formatters;
 using Trsys.Web.Identity;
 using Trsys.Web.Middlewares;
 using Trsys.Web.Models;
+using Trsys.Web.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,10 @@ builder.Services.AddMediatR(options => options.RegisterServicesFromAssembly(type
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection"));
 builder.Services.AddEmailSender(builder.Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
 builder.Services.AddDbContext<TrsysContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSwaggerGen(options =>
+{
+    options.OperationFilter<HttpResultsOperationFilter>();
+});
 
 var app = builder.Build();
 

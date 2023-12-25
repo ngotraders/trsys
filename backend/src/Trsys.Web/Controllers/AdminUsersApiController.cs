@@ -33,7 +33,7 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
     }
 
     [HttpPost]
-    public async Task<Results<Ok<UserDto>, ValidationProblem, BadRequest<string>>> Post([FromBody] CreateUserRequest request)
+    public async Task<Results<Ok<UserDto>, ValidationProblem>> Post([FromBody] CreateUserRequest request)
     {
         var identity = new TrsysUser()
         {
@@ -46,7 +46,10 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
         var result = await userManager.CreateAsync(identity, request.Password!);
         if (!result.Succeeded)
         {
-            return TypedResults.BadRequest(result.Errors.First().Description);
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                { "", result.Errors.Select(e => e.Description).ToArray() }
+            });
         }
         return TypedResults.Ok(await mediator.Send(new GetUser(identity.Id)));
     }
@@ -63,7 +66,7 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
     }
 
     [HttpPatch("{id}")]
-    public async Task<Results<Ok<UserDto>, NotFound, ValidationProblem, BadRequest<string>>> Put(Guid id, [FromBody] UpdateUserRequest request)
+    public async Task<Results<Ok<UserDto>, NotFound, ValidationProblem>> Put(Guid id, [FromBody] UpdateUserRequest request)
     {
         var identity = await userManager.FindByIdAsync(id.ToString());
         if (identity == null)
@@ -83,13 +86,19 @@ public class AdminUsersApiController(IMediator mediator, UserManager<TrsysUser> 
             var result = await userManager.UpdateAsync(identity!);
             if (!result.Succeeded)
             {
-                return TypedResults.BadRequest(result.Errors.First().Description);
+                return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    { "", result.Errors.Select(e => e.Description).ToArray() }
+                });
             }
             return TypedResults.Ok(await mediator.Send(new GetUser(id)));
         }
         catch (InvalidOperationException e)
         {
-            return TypedResults.BadRequest(e.Message);
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                { "", [e.Message] }
+            });
         }
     }
 
