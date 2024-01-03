@@ -15,6 +15,7 @@ import GlobalStyles from "@mui/material/GlobalStyles";
 import PeopleIcon from "@mui/icons-material/People";
 import KeyIcon from "@mui/icons-material/Key";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
+import ReceiptIcon from '@mui/icons-material/Receipt'
 import routerBindings, {
   CatchAllNavigate,
   DocumentTitleHandler,
@@ -40,6 +41,12 @@ import {
   TradeHistoryList,
   TradeHistoryShow,
 } from "./pages/trade-histories";
+import {
+  EventCreate,
+  EventEdit,
+  EventList,
+  EventShow,
+} from "./pages/events";
 import { ForgotPassword } from "./pages/forgotPassword";
 import { Login } from "./pages/login";
 import { Register } from "./pages/register";
@@ -124,6 +131,20 @@ function App() {
                       icon: <ShowChartIcon />,
                     },
                   },
+                  {
+                    name: "events",
+                    list: "/events",
+                    create: "/events/create",
+                    edit: "/events/edit/:id",
+                    show: "/events/show/:id",
+                    meta: {
+                      dataProviderName: "trsys",
+                      canDelete: true,
+                      title: "イベント",
+                      label: "イベント",
+                      icon: <ReceiptIcon />,
+                    },
+                  },
                 ]}
                 options={{
                   syncWithLocation: true,
@@ -171,6 +192,12 @@ function App() {
                       <Route path="create" element={<TradeHistoryCreate />} />
                       <Route path="edit/:id" element={<TradeHistoryEdit />} />
                       <Route path="show/:id" element={<TradeHistoryShow />} />
+                    </Route>
+                    <Route path="/events">
+                      <Route index element={<EventList />} />
+                      <Route path="create" element={<EventCreate />} />
+                      <Route path="edit/:id" element={<EventEdit />} />
+                      <Route path="show/:id" element={<EventShow />} />
                     </Route>
                     <Route
                       path="/update-password"

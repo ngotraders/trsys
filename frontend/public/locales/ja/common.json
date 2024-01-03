@@ -180,6 +180,20 @@
       "1": "ショート"
     }
   },
+  "events": {
+    "events": "イベント",
+    "fields": {
+      "id": "Id",
+      "timestamp": "時刻",
+      "aggregateId": "イベント元",
+      "version": "バージョン",
+      "eventType": "イベントタイプ",
+      "data": "イベントデータ"
+    },
+    "titles": {
+      "list": "イベント一覧"
+    }
+  },
   "documentTitle": {
     "default": "refine",
     "suffix": " | refine",
