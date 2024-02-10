@@ -27,47 +27,52 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
       {
         field: "keyType",
         flex: 1,
+        minWidth: 100,
         headerName: translate("secret-keys.fields.keyType"),
+        filterable: false,
         renderCell: function render({ value }) {
           return <>{translate(`secret-keys.keyTypes.${value}`)}</>;
         },
-        minWidth: 100,
       },
       {
         field: "key",
         flex: 1,
-        headerName: translate("secret-keys.fields.key"),
         minWidth: 200,
+        headerName: translate("secret-keys.fields.key"),
+        filterable: false,
       },
       {
         field: "description",
         flex: 1,
-        headerName: translate("secret-keys.fields.description"),
         minWidth: 200,
+        headerName: translate("secret-keys.fields.description"),
+        filterable: false,
       },
       {
         field: "isApproved",
-        headerName: translate("secret-keys.fields.isApproved"),
         minWidth: 100,
+        headerName: translate("secret-keys.fields.isApproved"),
+        filterable: false,
         renderCell: function render({ value, row }) {
           return (
             <Checkbox
               checked={!!value}
-              onClick={async () => {
-                await mutate({
+              onClick={() =>
+                mutate({
                   resource: "secret-keys",
                   id: row.id,
                   values: { ...row, isApproved: !value },
-                });
-              }}
+                })
+              }
             />
           );
         },
       },
       {
         field: "isConnected",
-        headerName: translate("secret-keys.fields.isConnected"),
         minWidth: 100,
+        headerName: translate("secret-keys.fields.isConnected"),
+        filterable: false,
         renderCell: function render({ value }) {
           if (value) {
             return <SyncIcon color="success" />;
@@ -77,8 +82,10 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
       },
       {
         field: "actions",
+        minWidth: 80,
         headerName: translate("table.actions"),
         sortable: false,
+        filterable: false,
         renderCell: function render({ row }) {
           return (
             <>
@@ -94,7 +101,6 @@ export const SecretKeyList: React.FC<IResourceComponentsProps> = () => {
         },
         align: "center",
         headerAlign: "center",
-        minWidth: 80,
       },
     ],
     [mutate, translate]

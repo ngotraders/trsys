@@ -54,7 +54,6 @@ import { UpdatePassword } from "./pages/updatePassword";
 import { Logo } from "./components/logo";
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "https://localhost:8443",
   withCredentials: true,
 });
 
@@ -86,7 +85,7 @@ function App() {
                 }}
                 notificationProvider={notificationProvider}
                 routerProvider={routerBindings}
-                authProvider={authProvider("", axiosInstance)}
+                authProvider={authProvider("/auth", axiosInstance)}
                 i18nProvider={i18nProvider}
                 resources={[
                   {

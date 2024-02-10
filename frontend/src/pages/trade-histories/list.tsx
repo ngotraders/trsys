@@ -20,8 +20,9 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
       {
         field: "isOpen",
         flex: 1,
-        headerName: translate("trade-histories.fields.isOpen"),
         minWidth: 100,
+        headerName: translate("trade-histories.fields.isOpen"),
+        filterable: false,
         renderCell: function render({ value }) {
           return (
             <Typography
@@ -37,8 +38,9 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
       {
         field: "openPublishedAt",
         flex: 1,
-        headerName: translate("trade-histories.fields.openPublishedAt"),
         minWidth: 200,
+        headerName: translate("trade-histories.fields.openPublishedAt"),
+        filterable: false,
         renderCell: function render({ value }) {
           return <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />;
         },
@@ -46,23 +48,28 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
       {
         field: "closePublishedAt",
         flex: 1,
-        headerName: translate("trade-histories.fields.closePublishedAt"),
         minWidth: 200,
+        headerName: translate("trade-histories.fields.closePublishedAt"),
+        filterable: false,
         renderCell: function render({ value }) {
-          return value && <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />;
+          return (
+            value && <DateField value={value} format="YYYY-MM-DD HH:mm:ss" />
+          );
         },
       },
       {
         field: "symbol",
         flex: 1,
-        headerName: translate("trade-histories.fields.symbol"),
         minWidth: 120,
+        headerName: translate("trade-histories.fields.symbol"),
+        filterable: false,
       },
       {
         field: "orderType",
         flex: 1,
-        headerName: translate("trade-histories.fields.orderType"),
         minWidth: 120,
+        headerName: translate("trade-histories.fields.orderType"),
+        filterable: false,
         renderCell: function render({ value }) {
           return translate(`trade-histories.orderTypes.${value}`);
         },
@@ -70,14 +77,17 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
       {
         field: "ticketNo",
         flex: 1,
-        headerName: translate("trade-histories.fields.ticketNo"),
-        type: "number",
         minWidth: 120,
+        headerName: translate("trade-histories.fields.ticketNo"),
+        filterable: false,
+        type: "number",
       },
       {
         field: "actions",
+        minWidth: 80,
         headerName: translate("table.actions"),
         sortable: false,
+        filterable: false,
         renderCell: function render({ row }) {
           return (
             <>
@@ -89,7 +99,6 @@ export const TradeHistoryList: React.FC<IResourceComponentsProps> = () => {
         },
         align: "center",
         headerAlign: "center",
-        minWidth: 80,
       },
     ],
     [translate]
