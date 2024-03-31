@@ -130,20 +130,23 @@
                     {
                         var key = Model.SecretKeys[i];
                         <tr class="@(key.IsApproved ? "" : " bg-light")">
-                            <td>
-                                <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
-                                @if (key.IsApproved)
-                                {
+                            @if (key.IsApproved)
+                            {
+                                <td class="align-middle">
                                     @key.KeyType
+                                    <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
                                     <input type="hidden" name="SecretKeys[@i].KeyType" value="@key.KeyType" />
-                                }
-                                else
-                                {
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
                                     <select class="form-control" name="SecretKeys[@i].KeyType">
                                         <option value="">---</option>
                                         @foreach (var type in
-                                       Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] {
-                            (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                                       Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[]
+                                       {(SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
                                         {
                                             if (key.KeyType.HasValue && key.KeyType.Value == type)
                                             {
@@ -155,8 +158,8 @@
                                             }
                                         }
                                     </select>
-                                }
-                            </td>
+                                </td>
+                            }
                             <td class="align-middle">
                                 <div class="secret-key">@key.Key</div>
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
