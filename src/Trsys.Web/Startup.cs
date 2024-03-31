@@ -15,7 +15,6 @@ using Trsys.Infrastructure;
 using Trsys.Web.Middlewares;
 using Trsys.Models;
 using Trsys.Infrastructure.ReadModel.UserNotification;
-using static System.Collections.Specialized.BitVector32;
 
 namespace Trsys.Web
 {

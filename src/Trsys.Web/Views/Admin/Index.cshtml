@@ -43,8 +43,8 @@
 
     <h1 class="h2 mb-3 font-weight-bold">@ViewBag.Title</h1>
 
-    <div class="mb-4 d-flex align-items-end">
-        <div class="pr-2">
+    <div class="mb-4 d-flex gap-2 align-items-end">
+        <div>
             <label>種類</label>
             <select class="form-control" name="KeyType">
                 <option value="">---</option>
@@ -61,16 +61,16 @@
                 }
             </select>
         </div>
-        <div class="pr-2">
+        <div>
             <label>シークレットキー</label>
             <input class="form-control" type="text" name="Key" value="@Model.Key" />
         </div>
-        <div class="pr-2">
+        <div>
             <label>説明</label>
             <input class="form-control" type="text" name="Description" value="@Model.Description" />
         </div>
         <div>
-            <button class="btn btn-outline-secondary btn-block">シークレットキー生成</button>
+            <button formaction="/admin/keys/new" class="btn btn-outline-secondary btn-block">シークレットキー生成</button>
         </div>
     </div>
     @if (Model.SecretKeys.Count > 0)
@@ -101,14 +101,14 @@
             </div>
         }
         <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered" style="table-layout: fixed;min-width: 87em">
+            <table class="table table-sm table-bordered">
                 <colgroup>
-                    <col style="width: 12em" />
+                    <col style="min-width: 12em" />
+                    <col style="min-width: 20em" />
                     <col />
-                    <col />
-                    <col style="width: 4em" />
-                    <col style="width: 4em" />
-                    <col style="width: 17em" />
+                    <col style="min-width: 4em" />
+                    <col style="min-width: 4em" />
+                    <col style="min-width: 17em" />
                 </colgroup>
                 <thead>
                     <tr>
@@ -124,8 +124,8 @@
                     @for (var i = 0; i < Model.SecretKeys.Count; i++)
                     {
                         var key = Model.SecretKeys[i];
-                        <tr class="@(key.IsApproved ? "" : "bg-light")">
-                            <td class="align-baseline">
+                        <tr class="@(key.IsApproved ? "" : " bg-light")">
+                            <td>
                                 <input type="hidden" name="SecretKeys[@i].Id" value="@key.Id" />
                                 @if (key.IsApproved)
                                 {
@@ -150,32 +150,32 @@
                                     </select>
                                 }
                             </td>
-                            <td class="align-baseline">
-                                <span class="secret-key">@key.Key</span>
+                            <td class="align-middle">
+                                <div class="secret-key">@key.Key</div>
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
                             </td>
-                            <td class="align-baseline p-1"><input class="form-control" type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
-                            <td class="align-baseline text-center">@(key.IsConnected ? "○" : "-")</td>
+                            <td class="p-1"><input class="form-control" type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
+                            <td class="align-middle text-center">@(key.IsConnected ? "○" : "-")</td>
                             @if (key.IsApproved)
                             {
-                                <td class="align-baseline text-center">有効</td>
+                                <td class="align-middle text-center">有効</td>
                             }
                             else
                             {
-                                <td class="align-baseline text-center">無効</td>
+                                <td class="align-middle text-center">無効</td>
                             }
-                            <td class="align-baseline p-1">
-                                <div class="d-flex justify-content-between">
-                                    <div class="flex-grow-1 mr-1">
-                                        <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/update">変更</button>
+                            <td class="p-1">
+                                <div class="d-flex gap-1 justify-content-between">
+                                    <div class="flex-grow-1">
+                                        <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/update">変更</button>
                                     </div>
                                     @if (key.IsApproved)
                                     {
                                         <div class="flex-grow-1 mr-1">
-                                            <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/revoke">無効化</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/revoke">無効化</button>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
                                         </div>
                                     }
                                     else
@@ -183,15 +183,15 @@
                                         <div class="flex-grow-1 mr-1">
                                             @if (key.KeyType.HasValue)
                                             {
-                                                <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/approve">有効化</button>
+                                                <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/approve">有効化</button>
                                             }
                                             else
                                             {
-                                                <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
+                                                <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
                                             }
                                         </div>
                                         <div class="flex-grow-1">
-                                            <button class="btn btn-outline-secondary btn-block w-full" formaction="/admin/keys/@key.Id/delete">削除</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/delete">削除</button>
                                         </div>
                                     }
                                 </div>
@@ -236,20 +236,20 @@
     {
         <div>
             <h2>新規注文</h2>
-            <div class="mb-4 d-flex align-items-end">
-                <div class="pr-2">
+            <div class="mb-4 d-flex gap-2 align-items-end">
+                <div>
                     <label>シークレットキー</label>
                     <input class="form-control" type="text" name="NewOrderSecretKey" value="@Model.NewOrderSecretKey" />
                 </div>
-                <div class="pr-2">
+                <div>
                     <label>チケットNo</label>
                     <input class="form-control" type="text" name="NewOrderTicketNo" value="@Model.NewOrderTicketNo" />
                 </div>
-                <div class="pr-2">
+                <div>
                     <label>通貨ペア</label>
                     <input class="form-control" type="text" name="NewOrderSymbol" value="@Model.NewOrderSymbol" />
                 </div>
-                <div class="pr-2">
+                <div>
                     <label>取引</label>
                     <select class="form-control" name="NewOrderType">
                         <option value="">---</option>
@@ -257,7 +257,7 @@
                         <option value="@OrderType.Sell" @(Model.NewOrderType == OrderType.Sell ? "selected" : "")>SELL</option>
                     </select>
                 </div>
-                <div class="pr-2">
+                <div>
                     <label>価格</label>
                     <input class="form-control" type="text" name="NewOrderPrice" value="@Model.NewOrderPrice" />
                 </div>
@@ -269,12 +269,12 @@
 
         <div>
             <h2>注文削除</h2>
-            <div class="mb-4 d-flex align-items-end">
-                <div class="pr-2">
+            <div class="mb-4 d-flex gap-2 align-items-end">
+                <div>
                     <label>シークレットキー</label>
                     <input class="form-control" type="text" name="CloseOrderSecretKey" value="@Model.CloseOrderSecretKey" />
                 </div>
-                <div class="pr-2">
+                <div>
                     <label>チケットNo</label>
                     <input class="form-control" type="text" name="CloseOrderTicketNo" value="@Model.CloseOrderTicketNo" />
                 </div>

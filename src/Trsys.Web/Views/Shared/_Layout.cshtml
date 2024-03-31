@@ -1,28 +1,35 @@
 ﻿@using Microsoft.Extensions.Hosting
+@using Microsoft.Extensions.Configuration
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment env
+@inject Microsoft.Extensions.Configuration.IConfiguration configuration
+
+@{
+    var theme = configuration.GetSection("Trsys.Web").GetValue<string>("BootstrapTheme") ?? "purple";
+    var colorTheme = configuration.GetSection("Trsys.Web").GetValue<string>("ColorTheme") == "dark" ? "dark" : "light";
+}
 
 <!DOCTYPE html>
 
-<html>
+<html lang="ja" data-bs-theme="@colorTheme">
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
-    <link rel="stylesheet" href="~/lib/bootstrap-theme/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-theme-@theme/bootstrap.min.css" />
 </head>
 <body>
     <header class="bg-primary">
-        <nav class="navbar navbar-fixed-top navbar-expand-lg navbar-dark py-4 px-3">
+        <nav class="navbar @(colorTheme == "light" ? "bg-primary" : $"bg-dark") navbar-fixed-top navbar-expand-lg py-4 px-3">
             <div class="container-fluid">
-                <a href="/" class="navbar-nav text-white text-decoration-none fw-bold h1">Trsys</a>
+                <a href="/" class="navbar-nav text-light text-decoration-none fw-bold h1">Trsys</a>
                 @if (User.Identity.IsAuthenticated)
                 {
                     <div class="d-flex align-items-center">
                         <div class="p-1">
-                            <a href="/userinfo" class="btn btn-light">ユーザー情報</a>
+                            <a href="/userinfo" class="btn btn-@colorTheme">ユーザー情報</a>
                         </div>
                         <div class="p-1">
                             <form method="post" action="/logout">
-                                <button class="btn btn-light">ログアウト</button>
+                                <button class="btn btn-@colorTheme">ログアウト</button>
                             </form>
                         </div>
                     </div>
@@ -31,7 +38,7 @@
         </nav>
         @if (env.IsDevelopment())
         {
-            <div class="bg-success text-white h4 font-weight-bold py-2 px-3">
+            <div class="bg-success text-light h4 font-weight-bold py-2 px-3">
                 <div class="container-fluid">
                     検証環境
                 </div>
