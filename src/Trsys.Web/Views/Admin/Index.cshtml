@@ -43,7 +43,7 @@
 
     <h1 class="h2 mb-3 font-weight-bold">@ViewBag.Title</h1>
 
-    <div class="mb-4 d-flex gap-2 align-items-end">
+    <div class="mb-4 d-lg-flex gap-2 align-items-end">
         <div>
             <label>種類</label>
             <select class="form-control" name="KeyType">
@@ -66,12 +66,12 @@
             <label>シークレットキー</label>
             <input class="form-control" type="text" name="Key" value="@Model.Key" />
         </div>
-        <div>
+        <div class="d-none d-lg-block">
             <label>説明</label>
             <input class="form-control" type="text" name="Description" value="@Model.Description" />
         </div>
-        <div>
-            <button formaction="/admin/keys/new" class="btn btn-outline-secondary btn-block">シークレットキー生成</button>
+        <div class="mt-2 mt-lg-0">
+            <button formaction="/admin/keys/new" class="btn btn-outline-secondary btn-block text-nowrap">シークレットキー生成</button>
         </div>
     </div>
     @if (Model.SecretKeys.Count > 0)
@@ -106,7 +106,7 @@
             </div>
         }
         <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered">
+            <table class="table table-sm table-bordered" style="min-width: 70em">
                 <colgroup>
                     <col style="min-width: 12em" />
                     <col style="min-width: 20em" />
@@ -257,7 +257,7 @@
     {
         <div>
             <h2>新規注文</h2>
-            <div class="mb-4 d-flex gap-2 align-items-end">
+            <div class="mb-4 d-lg-flex gap-2 align-items-end">
                 <div>
                     <label>シークレットキー</label>
                     <input class="form-control" type="text" name="NewOrderSecretKey" value="@Model.NewOrderSecretKey" />
@@ -283,15 +283,15 @@
                     <label>価格</label>
                     <input class="form-control" type="text" name="NewOrderPrice" value="@Model.NewOrderPrice" />
                 </div>
-                <div>
-                    <button class="btn btn-outline-secondary btn-block" formaction="/admin/orders/new">注文生成</button>
+                <div class="mt-2 mt-lg-0">
+                    <button class="btn btn-outline-secondary btn-block text-nowrap" formaction="/admin/orders/new">注文生成</button>
                 </div>
             </div>
         </div>
 
         <div>
             <h2>注文削除</h2>
-            <div class="mb-4 d-flex gap-2 align-items-end">
+            <div class="mb-4 d-lg-flex gap-2 align-items-end">
                 <div>
                     <label>シークレットキー</label>
                     <input class="form-control" type="text" name="CloseOrderSecretKey" value="@Model.CloseOrderSecretKey" />
@@ -300,8 +300,8 @@
                     <label>チケットNo</label>
                     <input class="form-control" type="text" name="CloseOrderTicketNo" value="@Model.CloseOrderTicketNo" />
                 </div>
-                <div>
-                    <button class="btn btn-outline-secondary btn-block" formaction="/admin/orders/close">注文削除</button>
+                <div class="mt-2 mt-lg-0">
+                    <button class="btn btn-outline-secondary btn-block text-nowrap" formaction="/admin/orders/close">注文削除</button>
                 </div>
             </div>
         </div>
