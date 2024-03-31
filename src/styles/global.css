@@ -39,6 +39,7 @@ template {
 }
 a {
   background-color: transparent;
+  color: rgb(169, 142, 218);
   -webkit-text-decoration-skip: objects;
 }
 a:active,
@@ -190,7 +191,8 @@ html {
   box-sizing: inherit;
 }
 body {
-  color: hsla(0, 0%, 0%, 0.8);
+  background-color: rgb(33, 37, 41);
+  color: rgb(222, 226, 230);
   font-weight: normal;
   word-wrap: break-word;
   font-kerning: normal;
