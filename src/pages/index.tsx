@@ -1,4 +1,4 @@
-import * as React from "react";
+﻿import * as React from "react";
 import { graphql } from "gatsby";
 
 // Please note that you can use https://github.com/dotansimha/graphql-code-generator
@@ -53,7 +53,7 @@ const IndexPage = (props: IndexPageProps) => {
           <li>WebRequest を許可するURLリストにチェックを入れる</li>
           <li>
             +新しい URL を追加をダブルクリックし、
-            <code>https://copy-trading-system.azurewebsites.net</code>{" "}
+            <code>https://kopi-trading-system.azurewebsites.net</code>{" "}
             を入力する
           </li>
         </ol>
