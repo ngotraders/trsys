@@ -5,7 +5,7 @@
     ViewBag.Title = "ログ一覧";
 }
 
-<div class="float-right">
+<div class="float-md-end">
     <span>ログ</span>
     <a href="@Url.Action("Index", "Events")">イベント</a>
 </div>
@@ -24,15 +24,18 @@
 <div class="mb-3">
     @if (Model.Page > 1)
     {
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
     }
     else
     {
         <span>最初のページ</span>
         <span>前のページ</span>
     }
-    <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
+    <a
+        href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
 </div>
 <div class="table-responsive">
     <table class="table table-sm table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
@@ -52,14 +55,17 @@
             @foreach (var e in Model.Events)
             {
                 <tr>
-                    <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new DateTimeOffset(e.TimeStamp.Value).ToOffset(TimeSpan.FromHours(9)))</td>
+                    <td>@string.Format("{0:yyyy-MM-ddTHH:mm:ss.fff}", new
+                                 DateTimeOffset(e.TimeStamp.Value).ToOffset(TimeSpan.FromHours(9)))</td>
                     <td><a href="@Url.Action("Index", new { source = e.Level })">@e.Level</a></td>
                     <td>
                         @if (!string.IsNullOrEmpty(e.Message))
                         {
                             @foreach (var line in e.Message.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.TrimEntries))
                             {
-                                <text>@line</text><br />
+                                <text>@line</text>
+
+                                <br />
                             }
                         }
                     </td>
@@ -68,9 +74,12 @@
                 {
                     <tr>
                         <td colspan="3">
-                            @foreach (var line in @e.Exception.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.TrimEntries))
+                            @foreach (var line in @e.Exception.Split(new[] { "\r\n", "\r", "\n" },
+                           StringSplitOptions.TrimEntries))
                             {
-                                <text>@line</text><br />
+                                <text>@line</text>
+
+                                <br />
                             }
                         </td>
                     </tr>
@@ -82,13 +91,16 @@
 <div>
     @if (Model.Page > 1)
     {
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
     }
     else
     {
         <span>最初のページ</span>
         <span>前のページ</span>
     }
-    <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
+    <a
+        href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
 </div>

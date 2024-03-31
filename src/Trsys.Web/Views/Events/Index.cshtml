@@ -5,7 +5,7 @@
     ViewBag.Title = "イベント一覧";
 }
 
-<div class="float-right">
+<div class="float-md-end">
     <a href="@Url.Action("Index", "Logs")">ログ</a>
     <span>イベント</span>
 </div>
@@ -25,14 +25,16 @@
     @if (Model.Page > 1)
     {
         <a href="@Url.Action("Index", new { source = Model.Source })">最初のページ</a>
-        <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">前のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">前のページ</a>
     }
     else
     {
         <span>最初のページ</span>
         <span>前のページ</span>
     }
-    <a href="@Url.Action("Index", new { source = Model.Source, page = Model.Page + 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">次のページ</a>
+    <a
+        href="@Url.Action("Index", new { source = Model.Source, page = Model.Page + 1, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">次のページ</a>
 </div>
 <div class="table-responsive">
     <table class="table table-sm table-bordered mb-3" style="table-layout: fixed;min-width: 87em">
@@ -66,13 +68,16 @@
 <div>
     @if (Model.Page > 1)
     {
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
-        <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage })">最初のページ</a>
+        <a
+            href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page - 1 == 1 ? default(int?) : Model.Page - 1 })">前のページ</a>
     }
     else
     {
         <span>最初のページ</span>
         <span>前のページ</span>
     }
-    <a href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
+    <a
+        href="@Url.Action("Index", new { source = Model.Source, perPage = Model.PerPage == 100 ? default(int?) : Model.PerPage, page = Model.Page + 1 })">次のページ</a>
 </div>

@@ -11,17 +11,17 @@
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
     <div class="alert alert-danger mb-4">
-        @Model.ErrorMessage
-    </div>
+    @Model.ErrorMessage
+</div>
 }
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
     <div class="alert alert-success mb-4">
-        @Model.SuccessMessage
-    </div>
+    @Model.SuccessMessage
+</div>
 }
 
-<div class="float-md-right">
+<div class="float-md-end">
     @if (!string.IsNullOrEmpty(Model.EaSiteUrl))
     {
         <a href="@Model.EaSiteUrl">EAのダウンロード</a>
@@ -48,7 +48,8 @@
             <label>種類</label>
             <select class="form-control" name="KeyType">
                 <option value="">---</option>
-                @foreach (var type in Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                @foreach (var type in Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] {
+                (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
                 {
                     if (Model.KeyType.HasValue && Model.KeyType.Value == type)
                     {
@@ -80,8 +81,10 @@
             <div class="mb-3">
                 @if (Model.SecretKeysPage > 1)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
                 }
                 else
                 {
@@ -90,8 +93,10 @@
                 }
                 @if (Model.SecretKeysPage * Model.SecretKeysPerPage < Model.SecretKeysTotalCount)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
                 }
                 else
                 {
@@ -136,7 +141,9 @@
                                 {
                                     <select class="form-control" name="SecretKeys[@i].KeyType">
                                         <option value="">---</option>
-                                        @foreach (var type in Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] { (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
+                                        @foreach (var type in
+                                       Enum.GetValues(typeof(SecretKeyType)).OfType<SecretKeyType>().Concat(new[] {
+                            (SecretKeyType.Publisher | SecretKeyType.Subscriber) }))
                                         {
                                             if (key.KeyType.HasValue && key.KeyType.Value == type)
                                             {
@@ -154,7 +161,8 @@
                                 <div class="secret-key">@key.Key</div>
                                 <input type="hidden" name="SecretKeys[@i].Key" value="@key.Key" />
                             </td>
-                            <td class="p-1"><input class="form-control" type="text" name="SecretKeys[@i].Description" value="@key.Description" /></td>
+                            <td class="p-1"><input class="form-control" type="text" name="SecretKeys[@i].Description"
+                                    value="@key.Description" /></td>
                             <td class="align-middle text-center">@(key.IsConnected ? "○" : "-")</td>
                             @if (key.IsApproved)
                             {
@@ -167,15 +175,18 @@
                             <td class="p-1">
                                 <div class="d-flex gap-1 justify-content-between">
                                     <div class="flex-grow-1">
-                                        <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/update">変更</button>
+                                        <button class="btn btn-outline-secondary btn-block w-100"
+                                            formaction="/admin/keys/@key.Id/update">変更</button>
                                     </div>
                                     @if (key.IsApproved)
                                     {
                                         <div class="flex-grow-1 mr-1">
-                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/revoke">無効化</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100"
+                                                formaction="/admin/keys/@key.Id/revoke">無効化</button>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100"
+                                                formaction="/admin/keys/@key.Id/delete" disabled>削除</button>
                                         </div>
                                     }
                                     else
@@ -183,15 +194,18 @@
                                         <div class="flex-grow-1 mr-1">
                                             @if (key.KeyType.HasValue)
                                             {
-                                                <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/approve">有効化</button>
+                                                <button class="btn btn-outline-secondary btn-block w-100"
+                                                    formaction="/admin/keys/@key.Id/approve">有効化</button>
                                             }
                                             else
                                             {
-                                                <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
+                                                <button class="btn btn-outline-secondary btn-block w-100"
+                                                    formaction="/admin/keys/@key.Id/approve" disabled>有効化</button>
                                             }
                                         </div>
                                         <div class="flex-grow-1">
-                                            <button class="btn btn-outline-secondary btn-block w-100" formaction="/admin/keys/@key.Id/delete">削除</button>
+                                            <button class="btn btn-outline-secondary btn-block w-100"
+                                                formaction="/admin/keys/@key.Id/delete">削除</button>
                                         </div>
                                     }
                                 </div>
@@ -206,8 +220,10 @@
             <div class="mb-3">
                 @if (Model.SecretKeysPage > 1)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage })">最初のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage - 1 == 1 ? default(int?) : Model.SecretKeysPage - 1 })">前のページ</a>
                 }
                 else
                 {
@@ -216,8 +232,10 @@
                 }
                 @if (Model.SecretKeysPage * Model.SecretKeysPerPage < Model.SecretKeysTotalCount)
                 {
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
-                    <a href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Model.SecretKeysPage + 1 })">次のページ</a>
+                    <a
+                        href="@Url.Action("Index", new { perPage = Model.SecretKeysPerPage == 20 ? default(int?) : Model.SecretKeysPerPage, page = Math.Ceiling(Model.SecretKeysTotalCount / (double)Model.SecretKeysPerPage) })">最後のページ</a>
                 }
                 else
                 {
@@ -254,7 +272,8 @@
                     <select class="form-control" name="NewOrderType">
                         <option value="">---</option>
                         <option value="@OrderType.Buy" @(Model.NewOrderType == OrderType.Buy ? "selected" : "")>BUY</option>
-                        <option value="@OrderType.Sell" @(Model.NewOrderType == OrderType.Sell ? "selected" : "")>SELL</option>
+                        <option value="@OrderType.Sell" @(Model.NewOrderType == OrderType.Sell ? "selected" : "")>SELL
+                        </option>
                     </select>
                 </div>
                 <div>
