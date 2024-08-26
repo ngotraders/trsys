@@ -77,7 +77,7 @@
         {
             "type": "Microsoft.Sql/servers",
             "name": "[variables('dbserver-name')]",
-            "apiVersion": "2014-04-01",
+            "apiVersion": "2021-11-01",
             "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "[variables('dbserver-name')]"
@@ -89,7 +89,7 @@
             "resources": [
                 {
                     "type": "firewallRules",
-                    "apiVersion": "2014-04-01",
+                    "apiVersion": "2021-11-01",
                     "dependsOn": [
                         "[resourceId('Microsoft.Sql/servers', variables('dbserver-name'))]"
                     ],
@@ -105,7 +105,7 @@
         {
             "type": "Microsoft.Sql/servers/databases",
             "name": "[concat(variables('dbserver-name'),'/',variables('database-name'))]",
-            "apiVersion": "2014-04-01",
+            "apiVersion": "2021-11-01",
             "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "[variables('database-name')]"
