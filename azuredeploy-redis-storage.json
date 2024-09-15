@@ -29,6 +29,7 @@
     },
     "variables": {
         "storage-name": "[concat(replace(parameters('resourcePrefix'), '-', ''), 'storage')]",
+        "workspace-name": "[concat(parameters('resourcePrefix'), '-workspace')]",
         "insights-name": "[concat(parameters('resourcePrefix'), '-insights')]",
         "dbserver-name": "[concat(parameters('resourcePrefix'), '-database')]",
         "redis-name": "[concat(parameters('resourcePrefix'), '-redis')]",
@@ -116,7 +117,7 @@
             "properties": {
                 "collation": "SQL_Latin1_General_CP1_CI_AS",
                 "edition": "Basic",
-                "maxSizeBytes": "1073741824",
+                "maxSizeBytes": 1073741824,
                 "requestedServiceObjectiveName": "Basic"
             }
         },
@@ -154,9 +155,27 @@
             }
         },
         {
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "apiVersion": "2021-12-01-preview",
+            "name": "[variables('workspace-name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "name": "PerGB2018"
+                },
+                "retentionInDays": 120,
+                "features": {
+                    "enableLogAccessUsingOnlyResourcePermissions": true
+                }
+            }
+        },
+        {
             "type": "Microsoft.Insights/components",
             "name": "[variables('insights-name')]",
-            "apiVersion": "2015-05-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspace-name'))]"
+            ],
+            "apiVersion": "2020-02-02-preview",
             "location": "[resourceGroup().location]",
             "kind": "web",
             "tags": {
@@ -164,24 +183,9 @@
                 "displayName": "[variables('insights-name')]"
             },
             "properties": {
-                "application_Type": "web"
-            },
-            "resources": [
-                {
-                    "type": "currentbillingfeatures",
-                    "apiVersion": "2015-05-01",
-                    "name": "BillingFeature",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Insights/components', variables('insights-name'))]"
-                    ],
-                    "properties": {
-                        "CurrentBillingFeatures": "Basic",
-                        "DataVolumeCap": {
-                            "Cap": "0.2"
-                        }
-                    }
-                }
-            ]
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspace-name'))]"
+            }
         },
         {
             "type": "Microsoft.Web/sites",
@@ -267,7 +271,9 @@
                         "SnapshotDebugger_EXTENSION_VERSION": "disabled",
                         "XDT_MicrosoftApplicationInsights_BaseExtensions": "disabled",
                         "XDT_MicrosoftApplicationInsights_Mode": "recommended",
-                        "XDT_MicrosoftApplicationInsights_PreemptSdk": "1"
+                        "XDT_MicrosoftApplicationInsights_PreemptSdk": "1",
+                        "WEBSITE_LOCAL_CACHE_OPTION": "Always",
+                        "WEBSITE_LOCAL_CACHE_SIZEINMB": "1000"
                     }
                 },
                 {

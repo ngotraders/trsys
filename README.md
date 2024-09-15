@@ -7,5 +7,5 @@
 ```powershell
 $rg = 'trsys'
 New-AzResourceGroup -Name $rg -Location japaneast -Force
-New-AzResourceGroupDeployment -Name 'trsys-backend' -ResourceGroupName $rg -TemplateFile 'azuredeploy.json' -dbAdminName 'trsys' -dbAdminPassword 'P@ssw0rd'
+New-AzResourceGroupDeployment -Name 'trsys-backend' -ResourceGroupName $rg -TemplateFile 'azuredeploy.json' -webSiteName 'trsys' -webServerSku 'F1' -dbAdminName 'trsys' -dbAdminPassword 'P@ssw0rd' -environment 'Production'
 ```
