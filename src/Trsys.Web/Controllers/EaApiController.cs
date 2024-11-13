@@ -28,6 +28,15 @@ namespace Trsys.Web.Controllers
             this.mediator = mediator;
         }
 
+        [Route("api/ea/ping")]
+        [HttpPost]
+        [Consumes("text/plain")]
+        [RequireToken]
+        public IActionResult PostPing()
+        {
+            return Ok();
+        }
+
         [Route("api/ea/token/generate")]
         [HttpPost]
         [Consumes("text/plain")]
