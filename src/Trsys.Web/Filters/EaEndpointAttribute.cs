@@ -71,6 +71,5 @@ namespace Trsys.Web.Filters
             context.HttpContext.User = SecretKeyClaimsPrincipalFactory.Create(secretKey.Id, secretKey.Key, secretKey.KeyType.Value);
             await base.OnActionExecutionAsync(context, next);
         }
-
     }
 }

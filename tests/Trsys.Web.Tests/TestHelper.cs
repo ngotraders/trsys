@@ -11,11 +11,11 @@ namespace Trsys.Web.Tests
         public static TestServer CreateServer()
         {
             return new TestServer(new WebHostBuilder()
-                .UseSerilog(new LoggerConfiguration().WriteTo.Console().CreateLogger())
                 .UseConfiguration(
                     new ConfigurationBuilder()
                     .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Trsys.Web:PasswordSalt", "salt"), }).Build()
                  )
+                .ConfigureServices(services => services.AddSerilog(new LoggerConfiguration().WriteTo.Console().CreateLogger()))
                 .UseStartup<Startup>());
         }
     }
