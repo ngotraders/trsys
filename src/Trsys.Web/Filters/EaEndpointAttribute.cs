@@ -16,9 +16,9 @@ namespace Trsys.Web.Filters
 {
     public class EaEndpointAttribute : ActionFilterAttribute
     {
-        private static readonly Dictionary<string, SecretKeyType> secretKeyTypes = Enum.GetValues(typeof(SecretKeyType))
+        private static readonly Dictionary<string, SecretKeyType> secretKeyTypes = Enum.GetValues<SecretKeyType>()
             .OfType<SecretKeyType>()
-            .ToDictionary(key => Enum.GetName(typeof(SecretKeyType), key), key => key);
+            .ToDictionary(key => Enum.GetName(key), key => key);
 
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
@@ -27,7 +27,7 @@ namespace Trsys.Web.Filters
             {
                 if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
                 {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
+                    context.HttpContext.Response.Headers["X-Environment"] = "Development";
                 }
             }
             var key = (string)context.HttpContext.Request.Headers["X-Ea-Id"];
@@ -41,6 +41,11 @@ namespace Trsys.Web.Filters
             if (string.IsNullOrEmpty(type))
             {
                 context.Result = new BadRequestObjectResult("X-Ea-Type is not set.");
+                return;
+            }
+            if (!secretKeyTypes.TryGetValue(type, out var keyType))
+            {
+                context.Result = new BadRequestObjectResult("X-Ea-Type is not valid");
                 return;
             }
             if (string.IsNullOrEmpty(version))
@@ -59,7 +64,7 @@ namespace Trsys.Web.Filters
             var secretKey = await mediator.Send(new FindBySecretKey(key));
             if (secretKey == null)
             {
-                await mediator.Send(new SecretKeyCreateIfNotExistsCommand(secretKeyTypes.TryGetValue(type, out var keyType) ? keyType : null, key, null));
+                await mediator.Send(new SecretKeyCreateIfNotExistsCommand(keyType, key, null));
                 context.Result = new BadRequestObjectResult("InvalidSecretKey");
                 return;
             }

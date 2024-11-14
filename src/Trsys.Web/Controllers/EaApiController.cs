@@ -40,12 +40,17 @@ namespace Trsys.Web.Controllers
         [Route("api/ea/token/generate")]
         [HttpPost]
         [Consumes("text/plain")]
-        public async Task<IActionResult> PostToken([FromBody] string key)
+        public async Task<IActionResult> PostToken([FromHeader(Name = "X-Ea-Type")] string eaType, [FromBody] string key)
         {
             if (string.IsNullOrEmpty(key))
             {
                 return BadRequest("InvalidSecretKey");
             }
+            if (string.IsNullOrEmpty(eaType) || !Enum.GetNames<SecretKeyType>().Contains(eaType))
+            {
+                return BadRequest("InvalidKeyType");
+            }
+            var type = Enum.Parse<SecretKeyType>(eaType);
 
             try
             {
@@ -56,6 +61,10 @@ namespace Trsys.Web.Controllers
                     return BadRequest("InvalidSecretKey");
                 }
                 else if (!secretKey.IsApproved)
+                {
+                    return BadRequest("InvalidSecretKey");
+                }
+                else if ((secretKey.KeyType & type) != type)
                 {
                     return BadRequest("InvalidSecretKey");
                 }

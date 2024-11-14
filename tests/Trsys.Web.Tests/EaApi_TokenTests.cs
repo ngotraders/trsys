@@ -82,6 +82,27 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
+        public async Task PostApiToken_should_return_badrequest_given_key_type_not_match()
+        {
+            var server = TestHelper.CreateServer();
+            var client = server.CreateClient();
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Publisher");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+
+            using (var scope = server.Services.CreateScope())
+            {
+                var mediator = server.Services.GetRequiredService<IMediator>();
+                await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null));
+            }
+
+            var res = await client.PostAsync("/api/ea/token/generate", new StringContent(VALID_KEY, Encoding.UTF8, "text/plain"));
+            Assert.AreEqual(HttpStatusCode.BadRequest, res.StatusCode);
+            Assert.AreEqual("InvalidSecretKey", await res.Content.ReadAsStringAsync());
+        }
+
+        [TestMethod]
         public async Task PostApiToken_should_return_badrequest_given_in_use_secret_key()
         {
             var server = TestHelper.CreateServer();
