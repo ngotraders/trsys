@@ -49,7 +49,7 @@ namespace Trsys.Models.ReadModel.Handlers
             await db.AddAsync(order);
             if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
             {
-                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeOpenedMessage(order));
+                notificationDispatcher.DispatchSystemNotification(NotificationMessageDto.CreateCopyTradeOpenedMessage(order));
             }
         }
 
@@ -62,7 +62,7 @@ namespace Trsys.Models.ReadModel.Handlers
             }
             if (Math.Abs((DateTimeOffset.UtcNow - notification.TimeStamp).TotalSeconds) < 10)
             {
-                await notificationDispatcher.DispatchSystemNotificationAsync(NotificationMessageDto.CreateCopyTradeClosedMessage(order));
+                notificationDispatcher.DispatchSystemNotification(NotificationMessageDto.CreateCopyTradeClosedMessage(order));
             }
         }
 

@@ -8,6 +8,7 @@
     <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
     <PackageReference Include="SqlStreamStore" Version="1.2.0" />
     <PackageReference Include="SqlStreamStore.MsSql" Version="1.2.0" />

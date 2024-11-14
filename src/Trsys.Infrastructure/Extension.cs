@@ -81,6 +81,7 @@ namespace Trsys.Infrastructure
 
             // User notification
             services.AddSingleton<IUserNotificationDispatcher, EmailMessageUserNotificationDispatcher>();
+            services.AddHostedService<EmailMessageUserNotificationDispatcher>();
 
             return services;
         }

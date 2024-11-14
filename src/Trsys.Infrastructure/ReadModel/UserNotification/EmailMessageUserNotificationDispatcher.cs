@@ -1,13 +1,18 @@
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.ReadModel.Dtos;
 using Trsys.Models.ReadModel.Infrastructure;
 
 namespace Trsys.Infrastructure.ReadModel.UserNotification
 {
-    public class EmailMessageUserNotificationDispatcher : IUserNotificationDispatcher
+    public class EmailMessageUserNotificationDispatcher : BackgroundService, IUserNotificationDispatcher
     {
         private readonly IEmailSender emailSender;
         private readonly IUserDatabase userDatabase;
+        private readonly BlockingCollection<NotificationMessageDto> queue = [];
 
         public EmailMessageUserNotificationDispatcher(IEmailSender emailSender, IUserDatabase userDatabase)
         {
@@ -15,17 +20,36 @@ namespace Trsys.Infrastructure.ReadModel.UserNotification
             this.userDatabase = userDatabase;
         }
 
-        public async Task DispatchSystemNotificationAsync(NotificationMessageDto message)
+        public void DispatchSystemNotification(NotificationMessageDto message)
         {
-            var users = await userDatabase.SearchAsync();
-            foreach (var user in users)
+            queue.Add(message);
+        }
+
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            return Task.Run(async () =>
             {
-                if (string.IsNullOrEmpty(user.EmailAddress))
+                try
                 {
-                    continue;
+                    while (!stoppingToken.IsCancellationRequested)
+                    {
+                        var message = queue.Take(stoppingToken);
+                        var users = await userDatabase.SearchAsync();
+                        foreach (var user in users)
+                        {
+                            if (string.IsNullOrEmpty(user.EmailAddress))
+                            {
+                                continue;
+                            }
+                            await emailSender.SendEmailAsync(user.EmailAddress, message.Subject, message.Body);
+                        }
+                    }
                 }
-                await emailSender.SendEmailAsync(user.EmailAddress, message.Subject, message.Body);
-            }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+            });
         }
     }
 }
