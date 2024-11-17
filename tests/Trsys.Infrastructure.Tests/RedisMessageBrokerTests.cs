@@ -32,7 +32,7 @@ namespace Trsys.Infrastructure.Tests
             var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
             var sut = new RedisMessageBroker(connection, dispatcher, logger);
-            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty)));
+            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty, "NORMAL")));
             Assert.AreEqual(Guid.Empty, store.First().Id);
         }
 
@@ -48,7 +48,7 @@ namespace Trsys.Infrastructure.Tests
             var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
             var sut = new RedisMessageBroker(connection, dispatcher, logger);
-            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty)));
+            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty, "NORMAL")));
         }
 
         [TestMethod]
@@ -64,7 +64,7 @@ namespace Trsys.Infrastructure.Tests
             var dispatcher = services.GetRequiredService<IMessageDispatcher>();
             var logger = services.GetRequiredService<ILogger<RedisMessageBroker>>();
             var sut = new RedisMessageBroker(connection, dispatcher, logger);
-            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty)));
+            await sut.Enqueue(PublishingMessageEnvelope.Create(new SecretKeyConnected(Guid.Empty, "NORMAL")));
         }
 
         class TestHandler1 : INotificationHandler<SecretKeyConnected>

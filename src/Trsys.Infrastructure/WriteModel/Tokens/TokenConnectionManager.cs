@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trsys.Models.Events;
@@ -26,13 +25,13 @@ namespace Trsys.Infrastructure.WriteModel.Tokens
         {
             using var scope = this.serviceScopeFactory.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
-            var connectedKeys = await store.SearchConnectedSecretKeysAsync();
-            if (connectedKeys.Any())
+            var keyConnections = await store.SearchConnectedSecretKeysAsync();
+            if (keyConnections.Count != 0)
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                foreach (var keyId in connectedKeys)
+                foreach (var connection in keyConnections)
                 {
-                    await mediator.Publish(new SecretKeyEaConnected(keyId));
+                    await mediator.Publish(new SecretKeyEaConnected(connection.Id, connection.EaState));
                 }
             }
         }
@@ -57,35 +56,28 @@ namespace Trsys.Infrastructure.WriteModel.Tokens
         {
             using var scope = this.serviceScopeFactory.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
-            var expiredKeys = await store.SearchExpiredSecretKeysAsync();
-            foreach (var keyId in expiredKeys)
+            var keyConnections = await store.SearchExpiredSecretKeysAsync();
+            foreach (var connection in keyConnections)
             {
-                var clearExpirationResult = await store.ClearConnectionAsync(keyId);
+                var clearExpirationResult = await store.ClearConnectionAsync(connection.Id);
                 if (clearExpirationResult)
                 {
                     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(keyId)));
+                    await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaDisconnected(connection.Id)));
                 }
             }
         }
 
-        public async void Touch(Guid id, bool forcePublishEvent)
+        public async void Touch(Guid id, string eaState, bool forcePublishEvent)
         {
             using var scope = this.serviceScopeFactory.CreateScope();
             var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
-            var touchResult = await store.UpdateLastAccessedAsync(id);
+            var touchResult = await store.UpdateLastAccessedAsync(id, eaState);
             if (forcePublishEvent || touchResult)
             {
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id)));
+                await mediator.Publish(PublishingMessageEnvelope.Create(new SecretKeyEaConnected(id, eaState)));
             }
-        }
-
-        public async Task RetainAsync(Guid id)
-        {
-            using var scope = this.serviceScopeFactory.CreateScope();
-            var store = scope.ServiceProvider.GetRequiredService<ISecretKeyConnectionManagerStore>();
-            await store.UpdateLastAccessedAsync(id);
         }
 
         public async Task ReleaseAsync(Guid id)

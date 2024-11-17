@@ -38,6 +38,80 @@ namespace Trsys.Web.Tests
         }
 
         [TestMethod]
+        public async Task RequireToken_should_become_connected_when_ea_state_is_normal()
+        {
+            var server = TestHelper.CreateServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-State", "NORMAL");
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+
+            var res = await client.GetAsync("/api/ea/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            Assert.AreEqual("", await res.Content.ReadAsStringAsync());
+            var key = await mediator.Send(new FindBySecretKey(VALID_KEY));
+            Assert.IsTrue(key.IsConnected);
+        }
+
+        [TestMethod]
+        public async Task RequireToken_should_become_connected_when_ea_state_is_not_normal()
+        {
+            var server = TestHelper.CreateServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-State", "KEY_UNAUTHORIZED");
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+
+            var res = await client.GetAsync("/api/ea/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+            Assert.AreEqual("", await res.Content.ReadAsStringAsync());
+            var key = await mediator.Send(new FindBySecretKey(VALID_KEY));
+            Assert.IsFalse(key.IsConnected);
+        }
+
+        [TestMethod]
+        public async Task RequireToken_should_become_connected_when_ea_state_is_normal_and_become_abnormal()
+        {
+            var server = TestHelper.CreateServer();
+            var client = server.CreateClient();
+
+            var mediator = server.Services.GetRequiredService<IMediator>();
+            var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Subscriber, VALID_KEY, null, true));
+            var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
+
+            client.DefaultRequestHeaders.Add("X-Ea-Id", VALID_KEY);
+            client.DefaultRequestHeaders.Add("X-Ea-Type", "Subscriber");
+            client.DefaultRequestHeaders.Add("X-Ea-Version", VALID_VERSION);
+            client.DefaultRequestHeaders.Add("X-Ea-State", "NORMAL");
+            client.DefaultRequestHeaders.Add("X-Secret-Token", token);
+
+            var res = await client.GetAsync("/api/ea/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res.StatusCode);
+
+            client.DefaultRequestHeaders.Remove("X-Ea-State");
+            client.DefaultRequestHeaders.Add("X-Ea-State", "UNNORMAL");
+
+            var res2 = await client.GetAsync("/api/ea/orders");
+            Assert.AreEqual(HttpStatusCode.OK, res2.StatusCode);
+            var key = await mediator.Send(new FindBySecretKey(VALID_KEY));
+            Assert.IsFalse(key.IsConnected);
+        }
+
+        [TestMethod]
         public async Task GetApiOrders_should_return_ok_and_single_entity_given_single_order_exists()
         {
             var server = TestHelper.CreateServer();

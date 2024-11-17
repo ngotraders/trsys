@@ -17,7 +17,7 @@ namespace Trsys.Web.WriteModel.Handlers
 
         public Task Handle(SecretKeyConnected notification, CancellationToken cancellationToken)
         {
-            manager.Touch(notification.Id, notification.ForcePublishEvent);
+            manager.Touch(notification.Id, notification.EaState, notification.ForcePublishEvent);
             return Task.CompletedTask;
         }
     }

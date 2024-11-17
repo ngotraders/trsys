@@ -70,7 +70,7 @@ namespace Trsys.Models.Tests
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", null, true));
             var token = await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id));
-            await mediator.Publish(new SecretKeyConnected(id));
+            await mediator.Publish(new SecretKeyConnected(id, "NORMAL"));
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await mediator.Send(new SecretKeyGenerateSecretTokenCommand(id)));
 
             var store = services.GetRequiredService<IEventStore>();

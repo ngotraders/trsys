@@ -74,7 +74,7 @@ namespace Trsys.Models.ReadModel.Handlers
 
         public Task Handle(SecretKeyEaConnected notification, CancellationToken cancellationToken = default)
         {
-            return db.UpdateIsConnectedAsync(notification.Id, true);
+            return db.UpdateIsConnectedAsync(notification.Id, notification.EaState == "NORMAL");
         }
 
         public Task Handle(SecretKeyEaDisconnected notification, CancellationToken cancellationToken = default)

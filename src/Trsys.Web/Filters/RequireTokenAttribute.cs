@@ -34,14 +34,12 @@ namespace Trsys.Web.Filters
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
-            if (env.IsDevelopment())
-            {
-                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
-                {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
-                }
-            }
             var token = context.HttpContext.Request.Headers["X-Secret-Token"];
+            var eaState = (string)context.HttpContext.Request.Headers["X-Ea-State"];
+            if (string.IsNullOrEmpty(eaState))
+            {
+                eaState = "NORMAL";
+            }
             if (string.IsNullOrEmpty(token))
             {
                 context.Result = new BadRequestObjectResult("X-Secret-Token not set.");
@@ -54,7 +52,7 @@ namespace Trsys.Web.Filters
                 context.Result = new UnauthorizedObjectResult("X-Secret-Token is invalid.");
                 return;
             }
-            await mediator.Publish(new SecretKeyConnected(result.Id, !result.IsConnected));
+            await mediator.Publish(new SecretKeyConnected(result.Id, eaState, !result.IsConnected));
             await base.OnActionExecutionAsync(context, next);
         }
     }

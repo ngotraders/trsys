@@ -21,20 +21,22 @@ namespace Trsys.Infrastructure.WriteModel.Tokens.Redis
             this.connection = connection;
         }
 
-        public async Task<bool> UpdateLastAccessedAsync(Guid id)
+        public Task<bool> UpdateLastAccessedAsync(Guid id, string eaState)
         {
-            var now = DateTimeOffset.UtcNow;
-            if (!lastAccessed.TryGetValue(id, out var timestamp))
-            {
-                lastAccessed.TryAdd(id, now);
-            }
-            if (now - timestamp < oneSecond)
-            {
-                return false;
-            }
-            var cache = connection.GetDatabase();
-            var idStr = id.ToString();
-            return await cache.SortedSetAddAsync(lastAccessedKey, idStr, (now + fiveSeconds).ToUnixTimeSeconds(), When.Always);
+            throw new NotImplementedException();
+            // eaState ‚ÌŽÀ‘•‚ª•K—v
+            //var now = DateTimeOffset.UtcNow;
+            //if (!lastAccessed.TryGetValue(id, out var timestamp))
+            //{
+            //    lastAccessed.TryAdd(id, now);
+            //}
+            //if (now - timestamp < oneSecond)
+            //{
+            //    return false;
+            //}
+            //var cache = connection.GetDatabase();
+            //var idStr = id.ToString();
+            //return await cache.SortedSetAddAsync(lastAccessedKey, idStr, (now + fiveSeconds).ToUnixTimeSeconds(), When.Always);
         }
 
         public async Task<bool> ClearConnectionAsync(Guid id)
@@ -51,18 +53,20 @@ namespace Trsys.Infrastructure.WriteModel.Tokens.Redis
             }
         }
 
-        public async Task<List<Guid>> SearchExpiredSecretKeysAsync()
+        public Task<List<EaConnection>> SearchExpiredSecretKeysAsync()
         {
-            var cache = connection.GetDatabase();
-            var values = await cache.SortedSetRangeByScoreAsync(lastAccessedKey, stop: DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-            return values.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
+            throw new NotImplementedException();
+            //var cache = connection.GetDatabase();
+            //var values = await cache.SortedSetRangeByScoreAsync(lastAccessedKey, stop: DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            //return values.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
         }
 
-        public async Task<List<Guid>> SearchConnectedSecretKeysAsync()
+        public Task<List<EaConnection>> SearchConnectedSecretKeysAsync()
         {
-            var cache = connection.GetDatabase();
-            var setValues = await cache.SortedSetRangeByScoreAsync(lastAccessedKey);
-            return setValues.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
+            throw new NotImplementedException();
+            //var cache = connection.GetDatabase();
+            //var setValues = await cache.SortedSetRangeByScoreAsync(lastAccessedKey);
+            //return setValues.Select(v => Guid.TryParse(v.ToString(), out var result) ? result : Guid.Empty).ToList();
         }
 
         public async Task<bool> IsConnectedAsync(Guid id)

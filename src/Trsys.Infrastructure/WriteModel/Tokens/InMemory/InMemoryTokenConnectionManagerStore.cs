@@ -9,23 +9,21 @@ namespace Trsys.Infrastructure.WriteModel.Tokens.InMemory
     public class InMemoryTokenConnectionManagerStore : ISecretKeyConnectionManagerStore
     {
         private readonly BlockingTaskQueue queue = new();
-        private readonly Dictionary<Guid, DateTime> store = new();
+        private readonly Dictionary<Guid, (EaConnection, DateTime)> store = [];
         private static readonly TimeSpan fiveSeconds = TimeSpan.FromSeconds(5);
 
-        public Task<bool> UpdateLastAccessedAsync(Guid id)
+        public Task<bool> UpdateLastAccessedAsync(Guid id, string eaState)
         {
             return queue.Enqueue(() =>
             {
                 var value = DateTime.UtcNow + fiveSeconds;
-                if (store.TryAdd(id, value))
+                if (!store.TryGetValue(id, out var oldConnection))
                 {
+                    store[id] = (new EaConnection(id, eaState), value);
                     return true;
                 }
-                else
-                {
-                    store[id] = value;
-                    return false;
-                }
+                store[id] = (new EaConnection(id, eaState), value);
+                return oldConnection.Item1.EaState != eaState;
             });
         }
 
@@ -37,20 +35,20 @@ namespace Trsys.Infrastructure.WriteModel.Tokens.InMemory
             });
         }
 
-        public Task<List<Guid>> SearchExpiredSecretKeysAsync()
+        public Task<List<EaConnection>> SearchExpiredSecretKeysAsync()
         {
             return queue.Enqueue(() =>
             {
                 return store
-                    .Where(e => DateTime.UtcNow > e.Value)
-                    .Select(e => e.Key)
+                    .Where(e => DateTime.UtcNow > e.Value.Item2)
+                    .Select(e => e.Value.Item1)
                     .ToList();
             });
         }
 
-        public Task<List<Guid>> SearchConnectedSecretKeysAsync()
+        public Task<List<EaConnection>> SearchConnectedSecretKeysAsync()
         {
-            return Task.FromResult(store.Keys.ToList());
+            return Task.FromResult(store.Values.Select(v => v.Item1).ToList());
         }
 
         public Task<bool> IsConnectedAsync(Guid id)

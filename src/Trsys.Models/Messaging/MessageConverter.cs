@@ -13,8 +13,7 @@ namespace Trsys.Models.Messaging
     public static class MessageConverter
     {
 
-        private static Type[] types = new[]
-        {
+        private static Type[] types = [
             typeof(LogNotification),
             typeof(OrderPublisherClosedOrder),
             typeof(OrderPublisherOpenedOrder),
@@ -41,7 +40,7 @@ namespace Trsys.Models.Messaging
             typeof(WorldStateSecretKeyIdGenerated),
             typeof(WorldStateUserDeleted),
             typeof(WorldStateUserIdGenerated),
-        };
+        ];
         private static Func<object, Type>[] objToTypes = types.Select(e =>
         {
             var p = Expression.Parameter(typeof(object));

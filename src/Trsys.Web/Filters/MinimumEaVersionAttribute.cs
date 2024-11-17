@@ -18,13 +18,6 @@ namespace Trsys.Web.Filters
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var env = context.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
-            if (env.IsDevelopment())
-            {
-                if (!context.HttpContext.Response.Headers.ContainsKey("X-Environment"))
-                {
-                    context.HttpContext.Response.Headers.Add("X-Environment", "Development");
-                }
-            }
             var version = (string)context.HttpContext.Request.Headers["X-Ea-Version"] ?? (string)context.HttpContext.Request.Headers["Version"];
             if (string.IsNullOrEmpty(version))
             {

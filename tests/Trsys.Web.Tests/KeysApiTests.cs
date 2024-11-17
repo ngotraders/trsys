@@ -98,10 +98,10 @@ namespace Trsys.Web.Tests
         public static async Task LoginAsync(this HttpClient client)
         {
             var loginResponse = await client.PostAsync("/login", new FormUrlEncodedContent(
-                new KeyValuePair<string, string>[] {
+                [
                         KeyValuePair.Create("Username", "admin"),
                         KeyValuePair.Create("Password", "P@ssw0rd"),
-                }));
+                ]));
 
             var container = new CookieContainer();
             container.SetCookies(client.BaseAddress, loginResponse.Headers.GetValues("Set-Cookie").FirstOrDefault());
