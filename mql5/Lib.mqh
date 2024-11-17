@@ -150,31 +150,37 @@ class EaState {
    string m_ea_type;
    long m_start_time;
    long m_next_ping_time;
+   string m_ea_state;
    void m_update_comment() {
       if (m_initializing) {
          return;
       }
       if (!m_ea_enabled) {
          Comment("Trsys" + m_ea_type + ": 自動売買が無効です");
+         m_ea_state = "DISABLED";
          m_logger.WriteLog("INFO", "Automated trading disabled");
          return;
       }
       if (!m_has_server_connection) {
          Comment("Trsys" + m_ea_type + ": サーバーと通信できません。");
+         m_ea_state = "CONNECTION_ERROR";
          m_logger.WriteLog("INFO", "Server connection failed");
          return;
       }
       string envText = StringFind(m_env, "Development") >= 0 ? "<検証環境>" : "";
       if (!m_key_is_valid) {
          Comment("Trsys" + m_ea_type + envText + ": シークレットキーが異常です。");
+         m_ea_state = "KEY_INVALID";
          m_logger.WriteLog("INFO", "Secret key is invalid");
          return;
       }
       if (!m_key_is_authorized) {
          Comment("Trsys" + m_ea_type + envText + ": シークレットキーが異常です。");
+         m_ea_state = "KEY_UNAUTHORIZED";
          m_logger.WriteLog("INFO", "Secret key is not authorized");
          return;
       }
+      m_ea_state = "NORMAL";
       if (m_ea_type == "Publisher") {
          Comment("Trsys" + m_ea_type + envText + ": 正常 (取引割合: " + DoubleToString(publisherConfig.OrderPercentageToSendSubscriber * 100) + "%)");
          m_logger.WriteLog("INFO", "Normal (Order Percentage: " + DoubleToString(publisherConfig.OrderPercentageToSendSubscriber * 100) + "%)");
@@ -249,6 +255,9 @@ public:
          m_env = env;
          m_update_comment();
       }
+   };
+   string GetState() {
+      return m_ea_state;
    };
    void Begin() {
       if (PERFORMANCE) {
@@ -1138,6 +1147,10 @@ class TrsysClient {
    
    string m_generate_header(string method, bool useToken, bool needToken) {
       string header = "X-Ea-Id: " + m_generate_secret_key() + "\r\nX-Ea-Type: " + m_ea_type + "\r\nX-Ea-Version: " + Version;
+      string ea_state = m_state.GetState();
+      if (ea_state != NULL) {
+         header += "\r\nX-Ea-State: " + ea_state;
+      }
       if (useToken) {
          string secret_token = m_get_secret_token();
          if (needToken && secret_token == NULL) {
