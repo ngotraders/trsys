@@ -163,12 +163,16 @@
             "properties": {
                 "name": "[parameters('webSiteName')]",
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('webserver-name'))]",
-                "siteConfig": {}
+                "httpsOnly": true,
+                "siteConfig": {
+                    "httpsOnly": true,
+                    "windowsFxVersion": "DOTNETCORE|8.0"
+                }
             },
             "resources": [
                 {
                     "type": "config",
-                    "apiVersion": "2016-08-01",
+                    "apiVersion": "2018-11-01",
                     "name": "connectionstrings",
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/sites', parameters('webSiteName'))]",
@@ -183,7 +187,7 @@
                 },
                 {
                     "type": "config",
-                    "apiVersion": "2016-08-01",
+                    "apiVersion": "2018-11-01",
                     "name": "appsettings",
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/sites', parameters('webSiteName'))]",
@@ -215,7 +219,7 @@
                         "[resourceId('Microsoft.Web/sites', parameters('webSiteName'))]"
                     ],
                     "properties": {
-                        "repoUrl": "https://github.com/chameleonhead/trsys.git",
+                        "repoUrl": "https://github.com/ngotraders/trsys.git",
                         "branch": "main",
                         "isManualIntegration": true
                     }
