@@ -19,19 +19,19 @@ namespace Trsys.Models.Tests
             using var services = new ServiceCollection().AddInMemoryInfrastructure().BuildServiceProvider();
             var mediator = services.GetRequiredService<IMediator>();
             var id = await mediator.Send(new SecretKeyCreateCommand(SecretKeyType.Publisher, "KEY", "description", true));
-            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
-            {
-                PublishedOrder.Parse("1:USDJPY:0:1617271883:100:20")
-            }));
-            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
-            {
+            await mediator.Send(new PublisherReplaceOrdersCommand(id,
+            [
+                PublishedOrder.Parse("1:USDJPY#:0:1617271883:100:20")
+            ]));
+            await mediator.Send(new PublisherReplaceOrdersCommand(id,
+            [
                 PublishedOrder.Parse("1:USDJPY:0:1617271883:100:20"),
                 PublishedOrder.Parse("2:EURJPY:1:1617271884:50:98")
-            }));
-            await mediator.Send(new PublisherReplaceOrdersCommand(id, new[]
-            {
+            ]));
+            await mediator.Send(new PublisherReplaceOrdersCommand(id,
+            [
                 PublishedOrder.Parse("2:EURJPY:1:1617271884:50:98")
-            }));
+            ]));
 
             var store = services.GetRequiredService<IEventStore>();
             var events = (await store.Get(id, 0)).ToList();
