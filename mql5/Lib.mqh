@@ -258,8 +258,13 @@ public:
       m_key_is_valid = false;
       m_ea_type = l_ea_type;
       m_next_ping_time = -1;
+      Print("Started (" + m_ea_type + "," + Version + ")");
       IsEaEnabled();
    };
+   ~EaState()
+   {
+      Print("Finished (" + m_ea_type + "," + Version + ")");
+   }
    void SetInitializationFinish()
    {
       m_initializing = false;
