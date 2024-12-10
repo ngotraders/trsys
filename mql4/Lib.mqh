@@ -2,7 +2,7 @@ bool DEBUG = false;
 bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
-string Endpoint = "https://copy-trading-system.azurewebsites.net";
+string Endpoint = "https://kopi-trading-system.azurewebsites.net";
 string Version = "20241210";
 
 enum EnumLotCalculationType

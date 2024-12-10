@@ -5,7 +5,6 @@ import Helmet from "react-helmet";
 const Header = () => (
   <div
     style={{
-      background: "rebeccapurple",
       marginBottom: "1.45rem",
     }}
   >
