@@ -25,7 +25,14 @@ int OnInit()
 {
    //--- create timer
    subscriberConfig.LotCalculationType = LotCalculationType;
-   subscriberConfig.LotCalculationValue = MathMax(0, MathMin(100, LotCalculationValue)) / 100;
+   if (subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot)
+   {
+      subscriberConfig.LotCalculationValue = LotCalculationValue;
+   }
+   else
+   {
+      subscriberConfig.LotCalculationValue = MathMax(0, MathMin(100, LotCalculationValue)) / 100;
+   }
    EventSetMillisecondTimer(100);
    logger = new Logger();
    state = new EaState(logger, Type);

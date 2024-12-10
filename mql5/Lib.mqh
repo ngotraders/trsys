@@ -3,7 +3,7 @@ bool PERFORMANCE = false;
 bool DRY_RUN = false;
 
 string Endpoint = "https://copy-trading-system.azurewebsites.net";
-string Version = "20241124";
+string Version = "20241210";
 
 enum EnumLotCalculationType
 {
@@ -233,7 +233,7 @@ class EaState
          if (subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot)
          {
             Comment("Trsys" + m_ea_type + envText + ": 正常 (固定ロット: " + DoubleToString(subscriberConfig.LotCalculationValue) + ")");
-            m_logger.WriteLog("INFO", "Normal (Fixed Lot: " + DoubleToString(subscriberConfig.LotCalculationValue * 100) + "%)");
+            m_logger.WriteLog("INFO", "Normal (Fixed Lot: " + DoubleToString(subscriberConfig.LotCalculationValue) + ")");
          }
          else if (subscriberConfig.LotCalculationType == EnumLotCalculationTypePercentage)
          {
@@ -490,7 +490,7 @@ class PositionManager
          m_logger.WriteLog("DEBUG", "CalculateVolume: Fixed Lots. Symbol = " + symbol + ", Margin for a lot = " + DoubleToString(one_lot) + ", Step = " + DoubleToString(step) + ", Balance = " + DoubleToString(account_balance) + ",  Free margin = " + DoubleToString(account_free_margin) + ", Leverage = " + IntegerToString(AccountInfoInteger(ACCOUNT_LEVERAGE)) + ", Calculated volume = " + DoubleToString(lots) + ", Calculated free volume = " + DoubleToString(lotsFree));
          return lots;
       }
-      else if (subscriberConfig.LotCalculationType == EnumLotCalculationTypeLot)
+      else if (subscriberConfig.LotCalculationType == EnumLotCalculationTypePercentage)
       {
          order_percentage = subscriberConfig.LotCalculationValue;
          lots = MathFloor(account_balance * order_percentage / one_lot / step) * step;
