@@ -5,7 +5,6 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using SqlStreamStore;
 using StackExchange.Redis;
-using System;
 using System.Reflection;
 using Trsys.Infrastructure.Logging;
 using Trsys.Infrastructure.Messaging;
@@ -26,32 +25,9 @@ namespace Trsys.Infrastructure
 {
     public static class Extension
     {
-        public static IServiceCollection AddEmailSender(this IServiceCollection services, Action<EmailSenderConfiguration> action)
+        public static IServiceCollection AddEmailSender(this IServiceCollection services)
         {
-            var configuration = new EmailSenderConfiguration();
-            action?.Invoke(configuration);
-            if (string.IsNullOrEmpty(configuration.Host))
-            {
-                services.AddSingleton<IEmailSender, DummyEmailSender>();
-            }
-            else
-            {
-                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
-            }
-            return services;
-        }
-
-        public static IServiceCollection AddEmailSender(this IServiceCollection services, EmailSenderConfiguration configuration)
-        {
-            if (configuration == null || string.IsNullOrEmpty(configuration.Host))
-            {
-                services.AddSingleton<IEmailSender, DummyEmailSender>();
-            }
-            else
-            {
-                services.AddSingleton<IEmailSender>(new MailKitEmailSender(configuration));
-            }
-            return services;
+            return services.AddTransient<IEmailSender, MailKitEmailSender>();
         }
 
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)
@@ -124,6 +100,7 @@ namespace Trsys.Infrastructure
             services.AddSingleton<IOrderDatabase, InMemoryOrderDatabase>();
             services.AddSingleton<IOrderHistoryDatabase, InMemoryOrderHistoryDatabase>();
             services.AddSingleton<ILogDatabase, InMemoryLogDatabase>();
+            services.AddSingleton<IConfigurationDatabase, InMemoryConfigurationDatabase>();
 
             if (string.IsNullOrEmpty(sqlserverConnection))
             {

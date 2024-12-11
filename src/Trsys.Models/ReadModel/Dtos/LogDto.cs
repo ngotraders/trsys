@@ -5,13 +5,13 @@ namespace Trsys.Models.ReadModel.Dtos
 {
     public class LogDto
     {
-        private static string[] LogTypes = new[]
-        {
+        private static string[] LogTypes =
+        [
             "DEBUG",
             "INFO",
             "WARN",
             "ERROR",
-        };
+        ];
 
         public Guid Id { get; set; }
         public string RequestId { get; set; }

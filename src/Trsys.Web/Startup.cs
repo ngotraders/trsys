@@ -72,7 +72,7 @@ namespace Trsys.Web
                 });
             }
             services.AddInfrastructure(sqlserverConnection, redisConnection);
-            services.AddEmailSender(Configuration.GetSection("Trsys.Web:EmailSenderConfiguration").Get<EmailSenderConfiguration>());
+            services.AddEmailSender();
             services.AddDbContext<TrsysContext>(options => options.UseSqlServer(sqlserverConnection));
             if (!string.IsNullOrEmpty(sqlserverConnection))
             {

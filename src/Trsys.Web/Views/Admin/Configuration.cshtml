@@ -1,0 +1,96 @@
+@using Microsoft.Extensions.Hosting
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment env
+@using Trsys.Models
+@using System.Linq
+@model Trsys.Web.ViewModels.Admin.ConfigurationViewModel
+
+@{
+    ViewBag.Title = "設定";
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger mb-4">
+        @Model.ErrorMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success mb-4">
+        @Model.SuccessMessage
+    </div>
+}
+
+<form method="post">
+    <h1 class="h2 mb-3 font-weight-bold">@ViewBag.Title</h1>
+
+    <div class="mb-4">
+        <h2>メール設定</h2>
+        <div class="mb-2">
+            <label>ホスト名</label>
+            <input class="form-control" type="text" name="EmailConfiguration.Host" value="@Model.EmailConfiguration.Host" />
+        </div>
+        <div class="mb-2">
+            <label>ポート</label>
+            <input class="form-control" type="text" name="EmailConfiguration.Port" value="@Model.EmailConfiguration.Port" />
+        </div>
+        <div class="mb-2">
+            <label>SSL</label>
+            @if (Model.EmailConfiguration.UseSsl.HasValue && Model.EmailConfiguration.UseSsl.Value)
+            {
+                <input class="form-check" type="checkbox" name="EmailConfiguration.UseSsl" value="true" checked />
+            }
+            else
+            {
+                <input class="form-check" type="checkbox" name="EmailConfiguration.UseSsl" value="true" />
+            }
+        </div>
+        <div class="mb-2">
+            <label>ユーザー名</label>
+            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationUser" value="@Model.EmailConfiguration.AuthenticationUser" />
+        </div>
+        <div class="mb-2">
+            <label>パスワード</label>
+            <input class="form-control" type="password" name="EmailConfiguration.AuthenticationPassword" value="@Model.EmailConfiguration.AuthenticationPassword" />
+        </div>
+        <div class="mb-2">
+            <label>メール送信元</label>
+            <input class="form-control" type="text" name="EmailConfiguration.MailFrom" value="@Model.EmailConfiguration.MailFrom" />
+        </div>
+        <div class="mb-2">
+            <label>クライアントID</label>
+            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationClientId" value="@Model.EmailConfiguration.AuthenticationClientId" />
+        </div>
+        <div class="mb-2">
+            <label>ClientSecret</label>
+            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationClientSecret" value="@Model.EmailConfiguration.AuthenticationClientSecret" />
+        </div>
+        <div class="mb-2">
+            <label>Authority</label>
+            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationAuthority" value="@Model.EmailConfiguration.AuthenticationAuthority" />
+        </div>
+        <div class="mb-2">
+            <label>スコープ</label>
+            @if (Model.EmailConfiguration.AuthenticationScopes.Any())
+            {
+
+                @for (int i = 0; i < Model.EmailConfiguration.AuthenticationScopes.Count; i++)
+                {
+                    <div>
+                        <input class="form-control" type="text" name="EmailConfiguration.AuthenticationScopes[@i]" value="@Model.EmailConfiguration.AuthenticationScopes[i]" />
+                    </div>
+                }
+            }
+            else
+            {
+                <div>
+                    <input class="form-control" type="text" name="EmailConfiguration.AuthenticationScopes" value="" />
+                </div>
+
+            }
+        </div>
+        <div class="mt-2 mt-lg-0">
+            <button formaction="/admin/configuration" class="btn btn-outline-secondary btn-block text-nowrap">登録</button>
+        </div>
+    </div>
+</form>

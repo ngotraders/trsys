@@ -3,71 +3,75 @@ using System;
 using System.Collections.Generic;
 using Trsys.Models.Events;
 
-namespace Trsys.Models.WriteModel.Domain
+namespace Trsys.Models.WriteModel.Domain;
+
+public class WorldStateAggregate : AggregateRoot
 {
-    public class WorldStateAggregate : AggregateRoot
+    public static readonly Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
+
+    private readonly Dictionary<string, Guid> _secretKeys = new();
+    private readonly Dictionary<string, Guid> _userNames = new();
+    public void Apply(WorldStateSecretKeyIdGenerated e) => _secretKeys.Add(e.Key, e.SecretKeyId);
+    public void Apply(WorldStateSecretKeyDeleted e) => _secretKeys.Remove(e.Key);
+    public void Apply(WorldStateUserIdGenerated e) => _userNames.Add(e.Username, e.UserId);
+    public void Apply(WorldStateUserDeleted e) => _userNames.Remove(e.Username);
+
+    public WorldStateAggregate()
     {
-        public static readonly Guid WORLD_STATE_ID = Guid.Parse("3502ca88-a8e7-4ea4-92dd-ce181e932c58");
+    }
 
-        private readonly Dictionary<string, Guid> _secretKeys = new();
-        private readonly Dictionary<string, Guid> _userNames = new();
-        public void Apply(WorldStateSecretKeyIdGenerated e) => _secretKeys.Add(e.Key, e.SecretKeyId);
-        public void Apply(WorldStateSecretKeyDeleted e) => _secretKeys.Remove(e.Key);
-        public void Apply(WorldStateUserIdGenerated e) => _userNames.Add(e.Username, e.UserId);
-        public void Apply(WorldStateUserDeleted e) => _userNames.Remove(e.Username);
+    public WorldStateAggregate(Guid id)
+    {
+        Id = id;
+        ApplyChange(new WorldStateCreated(id));
+    }
 
-        public WorldStateAggregate()
+    public bool GenerateSecretKeyIdIfNotExists(string key, out Guid id)
+    {
+        if (_secretKeys.TryGetValue(key, out id))
         {
+            return false;
         }
+        id = Guid.NewGuid();
+        ApplyChange(new WorldStateSecretKeyIdGenerated(Id, key, id));
+        return true;
+    }
 
-        public WorldStateAggregate(Guid id)
+    public void DeleteSecretKey(string key, Guid idToDelete)
+    {
+        if (_secretKeys.TryGetValue(key, out var id))
         {
-            Id = id;
-            ApplyChange(new WorldStateCreated(id));
-        }
-
-        public bool GenerateSecretKeyIdIfNotExists(string key, out Guid id)
-        {
-            if (_secretKeys.TryGetValue(key, out id))
+            if (id == idToDelete)
             {
-                return false;
-            }
-            id = Guid.NewGuid();
-            ApplyChange(new WorldStateSecretKeyIdGenerated(Id, key, id));
-            return true;
-        }
-
-        public void DeleteSecretKey(string key, Guid idToDelete)
-        {
-            if (_secretKeys.TryGetValue(key, out var id))
-            {
-                if (id == idToDelete)
-                {
-                    ApplyChange(new WorldStateSecretKeyDeleted(Id, key));
-                }
+                ApplyChange(new WorldStateSecretKeyDeleted(Id, key));
             }
         }
+    }
 
-        public bool GenerateUserIdIfNotExists(string username, out Guid id)
+    public bool GenerateUserIdIfNotExists(string username, out Guid id)
+    {
+        if (_secretKeys.TryGetValue(username, out id))
         {
-            if (_secretKeys.TryGetValue(username, out id))
-            {
-                return false;
-            }
-            id = Guid.NewGuid();
-            ApplyChange(new WorldStateUserIdGenerated(Id, username, id));
-            return true;
+            return false;
         }
+        id = Guid.NewGuid();
+        ApplyChange(new WorldStateUserIdGenerated(Id, username, id));
+        return true;
+    }
 
-        public void DeleteUser(string username, Guid idToDelete)
+    public void DeleteUser(string username, Guid idToDelete)
+    {
+        if (_secretKeys.TryGetValue(username, out var id))
         {
-            if (_secretKeys.TryGetValue(username, out var id))
+            if (id == idToDelete)
             {
-                if (id == idToDelete)
-                {
-                    ApplyChange(new WorldStateUserDeleted(Id, username));
-                }
+                ApplyChange(new WorldStateUserDeleted(Id, username));
             }
         }
+    }
+
+    public void SaveEmailConfiguration(EmailConfiguration emailConfiguration)
+    {
+        ApplyChange(new WorldStateConfigurationUpdated(Id, emailConfiguration));
     }
 }

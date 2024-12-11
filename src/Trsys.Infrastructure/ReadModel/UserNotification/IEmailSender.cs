@@ -1,9 +1,8 @@
 using System.Threading.Tasks;
 
-namespace Trsys.Infrastructure.ReadModel.UserNotification
+namespace Trsys.Infrastructure.ReadModel.UserNotification;
+
+public interface IEmailSender
 {
-    public interface IEmailSender
-    {
-        Task SendEmailAsync(string emailAddress, string subject, string body);
-    }
+    Task SendEmailAsync(string emailAddress, string subject, string body);
 }

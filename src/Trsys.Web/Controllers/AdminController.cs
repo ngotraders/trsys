@@ -46,6 +46,25 @@ namespace Trsys.Web.Controllers
             return View(model);
         }
 
+        [HttpGet("configuration")]
+        public async Task<IActionResult> Configuration()
+        {
+            var configuration = await mediator.Send(new GetConfiguration());
+            var model = new ConfigurationViewModel()
+            {
+                EmailConfiguration = configuration.EmailConfiguration,
+            };
+            return View(model);
+        }
+
+
+        [HttpPost("configuration")]
+        public async Task<IActionResult> PostConfiguration(ConfigurationViewModel model)
+        {
+            await mediator.Send(new ConfigurationUpdateCommand(model.EmailConfiguration));
+            return RedirectToAction(nameof(Configuration));
+        }
+
         [HttpPost("orders/new")]
         public async Task<IActionResult> PostOrderNew(IndexViewModel model)
         {
