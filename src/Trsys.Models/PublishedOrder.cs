@@ -31,7 +31,7 @@ namespace Trsys.Models
                 return null;
             }
             var ticketNo = match.Groups[1].Value;
-            var symbol = match.Groups[2].Value;
+            var symbol = (match.Groups[2].Value.Length > 6 ? match.Groups[2].Value.Substring(0, 6) : match.Groups[2].Value).ToUpperInvariant();
             var originalSymbol = match.Groups[2].Value + match.Groups[3].Value;
             var orderType = (OrderType)int.Parse(match.Groups[4].Value);
             var time = match.Groups[5].Value;
@@ -40,7 +40,7 @@ namespace Trsys.Models
             return new PublishedOrder()
             {
                 TicketNo = int.Parse(ticketNo),
-                Symbol = symbol.ToUpperInvariant(),
+                Symbol = symbol,
                 OriginalSymbol = originalSymbol,
                 OrderType = orderType,
                 Time = string.IsNullOrEmpty(time) ? default : long.Parse(time),
