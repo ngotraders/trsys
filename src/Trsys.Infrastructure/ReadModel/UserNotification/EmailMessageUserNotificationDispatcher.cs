@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trsys.Infrastructure.Queue;
 using Trsys.Models.ReadModel.Dtos;
 using Trsys.Models.ReadModel.Infrastructure;
 
@@ -12,43 +13,43 @@ public class EmailMessageUserNotificationDispatcher : BackgroundService, IUserNo
 {
     private readonly IEmailSender emailSender;
     private readonly IUserDatabase userDatabase;
-    private readonly BlockingCollection<NotificationMessageDto> queue = [];
+    private readonly ILogger logger;
+    private readonly BlockingTaskQueue queue = new();
 
-    public EmailMessageUserNotificationDispatcher(IEmailSender emailSender, IUserDatabase userDatabase)
+    public EmailMessageUserNotificationDispatcher(IEmailSender emailSender, IUserDatabase userDatabase, ILogger<EmailMessageUserNotificationDispatcher> logger)
     {
         this.emailSender = emailSender;
         this.userDatabase = userDatabase;
+        this.logger = logger;
     }
 
     public void DispatchSystemNotification(NotificationMessageDto message)
     {
-        queue.Add(message);
+        queue.Enqueue(async () =>
+        {
+            var users = await userDatabase.SearchAsync();
+            await emailSender.SendEmailsAsync(users.Select(user => user.EmailAddress).Where(a => !string.IsNullOrEmpty(a)).ToList(), message.Subject, message.Body);
+        }).ContinueWith(e =>
+        {
+            if (e.Exception != null)
+            {
+                logger.LogError(e.Exception, "メール送信でエラーが発生しました。");
+            }
+            else
+            {
+                logger.LogInformation("メールが送信されました。");
+            }
+        });
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        return Task.Run(async () =>
+        var tcs = new TaskCompletionSource();
+        stoppingToken.Register(() =>
         {
-            try
-            {
-                while (!stoppingToken.IsCancellationRequested)
-                {
-                    var message = queue.Take(stoppingToken);
-                    var users = await userDatabase.SearchAsync();
-                    foreach (var user in users)
-                    {
-                        if (string.IsNullOrEmpty(user.EmailAddress))
-                        {
-                            continue;
-                        }
-                        await emailSender.SendEmailAsync(user.EmailAddress, message.Subject, message.Body);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
+            this.queue.Dispose();
+            tcs.SetResult();
         });
+        return tcs.Task;
     }
 }

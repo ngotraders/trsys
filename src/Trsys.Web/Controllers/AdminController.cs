@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Trsys.Models;
+using Trsys.Models.Configurations;
 using Trsys.Models.ReadModel.Queries;
 using Trsys.Models.WriteModel.Commands;
 using Trsys.Web.ViewModels.Admin;
@@ -29,7 +30,7 @@ namespace Trsys.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int? page, int? perPage)
         {
-            var model = RestoreModel() ?? new IndexViewModel();
+            var model = RestoreIndexModel() ?? new IndexViewModel();
             if (TempData["KeyType"] != null)
             {
                 model.KeyType = (SecretKeyType)TempData["KeyType"];
@@ -49,11 +50,15 @@ namespace Trsys.Web.Controllers
         [HttpGet("configuration")]
         public async Task<IActionResult> Configuration()
         {
-            var configuration = await mediator.Send(new GetConfiguration());
-            var model = new ConfigurationViewModel()
+            var model = RestoreConfigurationModel();
+            if (model == null)
             {
-                EmailConfiguration = configuration.EmailConfiguration,
-            };
+                var configuration = await mediator.Send(new GetConfiguration());
+                model = new ConfigurationViewModel()
+                {
+                    EmailConfiguration = configuration?.EmailConfiguration ?? new EmailConfiguration()
+                };
+            }
             return View(model);
         }
 
@@ -62,7 +67,7 @@ namespace Trsys.Web.Controllers
         public async Task<IActionResult> PostConfiguration(ConfigurationViewModel model)
         {
             await mediator.Send(new ConfigurationUpdateCommand(model.EmailConfiguration));
-            return RedirectToAction(nameof(Configuration));
+            return SaveConfigurationModelAndRedirectToConfiguration(model);
         }
 
         [HttpPost("orders/new")]
@@ -71,28 +76,28 @@ namespace Trsys.Web.Controllers
             if (string.IsNullOrEmpty(model.NewOrderSecretKey))
             {
                 model.ErrorMessage = "シークレットキーが指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             var secretKey = await mediator.Send(new FindBySecretKey(model.NewOrderSecretKey));
             if (secretKey == null || (secretKey.KeyType & SecretKeyType.Publisher) != SecretKeyType.Publisher)
             {
                 model.ErrorMessage = "シークレットキーが不正です。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             if (string.IsNullOrEmpty(model.NewOrderSymbol))
             {
                 model.ErrorMessage = "通貨ペアが指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             if (!model.NewOrderType.HasValue || (model.NewOrderType.Value != OrderType.Sell && model.NewOrderType.Value != OrderType.Buy))
             {
                 model.ErrorMessage = "取引が指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             if (!model.NewOrderPrice.HasValue)
             {
                 model.ErrorMessage = "価格が指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             var ticketNo = model.NewOrderTicketNo ?? Random.Shared.Next(1, short.MaxValue);
             await mediator.Send(new PublisherOpenOrderCommand(secretKey.Id, new PublishedOrder()
@@ -105,7 +110,7 @@ namespace Trsys.Web.Controllers
                 Percentage = model.NewOrderPercentage.GetValueOrDefault(98),
             }));
             model.SuccessMessage = $"注文{ticketNo}を作成しました。";
-            return SaveModelAndRedirectToIndex(model);
+            return SaveIndexModelAndRedirectToIndex(model);
         }
 
         [HttpPost("orders/close")]
@@ -114,22 +119,22 @@ namespace Trsys.Web.Controllers
             if (string.IsNullOrEmpty(model.CloseOrderSecretKey))
             {
                 model.ErrorMessage = "シークレットキーが指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             var secretKey = await mediator.Send(new FindBySecretKey(model.CloseOrderSecretKey));
             if (secretKey == null || (secretKey.KeyType & SecretKeyType.Publisher) != SecretKeyType.Publisher)
             {
                 model.ErrorMessage = "シークレットキーが不正です。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             if (!model.CloseOrderTicketNo.HasValue)
             {
                 model.ErrorMessage = "チケットNoが指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             await mediator.Send(new PublisherCloseOrderCommand(secretKey.Id, model.CloseOrderTicketNo.Value));
             model.SuccessMessage = $"注文{model.CloseOrderTicketNo.Value}を削除しました。";
-            return SaveModelAndRedirectToIndex(model);
+            return SaveIndexModelAndRedirectToIndex(model);
         }
 
         [HttpPost("orders/clear")]
@@ -141,7 +146,7 @@ namespace Trsys.Web.Controllers
                 await mediator.Send(new PublisherClearOrdersCommand(id));
             }
             model.SuccessMessage = $"注文をクリアしました。";
-            return SaveModelAndRedirectToIndex(model);
+            return SaveIndexModelAndRedirectToIndex(model);
         }
 
         [HttpPost("keys/new")]
@@ -150,7 +155,7 @@ namespace Trsys.Web.Controllers
             if (!model.KeyType.HasValue)
             {
                 model.ErrorMessage = "キーの種類が指定されていません。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
 
             try
@@ -161,12 +166,12 @@ namespace Trsys.Web.Controllers
                 model.KeyType = null;
                 model.Key = null;
                 model.Description = null;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
             {
                 model.ErrorMessage = ex.Message;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
         }
 
@@ -180,16 +185,16 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
-                    return SaveModelAndRedirectToIndex(model);
+                    return SaveIndexModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を変更しました。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
             {
                 model.ErrorMessage = ex.Message;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
         }
 
@@ -203,16 +208,16 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
-                    return SaveModelAndRedirectToIndex(model);
+                    return SaveIndexModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, true));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を有効化しました。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
             {
                 model.ErrorMessage = ex.Message;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
         }
 
@@ -226,17 +231,17 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
-                    return SaveModelAndRedirectToIndex(model);
+                    return SaveIndexModelAndRedirectToIndex(model);
                 }
                 var token = secretKey.Token;
                 await mediator.Send(new SecretKeyUpdateCommand(secretKey.Id, updateRequest == null ? secretKey.KeyType : updateRequest.KeyType, updateRequest == null ? secretKey.Description : updateRequest.Description, false));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を無効化しました。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
             {
                 model.ErrorMessage = ex.Message;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
         }
 
@@ -249,22 +254,22 @@ namespace Trsys.Web.Controllers
                 if (secretKey == null)
                 {
                     model.ErrorMessage = $"シークレットキーを変更できません。";
-                    return SaveModelAndRedirectToIndex(model);
+                    return SaveIndexModelAndRedirectToIndex(model);
                 }
                 await mediator.Send(new SecretKeyDeleteCommand(secretKey.Id));
                 model.SuccessMessage = $"シークレットキー: {secretKey.Key} を削除しました。";
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
             catch (Exception ex)
             {
                 model.ErrorMessage = ex.Message;
-                return SaveModelAndRedirectToIndex(model);
+                return SaveIndexModelAndRedirectToIndex(model);
             }
         }
 
-        private IndexViewModel RestoreModel()
+        private IndexViewModel RestoreIndexModel()
         {
-            var modelStr = TempData["Model"] as string;
+            var modelStr = TempData["IndexModel"] as string;
             if (!string.IsNullOrEmpty(modelStr))
             {
                 return JsonConvert.DeserializeObject<IndexViewModel>(modelStr);
@@ -272,10 +277,26 @@ namespace Trsys.Web.Controllers
             return null;
         }
 
-        private IActionResult SaveModelAndRedirectToIndex(IndexViewModel model)
+        private IActionResult SaveIndexModelAndRedirectToIndex(IndexViewModel model)
         {
-            TempData["Model"] = JsonConvert.SerializeObject(model); ;
+            TempData["IndexModel"] = JsonConvert.SerializeObject(model); ;
             return RedirectToAction("Index");
+        }
+
+        private ConfigurationViewModel RestoreConfigurationModel()
+        {
+            var modelStr = TempData["ConfigurationModel"] as string;
+            if (!string.IsNullOrEmpty(modelStr))
+            {
+                return JsonConvert.DeserializeObject<ConfigurationViewModel>(modelStr);
+            }
+            return null;
+        }
+
+        private IActionResult SaveConfigurationModelAndRedirectToConfiguration(ConfigurationViewModel model)
+        {
+            TempData["ConfigurationModel"] = JsonConvert.SerializeObject(model); ;
+            return RedirectToAction("Configuration");
         }
 
     }

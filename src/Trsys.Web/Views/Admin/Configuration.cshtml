@@ -27,68 +27,56 @@
     <div class="mb-4">
         <h2>メール設定</h2>
         <div class="mb-2">
-            <label>ホスト名</label>
-            <input class="form-control" type="text" name="EmailConfiguration.Host" value="@Model.EmailConfiguration.Host" />
-        </div>
-        <div class="mb-2">
-            <label>ポート</label>
-            <input class="form-control" type="text" name="EmailConfiguration.Port" value="@Model.EmailConfiguration.Port" />
-        </div>
-        <div class="mb-2">
-            <label>SSL</label>
-            @if (Model.EmailConfiguration.UseSsl.HasValue && Model.EmailConfiguration.UseSsl.Value)
-            {
-                <input class="form-check" type="checkbox" name="EmailConfiguration.UseSsl" value="true" checked />
-            }
-            else
-            {
-                <input class="form-check" type="checkbox" name="EmailConfiguration.UseSsl" value="true" />
-            }
-        </div>
-        <div class="mb-2">
-            <label>ユーザー名</label>
-            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationUser" value="@Model.EmailConfiguration.AuthenticationUser" />
-        </div>
-        <div class="mb-2">
-            <label>パスワード</label>
-            <input class="form-control" type="password" name="EmailConfiguration.AuthenticationPassword" value="@Model.EmailConfiguration.AuthenticationPassword" />
-        </div>
-        <div class="mb-2">
             <label>メール送信元</label>
             <input class="form-control" type="text" name="EmailConfiguration.MailFrom" value="@Model.EmailConfiguration.MailFrom" />
         </div>
-        <div class="mb-2">
-            <label>クライアントID</label>
-            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationClientId" value="@Model.EmailConfiguration.AuthenticationClientId" />
-        </div>
-        <div class="mb-2">
-            <label>ClientSecret</label>
-            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationClientSecret" value="@Model.EmailConfiguration.AuthenticationClientSecret" />
-        </div>
-        <div class="mb-2">
-            <label>Authority</label>
-            <input class="form-control" type="text" name="EmailConfiguration.AuthenticationAuthority" value="@Model.EmailConfiguration.AuthenticationAuthority" />
-        </div>
-        <div class="mb-2">
-            <label>スコープ</label>
-            @if (Model.EmailConfiguration.AuthenticationScopes.Any())
-            {
-
-                @for (int i = 0; i < Model.EmailConfiguration.AuthenticationScopes.Count; i++)
+        <section>
+            <h3>SMTP</h3>
+            <div class="mb-2">
+                <label>ホスト名</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Smtp.Host" value="@Model.EmailConfiguration.Smtp?.Host" />
+            </div>
+            <div class="mb-2">
+                <label>ポート</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Smtp.Port" value="@Model.EmailConfiguration.Smtp?.Port" />
+            </div>
+            <div class="mb-2">
+                <label>SSL</label>
+                @if (Model.EmailConfiguration.Smtp?.UseSsl ?? false)
                 {
-                    <div>
-                        <input class="form-control" type="text" name="EmailConfiguration.AuthenticationScopes[@i]" value="@Model.EmailConfiguration.AuthenticationScopes[i]" />
-                    </div>
+                    <input class="form-check" type="checkbox" name="EmailConfiguration.Smtp.UseSsl" value="true" checked />
                 }
-            }
-            else
-            {
-                <div>
-                    <input class="form-control" type="text" name="EmailConfiguration.AuthenticationScopes" value="" />
-                </div>
+                else
+                {
+                    <input class="form-check" type="checkbox" name="EmailConfiguration.Smtp.UseSsl" value="true" />
+                }
+            </div>
+            <div class="mb-2">
+                <label>ユーザー名</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Smtp.AuthenticationUser" value="@Model.EmailConfiguration.Smtp?.AuthenticationUser" />
+            </div>
+            <div class="mb-2">
+                <label>パスワード</label>
+                <input class="form-control" type="password" name="EmailConfiguration.Smtp.AuthenticationPassword" value="@Model.EmailConfiguration.Smtp?.AuthenticationPassword" />
+            </div>
+        </section>
+        <section>
+            <h3>Microsoft Graph</h3>
+            <div class="mb-2">
+                <label>テナントID</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Graph.TenantId" value="@Model.EmailConfiguration.Graph?.TenantId" />
+            </div>
+            <div class="mb-2">
+                <label>クライアントID</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Graph.ClientId" value="@Model.EmailConfiguration.Graph?.ClientId" />
+            </div>
+            <div class="mb-2">
+                <label>ClientSecret</label>
+                <input class="form-control" type="text" name="EmailConfiguration.Graph.ClientSecret" value="@Model.EmailConfiguration.Graph?.ClientSecret" />
+            </div>
+        </section>
 
-            }
-        </div>
+
         <div class="mt-2 mt-lg-0">
             <button formaction="/admin/configuration" class="btn btn-outline-secondary btn-block text-nowrap">登録</button>
         </div>

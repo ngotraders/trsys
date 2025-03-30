@@ -27,7 +27,7 @@ namespace Trsys.Infrastructure
     {
         public static IServiceCollection AddEmailSender(this IServiceCollection services)
         {
-            return services.AddTransient<IEmailSender, MailKitEmailSender>();
+            return services.AddTransient<IEmailSender, EmailSender>();
         }
 
         private static IServiceCollection AddInfrastructure(this IServiceCollection services)

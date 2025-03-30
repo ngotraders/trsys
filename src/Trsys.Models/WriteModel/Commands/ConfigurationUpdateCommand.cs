@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Trsys.Models.Configurations;
 
 namespace Trsys.Models.WriteModel.Commands;
 

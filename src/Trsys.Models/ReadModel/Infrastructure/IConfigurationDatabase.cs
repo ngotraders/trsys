@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Trsys.Models.Configurations;
 
 namespace Trsys.Models.ReadModel.Infrastructure;
 

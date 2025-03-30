@@ -2,13 +2,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using Trsys.Infrastructure.ReadModel.InMemory;
 using Trsys.Infrastructure.ReadModel.UserNotification;
-using Trsys.Models;
+using Trsys.Models.Configurations;
 
 namespace Trsys.Infrastructure.Tests
 {
     [TestClass]
     [Ignore]
-    public class MailKitEmailSenderTests
+    public class EmailSenderTests
     {
         [TestMethod]
         public async Task When_sending_email_then_mail_sent()
@@ -16,13 +16,16 @@ namespace Trsys.Infrastructure.Tests
             var configurationDb = new InMemoryConfigurationDatabase();
             await configurationDb.SaveEmailConfigurationAsync(new EmailConfiguration
             {
-                Host = "localhost",
-                Port = 1025,
-                UseSsl = false,
+                Smtp = new SmtpEmailConfiguration()
+                {
+                    Host = "localhost",
+                    Port = 1025,
+                    UseSsl = false,
+                },
                 MailFrom = "copy-trading-system@example.com",
             });
 
-            var sut = new MailKitEmailSender(configurationDb);
+            var sut = new EmailSender(configurationDb);
             await sut.SendEmailAsync("copy-trading-system@example.com", "subject", "body");
         }
     }

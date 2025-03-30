@@ -1,6 +1,7 @@
 ﻿using CQRSlite.Events;
 using MediatR;
 using System;
+using Trsys.Models.Configurations;
 
 namespace Trsys.Models.Events;
 

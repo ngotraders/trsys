@@ -1,6 +1,8 @@
-﻿namespace Trsys.Models.ReadModel.Dtos;
+﻿using Trsys.Models.Configurations;
+
+namespace Trsys.Models.ReadModel.Dtos;
 
 public class ConfigurationDto
 {
-    public EmailConfiguration EmailConfiguration { get; set; } = new EmailConfiguration();
+    public EmailConfiguration EmailConfiguration { get; set; }
 }
